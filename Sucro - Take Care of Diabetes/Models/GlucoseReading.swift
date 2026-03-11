@@ -25,6 +25,7 @@ extension GlucoseReading {
     @NSManaged public var context: String?
     @NSManaged public var notes: String?
     @NSManaged public var source: String?
+    @NSManaged public var trend: String?
 }
 
 extension GlucoseReading : Identifiable {

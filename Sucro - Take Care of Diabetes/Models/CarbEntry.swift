@@ -24,6 +24,7 @@ extension CarbEntry {
     @NSManaged public var mealType: String?
     @NSManaged public var foodItems: String?
     @NSManaged public var notes: String?
+    @NSManaged public var photo: Data?
 }
 
 extension CarbEntry : Identifiable {

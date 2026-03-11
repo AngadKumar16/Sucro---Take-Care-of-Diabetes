@@ -24,6 +24,7 @@ extension SiteChange {
     @NSManaged public var timestamp: Date?
     @NSManaged public var notes: String?
     @NSManaged public var deviceType: String?
+    @NSManaged public var photo: Data?
 }
 
 extension SiteChange : Identifiable {
