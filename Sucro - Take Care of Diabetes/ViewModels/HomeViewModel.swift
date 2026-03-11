@@ -222,18 +222,3 @@ class HomeViewModel: BaseViewModel {
         }
     }
 }
-
-// Supporting data structures
-struct Reminder: Identifiable {
-    let id = UUID()
-    let title: String
-    let time: Date
-    let type: ReminderType
-}
-
-enum ReminderType {
-    case siteChange
-    case deviceCheck
-    case medication
-}
-}
