@@ -24,7 +24,6 @@ extension InsulinEntry {
     @NSManaged public var timestamp: Date?
     @NSManaged public var deliveryMethod: String?
     @NSManaged public var notes: String?
-    @NSManaged public var glucoseReading: GlucoseReading?
 }
 
 extension InsulinEntry : Identifiable {

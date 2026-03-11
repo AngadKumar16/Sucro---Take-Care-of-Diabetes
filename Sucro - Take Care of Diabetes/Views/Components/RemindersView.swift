@@ -137,7 +137,6 @@ struct ReminderCard: View {
         )
         .confirmationDialog("Snooze Reminder", isPresented: $showingSnoozeOptions) {
             Button("15 minutes") { snoozeFor(15) }
-            Button("30 minutes") { snoozeFor(30) }
             Button("1 hour") { snoozeFor(60) }
             Button("2 hours") { snoozeFor(120) }
             Button("Cancel", role: .cancel) { }

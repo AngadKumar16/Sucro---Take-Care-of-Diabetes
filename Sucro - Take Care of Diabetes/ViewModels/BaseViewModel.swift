@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 class BaseViewModel: ObservableObject {
-    protected let viewContext: NSManagedObjectContext
+    internal let viewContext: NSManagedObjectContext
     
     init(context: NSManagedObjectContext) {
         self.viewContext = context
