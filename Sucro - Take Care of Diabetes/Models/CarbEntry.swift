@@ -30,3 +30,12 @@ extension CarbEntry {
 extension CarbEntry : Identifiable {
     
 }
+
+extension CarbEntry {
+    override public func awakeFromInsert() {
+        super.awakeFromInsert()
+        self.id = UUID()
+        self.timestamp = Date()
+        self.grams = 0.0
+    }
+}

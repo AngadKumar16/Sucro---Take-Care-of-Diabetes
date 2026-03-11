@@ -30,3 +30,14 @@ extension ActivityEntry {
 extension ActivityEntry : Identifiable {
     
 }
+
+extension ActivityEntry {
+    override public func awakeFromInsert() {
+        super.awakeFromInsert()
+        self.id = UUID()
+        self.timestamp = Date()
+        self.type = "other"
+        self.duration = 0
+        self.caloriesBurned = 0.0
+    }
+}

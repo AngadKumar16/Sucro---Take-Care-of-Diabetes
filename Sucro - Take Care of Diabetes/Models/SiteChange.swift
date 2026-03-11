@@ -30,3 +30,12 @@ extension SiteChange {
 extension SiteChange : Identifiable {
     
 }
+
+extension SiteChange {
+    override public func awakeFromInsert() {
+        super.awakeFromInsert()
+        self.id = UUID()
+        self.timestamp = Date()
+        self.siteType = "infusion_set"
+    }
+}

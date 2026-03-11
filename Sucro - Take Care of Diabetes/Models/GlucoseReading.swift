@@ -31,3 +31,13 @@ extension GlucoseReading {
 extension GlucoseReading : Identifiable {
     
 }
+
+extension GlucoseReading {
+    override public func awakeFromInsert() {
+        super.awakeFromInsert()
+        self.id = UUID()
+        self.timestamp = Date()
+        self.unit = "mg/dL"
+        self.value = 0.0
+    }
+}

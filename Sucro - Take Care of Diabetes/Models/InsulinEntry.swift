@@ -29,3 +29,13 @@ extension InsulinEntry {
 extension InsulinEntry : Identifiable {
     
 }
+
+extension InsulinEntry {
+    override public func awakeFromInsert() {
+        super.awakeFromInsert()
+        self.id = UUID()
+        self.timestamp = Date()
+        self.units = 0.0
+        self.type = "bolus"
+    }
+}
