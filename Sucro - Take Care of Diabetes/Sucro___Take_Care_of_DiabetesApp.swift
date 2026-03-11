@@ -4,12 +4,12 @@ import SwiftUI
 import CoreData
 
 @main
-struct ___PACKAGENAME:identifier___App: App {
+struct SucroApp: App {
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppNavigationView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
