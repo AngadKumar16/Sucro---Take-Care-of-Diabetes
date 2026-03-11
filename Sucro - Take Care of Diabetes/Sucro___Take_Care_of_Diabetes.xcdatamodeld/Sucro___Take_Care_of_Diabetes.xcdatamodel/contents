@@ -1,62 +1,178 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23B92" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="true" userDefinedModelVersionIdentifier="1.0">
+    
+    <!-- Glucose Reading: Central entity tracking blood sugar -->
     <entity name="GlucoseReading" representedClassName="GlucoseReading" syncable="YES" codeGenerationType="class">
-        <attribute name="context" optional="YES" attributeType="String"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="value" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" minValueString="0" maxValueString="1000"/>
+        <attribute name="unit" attributeType="String" defaultValueString="mg/dL"/>
+        <attribute name="trend" optional="YES" attributeType="String" regularExpressionString="^(rising|falling|stable|unknown)$"/>
         <attribute name="source" optional="YES" attributeType="String"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="trend" optional="YES" attributeType="String"/>
-        <attribute name="unit" attributeType="String"/>
-        <attribute name="value" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="context" optional="YES" attributeType="String" regularExpressionString="^(fasting|pre_meal|post_meal|bedtime|exercise|sick|other)$"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        
+        <!-- Relationships -->
+        <relationship name="relatedCarbEntry" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CarbEntry" inverseName="relatedGlucoseReading" inverseEntity="CarbEntry"/>
+        <relationship name="relatedInsulinEntries" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsulinEntry" inverseName="relatedGlucoseReading" inverseEntity="InsulinEntry"/>
+        <relationship name="device" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Device" inverseName="readings" inverseEntity="Device"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+        <fetchIndex name="byTimestamp">
+            <indexElement property="timestamp" type="Binary" order="ascending"/>
+        </fetchIndex>
     </entity>
+    
+    <!-- Carb Entry: Food/carbohydrate intake -->
     <entity name="CarbEntry" representedClassName="CarbEntry" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="grams" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" minValueString="0" maxValueString="500"/>
         <attribute name="foodItems" optional="YES" attributeType="String"/>
-        <attribute name="grams" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="mealType" optional="YES" attributeType="String"/>
+        <attribute name="mealType" optional="YES" attributeType="String" regularExpressionString="^(breakfast|lunch|dinner|snack|other)$"/>
+        <attribute name="glycemicIndex" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" minValueString="0" maxValueString="100"/>
+        <attribute name="fiberGrams" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="photo" optional="YES" attributeType="Binary" allowsExternalStorage="YES" storeInExternalRecordFile="YES"/>
         <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="photo" optional="YES" attributeType="Binary"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        
+        <!-- Relationships -->
+        <relationship name="relatedGlucoseReading" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GlucoseReading" inverseName="relatedCarbEntry" inverseEntity="GlucoseReading"/>
+        <relationship name="insulinDelivery" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="InsulinEntry" inverseName="forCarbEntry" inverseEntity="InsulinEntry"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
+    
+    <!-- Insulin Entry: Insulin doses (bolus/basal) -->
     <entity name="InsulinEntry" representedClassName="InsulinEntry" syncable="YES" codeGenerationType="class">
-        <attribute name="deliveryMethod" optional="YES" attributeType="String"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="units" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" minValueString="0" maxValueString="50"/>
+        <attribute name="type" attributeType="String" regularExpressionString="^(bolus|basal|correction|extended)$"/>
+        <attribute name="deliveryMethod" optional="YES" attributeType="String" regularExpressionString="^(pump|pen|syringe|pod)$"/>
+        <attribute name="duration" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" minValueString="0" maxValueString="480"/>
+        <attribute name="insulinType" optional="YES" attributeType="String"/>
         <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="type" optional="YES" attributeType="String"/>
-        <attribute name="units" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        
+        <!-- Relationships -->
+        <relationship name="relatedGlucoseReading" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="GlucoseReading" inverseName="relatedInsulinEntries" inverseEntity="GlucoseReading"/>
+        <relationship name="forCarbEntry" optional="YES" maxCount="1" deletionRule="Deny" destinationEntity="CarbEntry" inverseName="insulinDelivery" inverseEntity="CarbEntry"/>
+        <relationship name="injectionSite" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SiteChange" inverseName="insulinEntries" inverseEntity="SiteChange"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
+    
+    <!-- Site Change: Pump/pod/site rotation tracking -->
     <entity name="SiteChange" representedClassName="SiteChange" syncable="YES" codeGenerationType="class">
-        <attribute name="deviceType" optional="YES" attributeType="String"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="siteType" attributeType="String" regularExpressionString="^(infusion_set|sensor|cgm|injection_site)$"/>
         <attribute name="location" optional="YES" attributeType="String"/>
-        <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="photo" optional="YES" attributeType="Binary"/>
-        <attribute name="siteType" optional="YES" attributeType="String"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-    </entity>
-    <entity name="ActivityEntry" representedClassName="ActivityEntry" syncable="YES" codeGenerationType="class">
-        <attribute name="caloriesBurned" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="duration" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="intensity" optional="YES" attributeType="String"/>
-        <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="type" optional="YES" attributeType="String"/>
-    </entity>
-    <entity name="DeviceStatus" representedClassName="DeviceStatus" syncable="YES" codeGenerationType="class">
-        <attribute name="batteryLevel" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="deviceType" optional="YES" attributeType="String"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="lastSync" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="lotNumber" optional="YES" attributeType="String"/>
+        <attribute name="expirationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="photo" optional="YES" attributeType="Binary" allowsExternalStorage="YES" storeInExternalRecordFile="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        
+        <!-- Relationships -->
+        <relationship name="insulinEntries" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="InsulinEntry" inverseName="injectionSite" inverseEntity="InsulinEntry"/>
+        <relationship name="device" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Device" inverseName="siteChanges" inverseEntity="Device"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
+    
+    <!-- Activity Entry: Exercise/physical activity -->
+    <entity name="ActivityEntry" representedClassName="ActivityEntry" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timestamp" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="type" attributeType="String"/>
+        <attribute name="duration" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" minValueString="0"/>
+        <attribute name="intensity" optional="YES" attributeType="String" regularExpressionString="^(low|moderate|high|very_high)$"/>
+        <attribute name="caloriesBurned" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="heartRateAvg" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="glucoseImpact" optional="YES" attributeType="String" regularExpressionString="^(drop|rise|stable|mixed)$"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        
+        <!-- Relationships -->
+        <relationship name="glucoseReadings" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="GlucoseReading"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    
+    <!-- Device: CGM, Pump, Meter management -->
+    <entity name="Device" representedClassName="Device" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="deviceType" attributeType="String" regularExpressionString="^(cgm|insulin_pump|bg_meter|insulin_pen|other)$"/>
+        <attribute name="manufacturer" optional="YES" attributeType="String"/>
+        <attribute name="model" optional="YES" attributeType="String"/>
+        <attribute name="serialNumber" optional="YES" attributeType="String"/>
+        <attribute name="batteryLevel" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" minValueString="0" maxValueString="100"/>
+        <attribute name="lastSync" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="dateAdded" attributeType="Date" usesScalarValueType="NO"/>
+        
+        <!-- Relationships -->
+        <relationship name="readings" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GlucoseReading" inverseName="device" inverseEntity="GlucoseReading"/>
+        <relationship name="siteChanges" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="SiteChange" inverseName="device" inverseEntity="SiteChange"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+            <uniquenessConstraint>
+                <constraint value="serialNumber"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    
+    <!-- Settings/User Preferences -->
+    <entity name="UserSettings" representedClassName="UserSettings" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="targetGlucoseMin" attributeType="Double" defaultValueString="70" usesScalarValueType="YES"/>
+        <attribute name="targetGlucoseMax" attributeType="Double" defaultValueString="180" usesScalarValueType="YES"/>
+        <attribute name="insulinToCarbRatio" attributeType="Double" defaultValueString="10" usesScalarValueType="YES"/>
+        <attribute name="correctionFactor" attributeType="Double" defaultValueString="50" usesScalarValueType="YES"/>
+        <attribute name="targetGlucose" attributeType="Double" defaultValueString="100" usesScalarValueType="YES"/>
+        <attribute name="lowGlucoseThreshold" attributeType="Double" defaultValueString="70" usesScalarValueType="YES"/>
+        <attribute name="highGlucoseThreshold" attributeType="Double" defaultValueString="180" usesScalarValueType="YES"/>
+        <attribute name="timeZone" optional="YES" attributeType="String"/>
+        <attribute name="unitPreference" attributeType="String" defaultValueString="mg/dL" regularExpressionString="^(mg/dL|mmol/L)$"/>
+        <attribute name="lastUpdated" attributeType="Date" usesScalarValueType="NO"/>
+        
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    
     <elements>
-        <element name="GlucoseReading" positionX="-63" positionY="-18" width="128" height="134"/>
-        <element name="CarbEntry" positionX="-54" positionY="9" width="128" height="149"/>
-        <element name="InsulinEntry" positionX="-36" positionY="54" width="128" height="149"/>
-        <element name="SiteChange" positionX="-18" positionY="99" width="128" height="149"/>
-        <element name="ActivityEntry" positionX="0" positionY="144" width="128" height="149"/>
-        <element name="DeviceStatus" positionX="18" positionY="189" width="128" height="89"/>
+        <element name="GlucoseReading" positionX="-243" positionY="-144" width="128" height="194"/>
+        <element name="CarbEntry" positionX="-54" positionY="-144" width="128" height="194"/>
+        <element name="InsulinEntry" positionX="135" positionY="-144" width="128" height="179"/>
+        <element name="SiteChange" positionX="324" positionY="-144" width="128" height="194"/>
+        <element name="ActivityEntry" positionX="-243" positionY="81" width="128" height="179"/>
+        <element name="Device" positionX="-54" positionY="81" width="128" height="209"/>
+        <element name="UserSettings" positionX="135" positionY="81" width="128" height="194"/>
     </elements>
 </model>
