@@ -66,7 +66,7 @@ struct PersistenceController {
     let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "Sucro___Take_Care_of_Diabetes")
+        container = NSPersistentContainer(name: "SucroDataModel")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
