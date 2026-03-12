@@ -22,7 +22,7 @@ struct SiteSnapshotView: View {
                 HStack(spacing: 16) {
                     // Body Map
                     BodyMapView(
-                        selectedLocation: siteChange.location ?? "Abdomen",
+                        selectedLocation: siteChange.location ?? "Abdomen Center",
                         onTap: { onChangeSite() }
                     )
                     .frame(width: 80, height: 120)
