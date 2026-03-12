@@ -153,6 +153,8 @@ struct ReminderCard: View {
             return "iphone.radiowaves.left.and.right"
         case .medication:
             return "pills.fill"
+        @unknown default:
+                return "bell.fill"
         }
     }
     
@@ -164,6 +166,8 @@ struct ReminderCard: View {
             return .blue
         case .medication:
             return .green
+        @unknown default:
+               return .gray
         }
     }
     

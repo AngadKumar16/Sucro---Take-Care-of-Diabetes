@@ -28,6 +28,31 @@ class GlucoseCalculator {
             }
     }
     
+    // MARK: - Statistics
+    static func calculateStatistics(readings: [GlucoseReading]) -> GlucoseStatistics {
+        guard !readings.isEmpty else {
+            return GlucoseStatistics()
+        }
+        
+        let values = readings.map { $0.value }
+        let average = values.reduce(0, +) / Double(values.count)
+        let standardDeviation = calculateStandardDeviation(readings: readings)
+        let cv = (standardDeviation / average) * 100
+        
+        let timeInRange = calculateTimeInRange(readings: readings)
+        let timeBelowRange = calculateTimeBelowRange(readings: readings)
+        let timeAboveRange = calculateTimeAboveRange(readings: readings)
+        
+        return GlucoseStatistics(
+            average: average,
+            standardDeviation: standardDeviation,
+            cv: cv,
+            timeInRange: timeInRange,
+            timeBelowRange: timeBelowRange,
+            timeAboveRange: timeAboveRange
+        )
+    }
+    
     // MARK: - Time in Range (TIR)
     static func calculateTimeInRange(readings: [GlucoseReading], targetMin: Double = 70, targetMax: Double = 180) -> (percentage: Double, hours: Double) {
         guard !readings.isEmpty else { return (percentage: 0, hours: 0) }
