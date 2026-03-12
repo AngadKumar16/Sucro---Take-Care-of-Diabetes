@@ -7,11 +7,14 @@
 
 import Foundation
 import UserNotifications
+import Combine
 
 class NotificationService: NSObject, ObservableObject {
     static let shared = NotificationService()
     
     @Published var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    
+    private var cancellables = Set<AnyCancellable>()
     
     private override init() {
         super.init()
@@ -46,7 +49,6 @@ class NotificationService: NSObject, ObservableObject {
         content.sound = .default
         content.categoryIdentifier = "SITE_CHANGE"
         
-        // Schedule for 3 days from now
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(days * 24 * 3600), repeats: false)
         
         let request = UNNotificationRequest(identifier: "site-change-\(UUID())", content: content, trigger: trigger)
@@ -59,7 +61,7 @@ class NotificationService: NSObject, ObservableObject {
     func scheduleCriticalGlucoseAlert(value: Double, isLow: Bool) {
         let content = UNMutableNotificationContent()
         content.title = isLow ? "LOW GLUCOSE" : "HIGH GLUCOSE"
-        content.body = isLow ? 
+        content.body = isLow ?
             "Glucose is \(Int(value)) mg/dL. Treat with 15g fast carbs." :
             "Glucose is \(Int(value)) mg/dL. Check for ketones."
         content.sound = .defaultCritical
@@ -68,7 +70,7 @@ class NotificationService: NSObject, ObservableObject {
         let request = UNNotificationRequest(
             identifier: "critical-glucose-\(UUID())",
             content: content,
-            trigger: nil // Immediate
+            trigger: nil
         )
         
         UNUserNotificationCenter.current().add(request)
@@ -102,12 +104,10 @@ class NotificationService: NSObject, ObservableObject {
 
 extension NotificationService: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        // Show notification even when app is in foreground
         completionHandler([.banner, .sound, .badge])
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Handle notification tap
         let identifier = response.notification.request.identifier
         
         if identifier.contains("site-change") {

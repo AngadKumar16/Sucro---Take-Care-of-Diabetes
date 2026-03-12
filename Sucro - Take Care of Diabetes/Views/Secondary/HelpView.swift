@@ -5,6 +5,14 @@
 //  Created by Angad Kumar on 3/12/26.
 //
 
+
+//
+//  HelpView.swift
+//  Sucro - Take Care of Diabetes
+//
+//  Created by Angad Kumar on 3/12/26.
+//
+
 import SwiftUI
 
 struct HelpView: View {

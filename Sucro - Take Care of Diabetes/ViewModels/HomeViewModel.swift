@@ -53,6 +53,9 @@ class HomeViewModel: BaseViewModel {
         fetchReminders()
         generateSmartSuggestion()
         fetchLastSiteChange()
+        // Check for critical alerts
+        checkForCriticalAlerts()
+
     }
     
     private func fetchRecentReadings() {
@@ -222,8 +225,6 @@ class HomeViewModel: BaseViewModel {
             return 100.0
         }
         
-        // Check for critical alerts
-        checkForCriticalAlerts()
     }
     
     // MARK: - Critical Alert Management
