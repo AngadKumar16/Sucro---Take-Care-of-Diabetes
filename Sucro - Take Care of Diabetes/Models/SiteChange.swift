@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData
+import CoreData 
 
 @objc(SiteChange)
 public class SiteChange: NSManagedObject {

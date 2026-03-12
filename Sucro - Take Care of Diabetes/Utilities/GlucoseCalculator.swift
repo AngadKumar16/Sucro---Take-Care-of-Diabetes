@@ -7,9 +7,7 @@
 
 import Foundation
 import Combine
-
-// Import your app's module to access GlucoseTrend enum
-// If your app target is named "Sucro", use: import Sucro
+import CoreData
 
 class GlucoseCalculator {
     
@@ -20,7 +18,7 @@ class GlucoseCalculator {
         return insulinEntries
             .filter { entry in
                 guard let timestamp = entry.timestamp else { return false }
-                return timestamp >= fourHoursAgo && entry.type == "bolus"
+                return timestamp >= fourHoursAgo && entry.type == InsulinType.bolus.rawValue
             }
             .reduce(0.0) { total, entry in
                 guard let timestamp = entry.timestamp else { return total }
@@ -96,7 +94,6 @@ class GlucoseCalculator {
     }
     
     // MARK: - Glucose Trend
-    // Use GlucoseTrend directly - it's in the same module (Data/Models/Enums/)
     static func calculateTrend(readings: [GlucoseReading]) -> GlucoseTrend {
         guard readings.count >= 2 else { return .stable }
         
@@ -112,8 +109,12 @@ class GlucoseCalculator {
         
         switch percentChange {
         case let change where change > 10:
+            return .risingFast
+        case let change where change > 5:
             return .rising
         case let change where change < -10:
+            return .fallingFast
+        case let change where change < -5:
             return .falling
         default:
             return .stable
@@ -125,14 +126,7 @@ class GlucoseCalculator {
         guard let firstTimestamp = readings.first?.timestamp,
               let lastTimestamp = readings.last?.timestamp else { return 0 }
         
-        return lastTimestamp.timeIntervalSince(firstTimestamp) / 3600
+        let timeInterval = lastTimestamp.timeIntervalSince(firstTimestamp)
+        return timeInterval / 3600.0
     }
 }
-
-// REMOVE THIS ENTIRE ENUM - it's duplicated in Data/Models/Enums/GlucoseTrend.swift
-// enum GlucoseTrend: String, CaseIterable {
-//     case rising = "rising"
-//     case falling = "falling"
-//     case stable = "stable"
-//     ...
-// }
