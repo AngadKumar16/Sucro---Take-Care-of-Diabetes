@@ -17,6 +17,19 @@ struct HomeView: View {
         NavigationView {
             ScrollView {
                 LazyVStack(spacing: 20) {
+                    // Critical Alert Banner
+                    if let criticalAlert = viewModel.criticalAlert {
+                        CriticalAlertBanner(
+                            alert: criticalAlert,
+                            onDismiss: {
+                                viewModel.dismissCriticalAlert()
+                            },
+                            onAction: {
+                                viewModel.handleCriticalAlertAction()
+                            }
+                        )
+                    }
+                    
                     // Hero Section with Glucose
                     GlucoseHeroView(
                         glucoseReading: viewModel.latestGlucoseReading,

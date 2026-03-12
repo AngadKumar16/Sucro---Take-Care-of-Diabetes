@@ -24,6 +24,7 @@ class HomeViewModel: BaseViewModel {
     @Published var upcomingReminders: [Reminder] = []
     @Published var smartSuggestion: String?
     @Published var lastSiteChange: SiteChange?
+    @Published var criticalAlert: AlertType?
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -219,6 +220,65 @@ class HomeViewModel: BaseViewModel {
             return readings.first?.value ?? 100.0
         } catch {
             return 100.0
+        }
+        
+        // Check for critical alerts
+        checkForCriticalAlerts()
+    }
+    
+    // MARK: - Critical Alert Management
+    func checkForCriticalAlerts() {
+        // Clear existing alert first
+        criticalAlert = nil
+        
+        // Check for low glucose
+        if let latest = latestGlucoseReading {
+            if latest.value < 70 {
+                criticalAlert = .lowGlucose(latest.value)
+                return
+            }
+            
+            if latest.value > 250 {
+                criticalAlert = .highGlucose(latest.value)
+                return
+            }
+        }
+        
+        // Check for device offline
+        if !isConnectedDevice {
+            criticalAlert = .deviceOffline
+            return
+        }
+        
+        // Check for site change overdue
+        if let lastChange = lastSiteChange,
+           let daysSince = Calendar.current.dateComponents([.day], from: lastChange.timestamp ?? Date(), to: Date()).day {
+            if daysSince >= 3 {
+                criticalAlert = .siteChangeOverdue(daysSince)
+            }
+        }
+    }
+    
+    func dismissCriticalAlert() {
+        criticalAlert = nil
+    }
+    
+    func handleCriticalAlertAction() {
+        guard let alert = criticalAlert else { return }
+        
+        switch alert {
+        case .lowGlucose:
+            // Navigate to quick treatment
+            print("Handle low glucose treatment")
+        case .highGlucose:
+            // Navigate to ketone checking
+            print("Handle high glucose ketone check")
+        case .deviceOffline:
+            // Navigate to device troubleshooting
+            print("Handle device offline")
+        case .siteChangeOverdue:
+            // Navigate to site change
+            print("Handle site change")
         }
     }
 }
