@@ -23,7 +23,7 @@ struct SiteSnapshotView: View {
                     // Body Map
                     BodyMapView(
                         selectedLocation: siteChange.location ?? "Abdomen Center",
-                        onTap: { onChangeSite() }
+                        onTap: onChangeSite
                     )
                     .frame(width: 80, height: 120)
                     
@@ -102,56 +102,6 @@ struct SiteSnapshotView: View {
         } else {
             return "Just now"
         }
-    }
-}
-
-struct BodyMapView: View {
-    let selectedLocation: String
-    let onTap: () -> Void
-    
-    private let bodySites: [String: CGPoint] = [
-        "Abdomen": CGPoint(x: 0.5, y: 0.4),
-        "Thigh": CGPoint(x: 0.5, y: 0.7),
-        "Arm": CGPoint(x: 0.8, y: 0.5),
-        "Buttock": CGPoint(x: 0.3, y: 0.6)
-    ]
-    
-    var body: some View {
-        Button(action: onTap) {
-            ZStack {
-                // Simple body outline
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemGray5))
-                    .frame(width: 60, height: 100)
-                
-                // Body parts
-                VStack(spacing: 4) {
-                    Circle()
-                        .fill(Color(.systemGray4))
-                        .frame(width: 20, height: 20)
-                    
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(.systemGray4))
-                        .frame(width: 40, height: 60)
-                }
-                
-                // Site marker
-                if let position = bodySites[selectedLocation] {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
-                        .position(
-                            x: 60 * position.x,
-                            y: 100 * position.y
-                        )
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white, lineWidth: 1)
-                        )
-                }
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
     }
 }
 

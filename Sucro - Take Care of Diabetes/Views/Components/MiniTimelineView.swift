@@ -28,7 +28,6 @@ struct MiniTimelineView: View {
         }
     }
     
-    // Break out header into computed property
     private var headerView: some View {
         HStack {
             Text("Glucose Timeline")
@@ -45,7 +44,6 @@ struct MiniTimelineView: View {
         }
     }
     
-    // Break out chart into computed property
     private var chartContainer: some View {
         GeometryReader { geometry in
             ScrollView(.horizontal, showsIndicators: false) {
@@ -67,7 +65,6 @@ struct MiniTimelineView: View {
         )
     }
     
-    // Break out chart content
     private func chartContent(geometry: GeometryProxy) -> some View {
         let chartWidth = max(geometry.size.width * 2, 400)
         let chartHeight: CGFloat = 120
@@ -78,7 +75,6 @@ struct MiniTimelineView: View {
         }
     }
     
-    // Separate glucose chart
     private func glucoseChart(width: CGFloat, height: CGFloat) -> some View {
         Chart(glucoseReadings.prefix(24)) { reading in
             LineMark(
@@ -111,7 +107,6 @@ struct MiniTimelineView: View {
         .frame(width: width, height: height)
     }
     
-    // Separate event overlays
     private func eventOverlays(chartWidth: CGFloat, chartHeight: CGFloat) -> some View {
         ForEach(events) { event in
             EventMarker(
@@ -123,6 +118,7 @@ struct MiniTimelineView: View {
         }
     }
 }
+
 struct EventMarker: View {
     let event: TimelineEvent
     let chartWidth: CGFloat
@@ -150,18 +146,14 @@ struct EventMarker: View {
     }
     
     private var xPosition: CGFloat {
-        // Calculate position based on event time relative to chart range
-        // This is a simplified calculation - you'd need to implement proper time scaling
-        return chartWidth * 0.5 // Placeholder
+        return chartWidth * 0.5
     }
     
     private var yPosition: CGFloat {
-        // Calculate position based on glucose value
         let normalizedValue = (event.glucoseValue - 40) / (300 - 40)
         return CGFloat(normalizedValue) * chartHeight
     }
 }
-
 
 struct EventDetailView: View {
     let event: TimelineEvent
@@ -170,7 +162,6 @@ struct EventDetailView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
-                // Event Header
                 HStack {
                     Image(systemName: event.icon)
                         .font(.title2)
@@ -188,13 +179,11 @@ struct EventDetailView: View {
                     Spacer()
                 }
                 
-                // Event Details
                 if let subtitle = event.subtitle {
                     Text(subtitle)
                         .font(.body)
                 }
                 
-                // Glucose Context
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Glucose at time")
                         .font(.caption)
@@ -228,10 +217,20 @@ private let dateTimeFormatter: DateFormatter = {
     return formatter
 }()
 
+// Helper function for preview
+func sampleGlucoseReading(value: Double, offset: Int, context: NSManagedObjectContext) -> GlucoseReading {
+    let reading = GlucoseReading(context: context)
+    reading.value = value
+    reading.unit = "mg/dL"
+    reading.timestamp = Date().addingTimeInterval(TimeInterval(offset * 3600))
+    reading.trend = "stable"
+    return reading
+}
+
 #Preview {
     let context = PersistenceController.preview.container.viewContext
     
-    return MiniTimelineView(
+    MiniTimelineView(
         glucoseReadings: [
             sampleGlucoseReading(value: 95, offset: -6, context: context),
             sampleGlucoseReading(value: 120, offset: -5, context: context),
@@ -249,13 +248,4 @@ private let dateTimeFormatter: DateFormatter = {
         onExpand: {},
         onEventTap: { _ in }
     )
-}
-
-func sampleGlucoseReading(value: Double, offset: Int, context: NSManagedObjectContext) -> GlucoseReading {
-    let reading = GlucoseReading(context: context)  // FIXED: Added context
-    reading.value = value
-    reading.unit = "mg/dL"
-    reading.timestamp = Date().addingTimeInterval(TimeInterval(offset * 3600))
-    reading.trend = "stable"
-    return reading
 }

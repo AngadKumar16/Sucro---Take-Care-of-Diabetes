@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import CoreData 
+import CoreData
 
 @objc(SiteChange)
 public class SiteChange: NSManagedObject {
@@ -33,10 +33,12 @@ extension SiteChange {
 }
 
 extension SiteChange: Identifiable {
-    override public func awakeFromInsert() {
+    nonisolated override public func awakeFromInsert() {
         super.awakeFromInsert()
-        self.id = UUID()
-        self.timestamp = Date()
-        self.location = SiteLocation.abdomenCenter.rawValue
+        MainActor.assumeIsolated {
+            self.id = UUID()
+            self.timestamp = Date()
+            self.location = SiteLocation.abdomenCenter.rawValue
+        }
     }
 }

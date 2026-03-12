@@ -26,7 +26,6 @@ struct GlucoseHeroView: View {
             Button(action: onTap) {
                 VStack(spacing: 12) {
                     // Large glucose reading with trend
-                    // Large glucose reading with trend
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         if let reading = glucoseReading {
                             Text("\(Int(reading.value))")
@@ -50,6 +49,7 @@ struct GlucoseHeroView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+                    
                     // Timestamp
                     if let reading = glucoseReading, let timestamp = reading.timestamp {
                         Text("Now • \(timestamp, formatter: timeFormatter)")
@@ -150,36 +150,6 @@ struct GlucoseHeroView: View {
     }
 }
 
-struct CriticalAlertBanner: View {
-    let glucoseValue: Double
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.white)
-                
-                Text(glucoseValue < 70 ? "Low Glucose • \(Int(glucoseValue)) mg/dL" : "High Glucose • \(Int(glucoseValue)) mg/dL")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("Take Action")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.8))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(glucoseValue < 70 ? Color.red : Color.orange)
-            .cornerRadius(12)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
 // Formatters
 private let timeFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -194,7 +164,14 @@ private let relativeTimeFormatter: RelativeDateTimeFormatter = {
 }()
 
 #Preview {
-    VStack(spacing: 20) {
+    let context = PersistenceController.preview.container.viewContext
+    let sampleReading = GlucoseReading(context: context)
+    sampleReading.value = 104
+    sampleReading.unit = "mg/dL"
+    sampleReading.timestamp = Date()
+    sampleReading.trend = "up"
+    
+    return VStack(spacing: 20) {
         GlucoseHeroView(
             glucoseReading: nil,
             insulinOnBoard: 2.5,
@@ -204,14 +181,7 @@ private let relativeTimeFormatter: RelativeDateTimeFormatter = {
         )
         
         GlucoseHeroView(
-            glucoseReading: {
-                let reading = GlucoseReading()
-                reading.value = 104
-                reading.unit = "mg/dL"
-                reading.timestamp = Date()
-                reading.trend = "up"
-                return reading
-            }(),
+            glucoseReading: sampleReading,
             insulinOnBoard: 2.5,
             batteryLevel: 0.8,
             lastSyncTime: Date().addingTimeInterval(-300),

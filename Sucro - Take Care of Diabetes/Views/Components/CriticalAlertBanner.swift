@@ -100,8 +100,8 @@ struct CriticalAlertBanner: View {
                 
                 Button(action: onAction) {
                     HStack {
-                        Image(systemName: actionIcon)
-                        Text(actionText)
+                        Image(systemName: actionIcon(for: alert))
+                        Text(actionText(for: alert))
                     }
                     .font(.subheadline)
                     .fontWeight(.semibold)
@@ -123,7 +123,7 @@ struct CriticalAlertBanner: View {
         }
     }
     
-    private var actionIcon: String {
+    private func actionIcon(for alert: AlertType) -> String {
         switch alert {
         case .lowGlucose:
             return "cross.fill"
@@ -136,7 +136,7 @@ struct CriticalAlertBanner: View {
         }
     }
     
-    private var actionText: String {
+    private func actionText(for alert: AlertType) -> String {
         switch alert {
         case .lowGlucose:
             return "Treat Now"
@@ -147,6 +147,16 @@ struct CriticalAlertBanner: View {
         case .siteChangeOverdue:
             return "Change Site"
         }
+    }
+}
+
+extension CriticalAlertBanner {
+    init(glucoseValue: Double, onTap: @escaping () -> Void) {
+        self.init(
+            alert: glucoseValue < 70 ? .lowGlucose(glucoseValue) : .highGlucose(glucoseValue),
+            onDismiss: {},
+            onAction: onTap
+        )
     }
 }
 
@@ -169,6 +179,9 @@ struct CriticalAlertBanner: View {
             onDismiss: {},
             onAction: {}
         )
+        
+        // Test convenience initializer
+        CriticalAlertBanner(glucoseValue: 65) {}
     }
     .padding()
 }

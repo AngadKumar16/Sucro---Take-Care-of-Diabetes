@@ -15,6 +15,7 @@ public class InsulinEntry: NSManagedObject {
     @NSManaged public var units: Double
     @NSManaged public var type: String?
     @NSManaged public var notes: String?
+    @NSManaged public var deliveryMethod: String?  // NEW
 }
 
 extension InsulinEntry {

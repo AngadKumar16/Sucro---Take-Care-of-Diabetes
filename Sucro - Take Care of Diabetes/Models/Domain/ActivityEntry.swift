@@ -5,6 +5,14 @@
 //  Created by Angad Kumar on 3/12/26.
 //
 
+
+//
+//  ActivityEntry.swift
+//  Sucro - Take Care of Diabetes
+//
+//  Created by Angad Kumar on 3/12/26.
+//
+
 import Foundation
 import CoreData
 

@@ -17,7 +17,7 @@ class InsightsViewModel: BaseViewModel {
     @Published var insulinStats = InsulinStatistics()
     @Published var carbStats = CarbStatistics()
     @Published var correlations: [DataCorrelation] = []
-    @Published var trends: [GlucoseTrend] = []
+    @Published var trends: [DailyGlucoseTrend] = []
     
     enum TimeRange: String, CaseIterable {
         case day = "1 Day"
@@ -176,8 +176,8 @@ class InsightsViewModel: BaseViewModel {
         return correlations.sorted { $0.effect > $1.effect }.prefix(5).map { $0 }
     }
     
-    private func calculateTrends(readings: [GlucoseReading]) -> [GlucoseTrend] {
-        var trends: [GlucoseTrend] = []
+    private func calculateTrends(readings: [GlucoseReading]) -> [DailyGlucoseTrend] {
+        var trends: [DailyGlucoseTrend] = []
         
         // Group readings by day
         let groupedReadings = Dictionary(grouping: readings) { reading in
@@ -189,7 +189,7 @@ class InsightsViewModel: BaseViewModel {
                 let average = dayReadings.reduce(0) { $0 + $1.value } / Double(dayReadings.count)
                 let trend = GlucoseCalculator.calculateTrend(readings: Array(dayReadings))
                 
-                trends.append(GlucoseTrend(
+                trends.append(DailyGlucoseTrend(
                     date: Calendar.current.date(from: dateComponents) ?? Date(),
                     average: average,
                     trend: trend,
@@ -211,7 +211,7 @@ struct GlucoseStatistics {
     let timeBelowRange: (percentage: Double, hours: Double)
     let timeAboveRange: (percentage: Double, hours: Double)
     
-    init(average: Double = 0, standardDeviation: Double = 0, cv: Double = 0, 
+    init(average: Double = 0, standardDeviation: Double = 0, cv: Double = 0,
          timeInRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0),
          timeBelowRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0),
          timeAboveRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0)) {
@@ -257,7 +257,7 @@ struct DataCorrelation {
     let description: String
 }
 
-struct GlucoseTrend {
+struct DailyGlucoseTrend {
     let date: Date
     let average: Double
     let trend: GlucoseTrend

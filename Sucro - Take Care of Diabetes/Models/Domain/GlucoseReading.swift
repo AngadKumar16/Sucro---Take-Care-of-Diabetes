@@ -16,6 +16,8 @@ public class GlucoseReading: NSManagedObject {
     @NSManaged public var unit: String?
     @NSManaged public var trend: String?
     @NSManaged public var source: String?
+    @NSManaged public var context: String?    // NEW
+    @NSManaged public var notes: String?     // NEW
 }
 
 extension GlucoseReading {
