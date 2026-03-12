@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 import Charts
 
 struct MiniTimelineView: View {
@@ -18,90 +19,110 @@ struct MiniTimelineView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Text("Glucose Timeline")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Button("Expand") {
-                    onExpand()
-                }
-                .font(.caption)
-                .foregroundColor(.blue)
-            }
-            
-            // Chart Container
-            GeometryReader { geometry in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    ZStack {
-                        // Glucose Line Chart
-                        Chart(glucoseReadings.prefix(24)) { reading in
-                            LineMark(
-                                x: .value("Time", reading.timestamp ?? Date()),
-                                y: .value("Glucose", reading.value)
-                            )
-                            .foregroundStyle(.blue)
-                            .lineStyle(StrokeStyle(lineWidth: 3))
-                            
-                            PointMark(
-                                x: .value("Time", reading.timestamp ?? Date()),
-                                y: .value("Glucose", reading.value)
-                            )
-                            .foregroundStyle(.blue)
-                            .symbolSize(30)
-                        }
-                        .chartXAxis {
-                            AxisMarks(values: .stride(by: .hour, count: 2)) { value in
-                                AxisGridLine()
-                                AxisValueLabel(format: .dateTime.hour(.defaultDigits(amortization: .zero)))
-                            }
-                        }
-                        .chartYAxis {
-                            AxisMarks(position: .leading) { value in
-                                AxisGridLine()
-                                AxisValueLabel("\(Int(value.as(Double.self) ?? 0))")
-                            }
-                        }
-                        .chartYScale(domain: 40...300)
-                        .frame(width: max(geometry.size.width * 2, 400), height: 120)
-                        
-                        // Event Overlays
-                        ForEach(events) { event in
-                            EventMarker(
-                                event: event,
-                                chartWidth: max(geometry.size.width * 2, 400),
-                                chartHeight: 120,
-                                onTap: { selectedEvent = event }
-                            )
-                        }
-                    }
-                }
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onEnded { value in
-                            if value.translation.x < -50 {
-                                // Swipe left to expand
-                                onExpand()
-                            }
-                        }
-                )
-            }
-            .frame(height: 120)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-            )
+            headerView
+            chartContainer
         }
         .padding(.horizontal, 16)
         .sheet(item: $selectedEvent) { event in
             EventDetailView(event: event)
         }
     }
+    
+    // Break out header into computed property
+    private var headerView: some View {
+        HStack {
+            Text("Glucose Timeline")
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Button("Expand") {
+                onExpand()
+            }
+            .font(.caption)
+            .foregroundColor(.blue)
+        }
+    }
+    
+    // Break out chart into computed property
+    private var chartContainer: some View {
+        GeometryReader { geometry in
+            ScrollView(.horizontal, showsIndicators: false) {
+                chartContent(geometry: geometry)
+            }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onEnded { value in
+                        if value.translation.width < -50 {
+                            onExpand()
+                        }
+                    }
+            )
+        }
+        .frame(height: 120)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+        )
+    }
+    
+    // Break out chart content
+    private func chartContent(geometry: GeometryProxy) -> some View {
+        let chartWidth = max(geometry.size.width * 2, 400)
+        let chartHeight: CGFloat = 120
+        
+        return ZStack {
+            glucoseChart(width: chartWidth, height: chartHeight)
+            eventOverlays(chartWidth: chartWidth, chartHeight: chartHeight)
+        }
+    }
+    
+    // Separate glucose chart
+    private func glucoseChart(width: CGFloat, height: CGFloat) -> some View {
+        Chart(glucoseReadings.prefix(24)) { reading in
+            LineMark(
+                x: .value("Time", reading.timestamp ?? Date()),
+                y: .value("Glucose", reading.value)
+            )
+            .foregroundStyle(.blue)
+            .lineStyle(StrokeStyle(lineWidth: 3))
+            
+            PointMark(
+                x: .value("Time", reading.timestamp ?? Date()),
+                y: .value("Glucose", reading.value)
+            )
+            .foregroundStyle(.blue)
+            .symbolSize(30)
+        }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour, count: 2)) { value in
+                AxisGridLine()
+                AxisValueLabel(format: .dateTime.hour())
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisValueLabel("\(Int(value.as(Double.self) ?? 0))")
+            }
+        }
+        .chartYScale(domain: 40...300)
+        .frame(width: width, height: height)
+    }
+    
+    // Separate event overlays
+    private func eventOverlays(chartWidth: CGFloat, chartHeight: CGFloat) -> some View {
+        ForEach(events) { event in
+            EventMarker(
+                event: event,
+                chartWidth: chartWidth,
+                chartHeight: chartHeight,
+                onTap: { selectedEvent = event }
+            )
+        }
+    }
 }
-
 struct EventMarker: View {
     let event: TimelineEvent
     let chartWidth: CGFloat
@@ -208,15 +229,17 @@ private let dateTimeFormatter: DateFormatter = {
 }()
 
 #Preview {
-    MiniTimelineView(
+    let context = PersistenceController.preview.container.viewContext
+    
+    return MiniTimelineView(
         glucoseReadings: [
-            sampleGlucoseReading(value: 95, offset: -6),
-            sampleGlucoseReading(value: 120, offset: -5),
-            sampleGlucoseReading(value: 140, offset: -4),
-            sampleGlucoseReading(value: 110, offset: -3),
-            sampleGlucoseReading(value: 105, offset: -2),
-            sampleGlucoseReading(value: 98, offset: -1),
-            sampleGlucoseReading(value: 104, offset: 0)
+            sampleGlucoseReading(value: 95, offset: -6, context: context),
+            sampleGlucoseReading(value: 120, offset: -5, context: context),
+            sampleGlucoseReading(value: 140, offset: -4, context: context),
+            sampleGlucoseReading(value: 110, offset: -3, context: context),
+            sampleGlucoseReading(value: 105, offset: -2, context: context),
+            sampleGlucoseReading(value: 98, offset: -1, context: context),
+            sampleGlucoseReading(value: 104, offset: 0, context: context)
         ],
         events: [
             TimelineEvent(type: .meal, timestamp: Date().addingTimeInterval(-4 * 3600), glucoseValue: 140, title: "Lunch", subtitle: "Sandwich and apple"),
@@ -228,8 +251,8 @@ private let dateTimeFormatter: DateFormatter = {
     )
 }
 
-func sampleGlucoseReading(value: Double, offset: Int) -> GlucoseReading {
-    let reading = GlucoseReading()
+func sampleGlucoseReading(value: Double, offset: Int, context: NSManagedObjectContext) -> GlucoseReading {
+    let reading = GlucoseReading(context: context)  // FIXED: Added context
     reading.value = value
     reading.unit = "mg/dL"
     reading.timestamp = Date().addingTimeInterval(TimeInterval(offset * 3600))

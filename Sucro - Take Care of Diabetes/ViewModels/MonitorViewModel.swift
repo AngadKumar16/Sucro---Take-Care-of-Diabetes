@@ -51,7 +51,7 @@ class MonitorViewModel: BaseViewModel {
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(context: NSManagedObjectContext) {
+    override init(context: NSManagedObjectContext) {
         super.init(context: context)
         fetchDataForTimeRange()
     }
@@ -61,7 +61,7 @@ class MonitorViewModel: BaseViewModel {
         fetchDataForTimeRange()
     }
     
-    private func fetchDataForTimeRange() {
+    func fetchDataForTimeRange() {
         let calendar = Calendar.current
         let endDate = Date()
         let startDate = calendar.date(byAdding: timeRange.calendarComponent, value: -timeRange.value, to: endDate)!

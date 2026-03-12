@@ -18,15 +18,29 @@ struct HomeView_Preview: View {
 }
 
 class MockHomeViewModel: HomeViewModel {
-    override init(context: NSManagedObjectContext) {
-        // Create mock context for preview
-        super.init(context: NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType))
+    private let previewContext: NSManagedObjectContext
+    
+    init() {
+        // Create in-memory persistent container for previews
+        let container = NSPersistentContainer(name: "SucroDataModel") // Use your model name
+        let description = NSPersistentStoreDescription()
+        description.type = NSInMemoryStoreType
+        container.persistentStoreDescriptions = [description]
+        
+        container.loadPersistentStores { description, error in
+            if let error = error {
+                fatalError("Failed to load: \(error)")
+            }
+        }
+        
+        self.previewContext = container.viewContext
+        super.init(context: self.previewContext)
         setupMockData()
     }
     
     private func setupMockData() {
         // Mock glucose reading
-        let mockGlucose = GlucoseReading()
+        let mockGlucose = GlucoseReading(context: previewContext)
         mockGlucose.value = 104
         mockGlucose.unit = "mg/dL"
         mockGlucose.timestamp = Date()
@@ -66,14 +80,14 @@ class MockHomeViewModel: HomeViewModel {
         smartSuggestion = "Consider changing the site - 2 days since last change"
         
         // Mock site change
-        let mockSiteChange = SiteChange()
+        let mockSiteChange = SiteChange(context: previewContext)
         mockSiteChange.location = "Abdomen"
         mockSiteChange.timestamp = Date().addingTimeInterval(-86400) // 1 day ago
         lastSiteChange = mockSiteChange
     }
     
     private func createMockGlucose(value: Double, offset: Int) -> GlucoseReading {
-        let reading = GlucoseReading()
+        let reading = GlucoseReading(context: previewContext)
         reading.value = value
         reading.unit = "mg/dL"
         reading.timestamp = Date().addingTimeInterval(TimeInterval(offset * 3600))

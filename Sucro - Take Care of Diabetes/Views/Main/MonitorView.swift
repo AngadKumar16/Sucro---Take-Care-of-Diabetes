@@ -54,7 +54,7 @@ struct MonitorView: View {
                             .chartXAxis {
                                 AxisMarks(values: .automatic) { value in
                                     AxisGridLine()
-                                    AxisValueLabel(format: .dateTime.hour(.defaultAmPM(.short)))
+                                    AxisValueLabel(format: .dateTime.hour())
                                 }
                             }
                             .chartYAxis {

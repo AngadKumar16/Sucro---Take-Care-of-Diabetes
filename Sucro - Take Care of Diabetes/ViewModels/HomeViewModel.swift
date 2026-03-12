@@ -162,7 +162,7 @@ class HomeViewModel: BaseViewModel {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: "Bolus",
-                    subtitle: "\(entry.units, specifier: "%.1f") units"
+                    subtitle: String(format: "%.1f units", entry.units)
                 ))
             }
         } catch {

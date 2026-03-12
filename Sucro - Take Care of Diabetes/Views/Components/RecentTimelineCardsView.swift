@@ -97,14 +97,14 @@ struct TimelineCard: View {
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    dragOffset = value.translation.x
+                    dragOffset = value.translation.width  // FIXED: .width not .x
                 }
                 .onEnded { value in
                     withAnimation(.spring()) {
-                        if value.translation.x < -50 {
+                        if value.translation.width < -50 {  // FIXED: .width not .x
                             // Swipe left - show delete option
                             dragOffset = -80
-                        } else if value.translation.x > 50 {
+                        } else if value.translation.width > 50 {  // FIXED: .width not .x
                             // Swipe right - add note
                             onAddNote()
                             dragOffset = 0

@@ -26,6 +26,7 @@ struct GlucoseHeroView: View {
             Button(action: onTap) {
                 VStack(spacing: 12) {
                     // Large glucose reading with trend
+                    // Large glucose reading with trend
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         if let reading = glucoseReading {
                             Text("\(Int(reading.value))")
@@ -38,16 +39,17 @@ struct GlucoseHeroView: View {
                                     .foregroundColor(glucoseColor(reading.value))
                             }
                             
-                            Text(reading.unit)
-                                .font(.title2)
-                                .foregroundColor(.secondary)
+                            if let unit = reading.unit {
+                                Text(unit)
+                                    .font(.title2)
+                                    .foregroundColor(.secondary)
+                            }
                         } else {
                             Text("--")
                                 .font(.system(size: 64, weight: .bold, design: .rounded))
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
                     // Timestamp
                     if let reading = glucoseReading, let timestamp = reading.timestamp {
                         Text("Now • \(timestamp, formatter: timeFormatter)")

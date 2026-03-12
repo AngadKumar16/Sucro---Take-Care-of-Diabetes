@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData  // ADD THIS LINE
 
 struct AppNavigationView: View {
     @State private var showingSecondary = false
