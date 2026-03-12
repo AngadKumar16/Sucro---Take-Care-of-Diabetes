@@ -53,9 +53,9 @@ class HomeViewModel: BaseViewModel {
         fetchReminders()
         generateSmartSuggestion()
         fetchLastSiteChange()
-        // Check for critical alerts
+        
+        // ✅ MOVED HERE: Check for critical alerts after all data is fetched
         checkForCriticalAlerts()
-
     }
     
     private func fetchRecentReadings() {
@@ -97,7 +97,6 @@ class HomeViewModel: BaseViewModel {
     }
     
     private func calculateIOB() {
-        // Simplified IOB calculation - in real app, use proper insulin decay curves
         let calendar = Calendar.current
         let now = Date()
         let fourHoursAgo = calendar.date(byAdding: .hour, value: -4, to: now)!
@@ -109,7 +108,7 @@ class HomeViewModel: BaseViewModel {
             let insulinEntries = try viewContext.fetch(insulinRequest)
             insulinOnBoard = insulinEntries.reduce(0) { total, entry in
                 let hoursAgo = now.timeIntervalSince(entry.timestamp ?? now) / 3600
-                let remaining = entry.units * max(0, 1 - (hoursAgo / 4)) // Linear decay over 4 hours
+                let remaining = entry.units * max(0, 1 - (hoursAgo / 4))
                 return total + remaining
             }
         } catch {
@@ -118,20 +117,17 @@ class HomeViewModel: BaseViewModel {
     }
     
     private func fetchDeviceStatus() {
-        // Mock device status - in real app, fetch from actual device
         batteryLevel = 0.85
-        lastSyncTime = Date().addingTimeInterval(-300) // 5 minutes ago
+        lastSyncTime = Date().addingTimeInterval(-300)
         isConnectedDevice = true
     }
     
     private func fetchTimelineEvents() {
-        // Create timeline events from recent data
         let calendar = Calendar.current
         let twelveHoursAgo = calendar.date(byAdding: .hour, value: -12, to: Date())!
         
         var events: [TimelineEvent] = []
         
-        // Add meal events
         let carbRequest: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
         carbRequest.predicate = NSPredicate(format: "timestamp >= %@", twelveHoursAgo as NSDate)
         carbRequest.sortDescriptors = [NSSortDescriptor(keyPath: \CarbEntry.timestamp, ascending: false)]
@@ -152,7 +148,6 @@ class HomeViewModel: BaseViewModel {
             print("Error fetching meals for timeline: \(error)")
         }
         
-        // Add bolus events
         let insulinRequest: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
         insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", twelveHoursAgo as NSDate, "bolus")
         insulinRequest.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
@@ -177,7 +172,6 @@ class HomeViewModel: BaseViewModel {
     }
     
     private func fetchReminders() {
-        // Mock reminders - in real app, fetch from user settings
         upcomingReminders = [
             Reminder(title: "Change infusion site", time: Date().addingTimeInterval(3600), type: .siteChange),
             Reminder(title: "Check CGM sensor", time: Date().addingTimeInterval(7200), type: .deviceCheck)
@@ -187,7 +181,6 @@ class HomeViewModel: BaseViewModel {
     private func generateSmartSuggestion() {
         guard let latest = latestGlucoseReading else { return }
         
-        // Simple pattern detection
         if latest.value > 180 && latest.trend == "up" {
             smartSuggestion = "Consider checking for ketones - glucose trending up"
         } else if let lastChange = lastSiteChange {
@@ -212,7 +205,6 @@ class HomeViewModel: BaseViewModel {
     }
     
     private func getGlucoseAtTime(_ time: Date) -> Double {
-        // Find closest glucose reading to given time
         let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
         request.predicate = NSPredicate(format: "timestamp <= %@", time as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: false)]
@@ -224,15 +216,12 @@ class HomeViewModel: BaseViewModel {
         } catch {
             return 100.0
         }
-        
     }
     
     // MARK: - Critical Alert Management
     func checkForCriticalAlerts() {
-        // Clear existing alert first
         criticalAlert = nil
         
-        // Check for low glucose
         if let latest = latestGlucoseReading {
             if latest.value < 70 {
                 criticalAlert = .lowGlucose(latest.value)
@@ -245,13 +234,11 @@ class HomeViewModel: BaseViewModel {
             }
         }
         
-        // Check for device offline
         if !isConnectedDevice {
             criticalAlert = .deviceOffline
             return
         }
         
-        // Check for site change overdue
         if let lastChange = lastSiteChange,
            let daysSince = Calendar.current.dateComponents([.day], from: lastChange.timestamp ?? Date(), to: Date()).day {
             if daysSince >= 3 {
@@ -269,16 +256,12 @@ class HomeViewModel: BaseViewModel {
         
         switch alert {
         case .lowGlucose:
-            // Navigate to quick treatment
             print("Handle low glucose treatment")
         case .highGlucose:
-            // Navigate to ketone checking
             print("Handle high glucose ketone check")
         case .deviceOffline:
-            // Navigate to device troubleshooting
             print("Handle device offline")
         case .siteChangeOverdue:
-            // Navigate to site change
             print("Handle site change")
         }
     }
