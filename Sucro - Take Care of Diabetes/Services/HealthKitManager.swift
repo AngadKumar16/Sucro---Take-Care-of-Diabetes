@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine  // ADD THIS
 import HealthKit
 
 class HealthKitManager: ObservableObject {
@@ -16,17 +17,24 @@ class HealthKitManager: ObservableObject {
     
     // MARK: - Authorization
     func requestAuthorization() {
+        guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose),
+              let insulinType = HKObjectType.quantityType(forIdentifier: .insulinDelivery),
+              let carbType = HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates) else {
+            print("Failed to get HealthKit quantity types")
+            return
+        }
+        
         let typesToRead: Set<HKSampleType> = [
-            HKObjectType.quantityType(forIdentifier: .bloodGlucose),
-            HKObjectType.quantityType(forIdentifier: .insulinDelivery),
-            HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates),
+            glucoseType,
+            insulinType,
+            carbType,
             HKObjectType.workoutType()
         ]
         
         let typesToWrite: Set<HKSampleType> = [
-            HKObjectType.quantityType(forIdentifier: .bloodGlucose),
-            HKObjectType.quantityType(forIdentifier: .insulinDelivery),
-            HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates)
+            glucoseType,
+            insulinType,
+            carbType
         ]
         
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
@@ -50,9 +58,15 @@ class HealthKitManager: ObservableObject {
     func saveGlucoseReading(_ value: Double, unit: String, timestamp: Date) {
         guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose) else { return }
         
-        let unitString = unit == "mmol/L" ? HKUnit.moleUnit(with: .milli, with: .liter).unitDivided(by: HKUnit.moleUnit(with: .milli, with: .liter)) : HKUnit.gramUnit(with: .deci)
-        let quantity = HKQuantity(unit: unitString, doubleValue: value)
+        // FIX: Proper unit handling for mg/dL vs mmol/L
+        let hkUnit: HKUnit
+        if unit == "mmol/L" {
+            hkUnit = HKUnit.moleUnit(with: .milli, molarMass: HKUnitMolarMassBloodGlucose).unitDivided(by: HKUnit.liter())
+        } else {
+            hkUnit = HKUnit.gramUnit(with: .milli).unitDivided(by: HKUnit.literUnit(with: .deci))
+        }
         
+        let quantity = HKQuantity(unit: hkUnit, doubleValue: value)
         let sample = HKQuantitySample(type: glucoseType, quantity: quantity, start: timestamp, end: timestamp)
         
         healthStore.save(sample) { success, error in
@@ -90,11 +104,16 @@ class HealthKitManager: ObservableObject {
         guard let insulinType = HKObjectType.quantityType(forIdentifier: .insulinDelivery) else { return }
         
         let quantity = HKQuantity(unit: HKUnit.internationalUnit(), doubleValue: units)
-        let sample = HKQuantitySample(type: insulinType, quantity: quantity, start: timestamp, end: timestamp)
         
-        // Add metadata for insulin type
-        var metadata = [String: Any]()
-        metadata[HKMetadataKeyInsulinDeliveryReason] = HKInsulinDeliveryReason.basal.rawValue
+        // FIX: Proper metadata for insulin delivery reason
+        var metadata: [String: Any] = [:]
+        if type.lowercased() == "basal" {
+            metadata[HKMetadataKeyInsulinDeliveryReason] = HKInsulinDeliveryReason.basal.rawValue
+        } else {
+            metadata[HKMetadataKeyInsulinDeliveryReason] = HKInsulinDeliveryReason.bolus.rawValue
+        }
+        
+        let sample = HKQuantitySample(type: insulinType, quantity: quantity, start: timestamp, end: timestamp, metadata: metadata)
         
         healthStore.save(sample) { success, error in
             if success {
@@ -123,11 +142,7 @@ class HealthKitManager: ObservableObject {
     
     // MARK: - Workout
     func saveWorkout(_ activityType: String, duration: TimeInterval, caloriesBurned: Double, timestamp: Date) {
-        guard let workoutType = HKObjectType.workoutType() else { return }
-        
-        let workoutConfiguration = HKWorkoutConfiguration()
-        workoutConfiguration.activityType = .other
-        
+        // FIX: HKWorkoutType is not optional, remove guard let
         let workout = HKWorkout(
             activityType: .other,
             start: timestamp,

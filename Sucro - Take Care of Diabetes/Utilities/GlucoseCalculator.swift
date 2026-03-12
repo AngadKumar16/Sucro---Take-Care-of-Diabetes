@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Combine
+
+// Import your app's module to access GlucoseTrend enum
+// If your app target is named "Sucro", use: import Sucro
 
 class GlucoseCalculator {
     
@@ -36,7 +40,6 @@ class GlucoseCalculator {
         
         let percentage = (Double(inRangeCount) / Double(readings.count)) * 100
         
-        // Calculate hours based on time span
         let timeSpan = calculateTimeSpan(readings: readings)
         let hoursInRange = timeSpan * (percentage / 100)
         
@@ -93,6 +96,7 @@ class GlucoseCalculator {
     }
     
     // MARK: - Glucose Trend
+    // Use GlucoseTrend directly - it's in the same module (Data/Models/Enums/)
     static func calculateTrend(readings: [GlucoseReading]) -> GlucoseTrend {
         guard readings.count >= 2 else { return .stable }
         
@@ -121,34 +125,14 @@ class GlucoseCalculator {
         guard let firstTimestamp = readings.first?.timestamp,
               let lastTimestamp = readings.last?.timestamp else { return 0 }
         
-        return lastTimestamp.timeIntervalSince(firstTimestamp) / 3600 // Convert to hours
+        return lastTimestamp.timeIntervalSince(firstTimestamp) / 3600
     }
 }
 
-enum GlucoseTrend: String, CaseIterable {
-    case rising = "rising"
-    case falling = "falling"
-    case stable = "stable"
-    
-    var icon: String {
-        switch self {
-        case .rising:
-            return "arrow.up.right"
-        case .falling:
-            return "arrow.down.right"
-        case .stable:
-            return "arrow.right"
-        }
-    }
-    
-    var color: String {
-        switch self {
-        case .rising:
-            return "red"
-        case .falling:
-            return "orange"
-        case .stable:
-            return "green"
-        }
-    }
-}
+// REMOVE THIS ENTIRE ENUM - it's duplicated in Data/Models/Enums/GlucoseTrend.swift
+// enum GlucoseTrend: String, CaseIterable {
+//     case rising = "rising"
+//     case falling = "falling"
+//     case stable = "stable"
+//     ...
+// }

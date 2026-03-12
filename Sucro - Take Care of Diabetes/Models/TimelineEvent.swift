@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Combine  // ADD THIS
 
 struct TimelineEvent: Identifiable {
     let id = UUID()
@@ -50,15 +51,6 @@ enum EventType {
     case activity
 }
 
-struct Reminder: Identifiable {
-    let id = UUID()
-    let title: String
-    let time: Date
-    let type: ReminderType
-}
-
-enum ReminderType {
-    case siteChange
-    case deviceCheck
-    case medication
-}
+// REMOVE THESE - They are already defined in Data/Models/Domain/Reminder.swift and Data/Models/Enums/ReminderType.swift
+// struct Reminder: Identifiable { ... }
+// enum ReminderType { ... }

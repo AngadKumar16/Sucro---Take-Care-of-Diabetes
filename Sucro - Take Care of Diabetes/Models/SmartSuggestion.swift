@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine  // ADD THIS
 
 enum SuggestionType: String, CaseIterable, Codable {
     case glucoseHigh = "High Glucose"
@@ -79,7 +80,7 @@ struct SmartSuggestion: Identifiable, Codable {
     
     static func lowGlucose(value: Double) -> SmartSuggestion {
         return SmartSuggestion(
-            title: "Low Glucose Alert", 
+            title: "Low Glucose Alert",
             subtitle: "Current reading is \(Int(value)) mg/dL - treat immediately",
             type: .glucoseLow,
             actionText: "Treat Now"
