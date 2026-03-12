@@ -12,61 +12,70 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(key: "timestamp", ascending: true)],
         animation: .default)
-    private var items: FetchedResults<Item>
+    private var readings: FetchedResults<GlucoseReading>
 
     var body: some View {
         NavigationView {
             List {
-                ForEach(items) { item in
+                ForEach(readings) { reading in
                     NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
+                        Text("Glucose: \(reading.value) \(reading.unit ?? "mg/dL")")
                     } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
+                        HStack {
+                            Text("\(reading.value, specifier: "%.0f")")
+                                .foregroundColor(reading.value > 180 ? .red : reading.value < 70 ? .orange : .green)
+                            Text(reading.unit ?? "mg/dL")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            if let timestamp = reading.timestamp {
+                                Text(timestamp, formatter: itemFormatter)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete(perform: deleteReadings)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }
                 ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    Button(action: addReading) {
+                        Label("Add Reading", systemImage: "plus")
                     }
                 }
             }
-            Text("Select an item")
+            Text("Select a reading")
         }
     }
 
-    private func addItem() {
+    private func addReading() {
         withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+            let newReading = GlucoseReading(context: viewContext)
+            newReading.id = UUID()
+            newReading.timestamp = Date()
+            newReading.value = 100.0
+            newReading.unit = "mg/dL"
 
             do {
                 try viewContext.save()
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
                 let nsError = error as NSError
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
         }
     }
 
-    private func deleteItems(offsets: IndexSet) {
+    private func deleteReadings(offsets: IndexSet) {
         withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
+            offsets.map { readings[$0] }.forEach(viewContext.delete)
 
             do {
                 try viewContext.save()
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
                 let nsError = error as NSError
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }

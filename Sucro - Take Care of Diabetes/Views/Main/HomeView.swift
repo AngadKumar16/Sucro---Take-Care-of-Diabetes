@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 import Charts
 
 struct HomeView: View {

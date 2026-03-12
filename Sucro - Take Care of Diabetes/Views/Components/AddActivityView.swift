@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct AddActivityView: View {
     @EnvironmentObject var viewModel: LogViewModel

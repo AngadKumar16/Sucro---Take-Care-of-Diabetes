@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct MainTabView: View {
     @StateObject private var homeViewModel: HomeViewModel

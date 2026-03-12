@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct GlucoseHeroView: View {
     let glucoseReading: GlucoseReading?

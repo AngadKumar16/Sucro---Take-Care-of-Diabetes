@@ -14,15 +14,49 @@ struct PersistenceController {
     static let preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+        
+        // Create sample glucose readings for preview
+        for i in 0..<10 {
+            let reading = GlucoseReading(context: viewContext)
+            reading.id = UUID()
+            reading.timestamp = Date().addingTimeInterval(Double(-i * 3600)) // Hours ago
+            reading.value = Double.random(in: 70...180)
+            reading.unit = "mg/dL"
+            reading.context = i % 2 == 0 ? "pre_meal" : "post_meal"
+            reading.notes = "Sample reading \(i)"
         }
+        
+        // Add sample carb entry
+        let carbEntry = CarbEntry(context: viewContext)
+        carbEntry.id = UUID()
+        carbEntry.timestamp = Date()
+        carbEntry.grams = 45.0
+        carbEntry.mealType = "lunch"
+        carbEntry.foodItems = "Rice, Chicken, Vegetables"
+        carbEntry.notes = "Sample meal"
+        
+        // Add sample insulin entry
+        let insulinEntry = InsulinEntry(context: viewContext)
+        insulinEntry.id = UUID()
+        insulinEntry.timestamp = Date()
+        insulinEntry.units = 5.0
+        insulinEntry.type = "bolus"
+        insulinEntry.deliveryMethod = "pen"
+        insulinEntry.notes = "Sample dose"
+        
+        // Add sample activity entry
+        let activityEntry = ActivityEntry(context: viewContext)
+        activityEntry.id = UUID()
+        activityEntry.timestamp = Date()
+        activityEntry.type = "Walking"
+        activityEntry.duration = 30
+        activityEntry.intensity = "moderate"
+        activityEntry.caloriesBurned = 150.0
+        activityEntry.notes = "Sample activity"
+        
         do {
             try viewContext.save()
         } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
             let nsError = error as NSError
             fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
         }
@@ -38,17 +72,6 @@ struct PersistenceController {
         }
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
-                /*
-                 Typical reasons for an error here include:
-                 * The parent directory does not exist, cannot be created, or disallows writing.
-                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                 * The device is out of space.
-                 * The store could not be migrated to the current model version.
-                 Check the error message to determine what the actual problem was.
-                 */
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })

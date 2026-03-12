@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct AddCarbView: View {
     @EnvironmentObject var viewModel: LogViewModel

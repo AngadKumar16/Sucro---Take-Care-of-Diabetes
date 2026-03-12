@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct AddInsulinView: View {
     @EnvironmentObject var viewModel: LogViewModel

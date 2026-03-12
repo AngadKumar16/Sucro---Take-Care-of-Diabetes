@@ -23,7 +23,7 @@ class LogViewModel: BaseViewModel {
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(context: NSManagedObjectContext) {
+    override init(context: NSManagedObjectContext) {
         super.init(context: context)
         fetchEntriesForDate(selectedDate)
     }

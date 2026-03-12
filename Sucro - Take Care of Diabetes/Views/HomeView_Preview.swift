@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct HomeView_Preview: View {
     @StateObject private var mockViewModel = MockHomeViewModel()

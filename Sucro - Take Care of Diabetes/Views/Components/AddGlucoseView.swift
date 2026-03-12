@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct AddGlucoseView: View {
     @EnvironmentObject var viewModel: LogViewModel
