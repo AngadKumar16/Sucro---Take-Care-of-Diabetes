@@ -14,6 +14,9 @@ public class SiteChange: NSManagedObject {
     @NSManaged public var timestamp: Date?
     @NSManaged public var location: String?
     @NSManaged public var notes: String?
+    @NSManaged public var deviceType: String?
+    @NSManaged public var siteType: String?
+    @NSManaged public var photo: Data?
     
     // Convert string location to SiteLocation enum
     var siteLocation: SiteLocation {

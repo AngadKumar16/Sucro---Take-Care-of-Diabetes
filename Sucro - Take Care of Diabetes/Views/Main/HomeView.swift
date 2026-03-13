@@ -3,7 +3,7 @@
 //  Sucro - Take Care of Diabetes
 //
 //  Created by Angad Kumar on 3/11/26.
-// 
+//
 
 import SwiftUI
 import CoreData
@@ -45,24 +45,20 @@ struct HomeView: View {
                         events: viewModel.timelineEvents,
                         onExpand: { showingMonitor = true },
                         onEventTap: { event in
-                            // Handle event tap - could show detail modal
-                            print("Tapped event: \(event.title)")
+                            viewModel.showEventDetails(event)
                         }
                     )
                     
                     // Quick Action Buttons
                     QuickActionButtonsView(
                         onLogMeal: {
-                            // Navigate to meal logging
-                            print("Log meal tapped")
+                            viewModel.logMeal()
                         },
                         onQuickBolus: {
-                            // Show quick bolus dialog
-                            print("Quick bolus tapped")
+                            viewModel.quickBolus()
                         },
                         onChangeSite: {
-                            // Navigate to site change
-                            print("Change site tapped")
+                            viewModel.changeSite()
                         }
                     )
                     
@@ -70,16 +66,16 @@ struct HomeView: View {
                     RecentTimelineCardsView(
                         events: viewModel.timelineEvents,
                         onEventTap: { event in
-                            print("Timeline event tapped: \(event.title)")
+                            viewModel.showEventDetails(event)
                         },
                         onEventEdit: { event in
-                            print("Edit event: \(event.title)")
+                            viewModel.editEvent(event)
                         },
                         onEventDelete: { event in
-                            print("Delete event: \(event.title)")
+                            viewModel.deleteEvent(event)
                         },
                         onAddNote: { event in
-                            print("Add note to event: \(event.title)")
+                            viewModel.showAddNote(for: event)
                         }
                     )
                     
@@ -87,7 +83,7 @@ struct HomeView: View {
                     SiteSnapshotView(
                         lastSiteChange: viewModel.lastSiteChange,
                         onChangeSite: {
-                            print("Change site from snapshot")
+                            viewModel.changeSite()
                         }
                     )
                     
@@ -96,14 +92,14 @@ struct HomeView: View {
                         reminders: viewModel.upcomingReminders,
                         suggestion: viewModel.smartSuggestion,
                         onSnooze: { reminder in
-                            print("Snooze reminder: \(reminder.title)")
+                            viewModel.snoozeReminder(reminder)
                         },
                         onComplete: { reminder in
-                            print("Complete reminder: \(reminder.title)")
+                            viewModel.completeReminder(reminder)
                         }
                     )
                     
-                    // Today's Summary (keep existing for now)
+                    // Today's Summary
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Today's Summary")
                             .font(.headline)
@@ -148,12 +144,49 @@ struct HomeView: View {
             .refreshable {
                 viewModel.fetchLatestData()
             }
+            // MARK: - Sheets
+            .sheet(isPresented: $viewModel.showAddCarbSheet) {
+                AddCarbView()
+                    .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $viewModel.showQuickBolusSheet) {
+                QuickBolusView()
+                    .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $viewModel.showAddSiteChangeSheet) {
+                AddSiteChangeView()
+                    .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $viewModel.showEventDetail) {
+                if let event = viewModel.selectedEvent {
+                    EventDetailView(
+                        event: event,
+                        onEdit: {
+                            viewModel.editEvent(event)
+                            viewModel.showEventDetail = false
+                        },
+                        onDelete: {
+                            viewModel.deleteEvent(event)
+                            viewModel.showEventDetail = false
+                        },
+                        onAddNote: {
+                            viewModel.showEventDetail = false
+                            viewModel.showAddNote(for: event)
+                        }
+                    )
+                }
+            }
+            .sheet(isPresented: $viewModel.showNoteInput) {
+                NoteInputView(
+                    eventTitle: viewModel.noteEventTitle,
+                    onSave: { note in
+                        viewModel.saveNote(note)
+                    }
+                )
+            }
             .fullScreenCover(isPresented: $showingMonitor) {
-                // This would navigate to the Monitor page
-                Text("Monitor View - Full Implementation Coming Soon")
-                    .font(.title)
-                    .foregroundColor(.secondary)
-                    .padding()
+                MonitorView()
+                    .environmentObject(viewModel)
             }
         }
     }

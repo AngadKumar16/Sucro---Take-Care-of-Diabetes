@@ -25,6 +25,14 @@ class HomeViewModel: BaseViewModel {
     @Published var smartSuggestion: String?
     @Published var lastSiteChange: SiteChange?
     @Published var criticalAlert: AlertType?
+    @Published var showAddCarbSheet = false
+    @Published var showQuickBolusSheet = false
+    @Published var showAddSiteChangeSheet = false
+    @Published var selectedEvent: TimelineEvent?
+    @Published var showEventDetail = false
+    @Published var showNoteInput = false
+    @Published var noteEventTitle: String = ""
+
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -32,6 +40,214 @@ class HomeViewModel: BaseViewModel {
         super.init(context: context)
         fetchLatestData()
     }
+    
+    // MARK: - Navigation Actions
+    
+    func logMeal() {
+        showAddCarbSheet = true
+    }
+        
+    func quickBolus() {
+        showQuickBolusSheet = true
+    }
+    
+    func changeSite() {
+        showAddSiteChangeSheet = true
+    }
+    
+    func showEventDetails(_ event: TimelineEvent) {
+        selectedEvent = event
+        showEventDetail = true
+    }
+    
+    func editEvent(_ event: TimelineEvent) {
+        // Navigate to appropriate edit view based on event type
+        print("Edit event: \(event.title)")
+        // Implementation depends on event type
+    }
+    
+    func deleteEvent(_ event: TimelineEvent) {
+        // Fetch and delete from CoreData based on event type and timestamp
+        switch event.type {
+        case .meal:
+            deleteCarbEntry(at: event.timestamp)
+        case .bolus:
+            deleteInsulinEntry(at: event.timestamp)
+        case .siteChange:
+            deleteSiteChange(at: event.timestamp)
+        case .activity:
+            deleteActivityEntry(at: event.timestamp)
+        }
+        
+        // Refresh timeline after deletion
+        fetchTimelineEvents()
+    }
+    
+    private func deleteCarbEntry(at timestamp: Date) {
+        let request: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                viewContext.delete(entry)
+                save()
+            }
+        } catch {
+            print("Error deleting carb entry: \(error)")
+        }
+    }
+    
+    private func deleteInsulinEntry(at timestamp: Date) {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                viewContext.delete(entry)
+                save()
+            }
+        } catch {
+            print("Error deleting insulin entry: \(error)")
+        }
+    }
+    
+    private func deleteSiteChange(at timestamp: Date) {
+        let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                viewContext.delete(entry)
+                save()
+            }
+        } catch {
+            print("Error deleting site change: \(error)")
+        }
+    }
+    
+    private func deleteActivityEntry(at timestamp: Date) {
+        let request: NSFetchRequest<ActivityEntry> = ActivityEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                viewContext.delete(entry)
+                save()
+            }
+        } catch {
+            print("Error deleting activity entry: \(error)")
+        }
+    }
+    
+    func showAddNote(for event: TimelineEvent) {
+        noteEventTitle = event.title
+        selectedEvent = event
+        showNoteInput = true
+    }
+    
+    func saveNote(_ note: String) {
+        guard let event = selectedEvent else { return }
+        
+        // Update the appropriate CoreData entity with note based on event type
+        switch event.type {
+        case .meal:
+            addNoteToCarbEntry(at: event.timestamp, note: note)
+        case .bolus:
+            addNoteToInsulinEntry(at: event.timestamp, note: note)
+        case .siteChange:
+            addNoteToSiteChange(at: event.timestamp, note: note)
+        case .activity:
+            addNoteToActivityEntry(at: event.timestamp, note: note)
+        }
+    }
+    
+    private func addNoteToCarbEntry(at timestamp: Date, note: String) {
+        let request: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                entry.notes = note
+                save()
+            }
+        } catch {
+            print("Error adding note to carb entry: \(error)")
+        }
+    }
+    
+    private func addNoteToInsulinEntry(at timestamp: Date, note: String) {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                entry.notes = note
+                save()
+            }
+        } catch {
+            print("Error adding note to insulin entry: \(error)")
+        }
+    }
+    
+    private func addNoteToSiteChange(at timestamp: Date, note: String) {
+        let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                entry.notes = note
+                save()
+            }
+        } catch {
+            print("Error adding note to site change: \(error)")
+        }
+    }
+    
+    private func addNoteToActivityEntry(at timestamp: Date, note: String) {
+        let request: NSFetchRequest<ActivityEntry> = ActivityEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
+        request.fetchLimit = 1
+        
+        do {
+            let entries = try viewContext.fetch(request)
+            if let entry = entries.first {
+                entry.notes = note
+                save()
+            }
+        } catch {
+            print("Error adding note to activity entry: \(error)")
+        }
+    }
+    
+    func snoozeReminder(_ reminder: Reminder) {
+        // Reschedule notification for 15 minutes later
+        let newTime = Date().addingTimeInterval(15 * 60)
+        NotificationService.shared.scheduleSiteChangeReminder(days: 0) { _ in
+            print("Reminder snoozed to \(newTime)")
+        }
+    }
+    
+    func completeReminder(_ reminder: Reminder) {
+        // Remove from upcoming reminders
+        upcomingReminders.removeAll { $0.id == reminder.id }
+        // Cancel any scheduled notifications for this reminder
+    }
+    
+    // MARK: - Data Fetching
     
     func fetchLatestData() {
         let glucoseRequest: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
@@ -54,7 +270,7 @@ class HomeViewModel: BaseViewModel {
         generateSmartSuggestion()
         fetchLastSiteChange()
         
-        // ✅ MOVED HERE: Check for critical alerts after all data is fetched
+        // Check for critical alerts after all data is fetched
         checkForCriticalAlerts()
     }
     
@@ -73,7 +289,7 @@ class HomeViewModel: BaseViewModel {
     private func fetchTodayTotals() {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else { return }
         
         let insulinRequest: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
         insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate)
@@ -99,10 +315,10 @@ class HomeViewModel: BaseViewModel {
     private func calculateIOB() {
         let calendar = Calendar.current
         let now = Date()
-        let fourHoursAgo = calendar.date(byAdding: .hour, value: -4, to: now)!
+        guard let fourHoursAgo = calendar.date(byAdding: .hour, value: -4, to: now) else { return }
         
         let insulinRequest: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
-        insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", fourHoursAgo as NSDate, "bolus")
+        insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", fourHoursAgo as NSDate, InsulinType.bolus.rawValue)
         
         do {
             let insulinEntries = try viewContext.fetch(insulinRequest)
@@ -124,10 +340,11 @@ class HomeViewModel: BaseViewModel {
     
     private func fetchTimelineEvents() {
         let calendar = Calendar.current
-        let twelveHoursAgo = calendar.date(byAdding: .hour, value: -12, to: Date())!
+        guard let twelveHoursAgo = calendar.date(byAdding: .hour, value: -12, to: Date()) else { return }
         
         var events: [TimelineEvent] = []
         
+        // Fetch carb entries (meals)
         let carbRequest: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
         carbRequest.predicate = NSPredicate(format: "timestamp >= %@", twelveHoursAgo as NSDate)
         carbRequest.sortDescriptors = [NSSortDescriptor(keyPath: \CarbEntry.timestamp, ascending: false)]
@@ -140,7 +357,7 @@ class HomeViewModel: BaseViewModel {
                     type: .meal,
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
-                    title: "Meal",
+                    title: entry.mealType ?? "Meal",
                     subtitle: "\(Int(entry.grams))g carbs"
                 ))
             }
@@ -148,8 +365,9 @@ class HomeViewModel: BaseViewModel {
             print("Error fetching meals for timeline: \(error)")
         }
         
+        // Fetch insulin entries (boluses)
         let insulinRequest: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
-        insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", twelveHoursAgo as NSDate, "bolus")
+        insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", twelveHoursAgo as NSDate, InsulinType.bolus.rawValue)
         insulinRequest.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
         
         do {
@@ -168,6 +386,48 @@ class HomeViewModel: BaseViewModel {
             print("Error fetching boluses for timeline: \(error)")
         }
         
+        // Fetch site changes
+        let siteRequest: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        siteRequest.predicate = NSPredicate(format: "timestamp >= %@", twelveHoursAgo as NSDate)
+        siteRequest.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]
+        
+        do {
+            let siteChanges = try viewContext.fetch(siteRequest)
+            for entry in siteChanges.prefix(3) {
+                let glucose = getGlucoseAtTime(entry.timestamp ?? Date())
+                events.append(TimelineEvent(
+                    type: .siteChange,
+                    timestamp: entry.timestamp ?? Date(),
+                    glucoseValue: glucose,
+                    title: "Site Change",
+                    subtitle: entry.location ?? "Unknown location"
+                ))
+            }
+        } catch {
+            print("Error fetching site changes for timeline: \(error)")
+        }
+        
+        // Fetch activity entries
+        let activityRequest: NSFetchRequest<ActivityEntry> = ActivityEntry.fetchRequest()
+        activityRequest.predicate = NSPredicate(format: "timestamp >= %@", twelveHoursAgo as NSDate)
+        activityRequest.sortDescriptors = [NSSortDescriptor(keyPath: \ActivityEntry.timestamp, ascending: false)]
+        
+        do {
+            let activityEntries = try viewContext.fetch(activityRequest)
+            for entry in activityEntries.prefix(3) {
+                let glucose = getGlucoseAtTime(entry.timestamp ?? Date())
+                events.append(TimelineEvent(
+                    type: .activity,
+                    timestamp: entry.timestamp ?? Date(),
+                    glucoseValue: glucose,
+                    title: entry.type ?? "Activity",
+                    subtitle: "\(entry.duration) min"
+                ))
+            }
+        } catch {
+            print("Error fetching activities for timeline: \(error)")
+        }
+        
         timelineEvents = events.sorted { $0.timestamp > $1.timestamp }
     }
     
@@ -181,7 +441,7 @@ class HomeViewModel: BaseViewModel {
     private func generateSmartSuggestion() {
         guard let latest = latestGlucoseReading else { return }
         
-        if latest.value > 180 && latest.trend == "up" {
+        if latest.value > 180 && latest.trend == GlucoseTrend.rising.rawValue {
             smartSuggestion = "Consider checking for ketones - glucose trending up"
         } else if let lastChange = lastSiteChange {
             let daysSinceChange = Calendar.current.dateComponents([.day], from: lastChange.timestamp ?? Date(), to: Date()).day ?? 0
@@ -219,17 +479,20 @@ class HomeViewModel: BaseViewModel {
     }
     
     // MARK: - Critical Alert Management
+    
     func checkForCriticalAlerts() {
         criticalAlert = nil
         
         if let latest = latestGlucoseReading {
             if latest.value < 70 {
                 criticalAlert = .lowGlucose(latest.value)
+                NotificationService.shared.scheduleCriticalGlucoseAlert(value: latest.value, isLow: true)
                 return
             }
             
             if latest.value > 250 {
                 criticalAlert = .highGlucose(latest.value)
+                NotificationService.shared.scheduleCriticalGlucoseAlert(value: latest.value, isLow: false)
                 return
             }
         }
@@ -256,13 +519,17 @@ class HomeViewModel: BaseViewModel {
         
         switch alert {
         case .lowGlucose:
-            print("Handle low glucose treatment")
+            // Show quick carb entry
+            showAddCarbSheet = true
         case .highGlucose:
-            print("Handle high glucose ketone check")
+            // Navigate to ketone checking or show info
+            print("Handle high glucose - check ketones")
         case .deviceOffline:
+            // Navigate to device troubleshooting
             print("Handle device offline")
         case .siteChangeOverdue:
-            print("Handle site change")
+            // Show site change
+            showAddSiteChangeSheet = true
         }
     }
 }

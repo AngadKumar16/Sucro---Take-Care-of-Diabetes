@@ -24,7 +24,21 @@ struct MiniTimelineView: View {
         }
         .padding(.horizontal, 16)
         .sheet(item: $selectedEvent) { event in
-            EventDetailView(event: event)
+            EventDetailView(
+                event: event,
+                onEdit: {
+                    // Handle edit - pass up to parent
+                    onEventTap(event)
+                },
+                onDelete: {
+                    // Handle delete - pass up to parent
+                    selectedEvent = nil
+                },
+                onAddNote: {
+                    // Handle add note - pass up to parent
+                    onEventTap(event)
+                }
+            )
         }
     }
     
@@ -152,61 +166,6 @@ struct EventMarker: View {
     private var yPosition: CGFloat {
         let normalizedValue = (event.glucoseValue - 40) / (300 - 40)
         return CGFloat(normalizedValue) * chartHeight
-    }
-}
-
-struct EventDetailView: View {
-    let event: TimelineEvent
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Image(systemName: event.icon)
-                        .font(.title2)
-                        .foregroundColor(event.color)
-                    
-                    VStack(alignment: .leading) {
-                        Text(event.title)
-                            .font(.headline)
-                        
-                        Text(event.timestamp, formatter: dateTimeFormatter)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                }
-                
-                if let subtitle = event.subtitle {
-                    Text(subtitle)
-                        .font(.body)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Glucose at time")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("\(Int(event.glucoseValue)) mg/dL")
-                        .font(.title2)
-                        .fontWeight(.medium)
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Event Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
     }
 }
 

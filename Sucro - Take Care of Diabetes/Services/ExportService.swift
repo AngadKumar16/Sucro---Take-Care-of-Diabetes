@@ -61,12 +61,9 @@ class ExportService {
         
         do {
             try renderer.writePDF(to: tempURL) { context in
-                var currentPage = 0
-                
                 // Page 1: Title Page
                 context.beginPage()
                 self.drawTitlePage(in: context.pdfContextBounds, dateRange: dateRange)
-                currentPage += 1
                 
                 // Page 2: Summary Statistics
                 context.beginPage()
@@ -76,10 +73,9 @@ class ExportService {
                     insulin: insulinEntries,
                     carbs: carbEntries
                 )
-                currentPage += 1
                 
                 // Page 3+: Data Tables (if needed, split across pages)
-                if glucoseReadings.count > 0 {
+                if !glucoseReadings.isEmpty {
                     context.beginPage()
                     self.drawGlucoseDataPage(in: context.pdfContextBounds, readings: glucoseReadings)
                 }
@@ -216,10 +212,17 @@ class ExportService {
         
         var yOffset: CGFloat = 100
         for (label, value) in stats {
-            // Box background
+            // Box background - FIX: Use explicit CGSize for corner radii
             let boxRect = CGRect(x: 50, y: yOffset, width: 250, height: 60)
             UIColor.systemGray6.setFill()
-            UIBezierPath(roundedRect: boxRect, cornerRadius: 8).fill()
+            
+            // FIX: Use bezierPathWithRoundedRect with explicit CGSize
+            let path = UIBezierPath(
+                roundedRect: boxRect,
+                byRoundingCorners: .allCorners,
+                cornerRadii: CGSize(width: 8.0, height: 8.0)
+            )
+            path.fill()
             
             // Label
             let labelAttributes: [NSAttributedString.Key: Any] = [
@@ -249,7 +252,7 @@ class ExportService {
         
         // Table header
         let headerY: CGFloat = 90
-        let colX = [50, 200, 300, 400]
+        let colX: [CGFloat] = [50, 200, 300, 400]
         let headers = ["Time", "Value", "Unit", "Trend"]
         
         for (index, header) in headers.enumerated() {
@@ -260,12 +263,13 @@ class ExportService {
             header.draw(at: CGPoint(x: colX[index], y: headerY), withAttributes: attributes)
         }
         
-        // Divider line
+        // Divider line - FIX: Use explicit UIBezierPath initialization
         UIColor.systemGray3.setStroke()
-        let line = UIBezierPath()
-        line.move(to: CGPoint(x: 50, y: headerY + 20))
-        line.addLine(to: CGPoint(x: 550, y: headerY + 20))
-        line.stroke()
+        let linePath = UIBezierPath()
+        linePath.move(to: CGPoint(x: 50, y: headerY + 20))
+        linePath.addLine(to: CGPoint(x: 550, y: headerY + 20))
+        linePath.lineWidth = 1.0
+        linePath.stroke()
         
         // Data rows (limit to fit page)
         var yOffset: CGFloat = headerY + 30
@@ -285,7 +289,8 @@ class ExportService {
             let unit = reading.unit ?? "mg/dL"
             let trend = reading.trend ?? "-"
             
-            [time, value, unit, trend].enumerated().forEach { colIndex, text in
+            let rowData = [time, value, unit, trend]
+            for (colIndex, text) in rowData.enumerated() {
                 text.draw(at: CGPoint(x: colX[colIndex], y: rowY), withAttributes: attributes)
             }
         }
