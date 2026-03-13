@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 import Combine
+import UIKit
 
 @MainActor
 class HomeViewModel: BaseViewModel {
@@ -17,9 +18,12 @@ class HomeViewModel: BaseViewModel {
     @Published var todayInsulinTotal: Double = 0.0
     @Published var todayCarbTotal: Double = 0.0
     @Published var insulinOnBoard: Double = 0.0
-    @Published var batteryLevel: Double = 0.85
-    @Published var lastSyncTime: Date? = Date().addingTimeInterval(-300)
-    @Published var isConnectedDevice: Bool = true
+    
+    // REMOVED: Hardcoded fake values
+    // @Published var batteryLevel: Double = 0.85
+    // @Published var lastSyncTime: Date? = Date().addingTimeInterval(-300)
+    // @Published var isConnectedDevice: Bool = true
+    
     @Published var timelineEvents: [TimelineEvent] = []
     @Published var upcomingReminders: [Reminder] = []
     @Published var smartSuggestion: String?
@@ -34,18 +38,60 @@ class HomeViewModel: BaseViewModel {
     @Published var showEventDetail = false
     @Published var showNoteInput = false
     @Published var noteEventTitle: String = ""
-    @Published var showEditSheet = false
+    
+    // REMOVED: @Published var showEditSheet = false (replaced with editOperation)
+    
+    // MARK: - New Published Properties for Real Implementations
+    var editOperation: DraftOperation<NSManagedObject>?
+    @Published var showKetoneInfoSheet = false
+    @Published var showTroubleshootingSheet = false
     
     // MARK: - Services
     private let dataService = DataService.shared
     private let timelineService = TimelineService.shared
     private let alertService = AlertService.shared
-    private let reminderService = ReminderService.shared
+    
+    // REPLACED: private let reminderService = ReminderService.shared
+    private let reminderService = RealReminderService.shared
+    
+    // ADDED: Real device monitoring
+    private let deviceMonitor = DeviceMonitorService.shared
     
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Computed Properties for Device Status (REPLACED HARDCODED VALUES)
+    var batteryLevel: Double {
+        deviceMonitor.batteryLevel
+    }
+    
+    var batteryState: UIDevice.BatteryState {
+        deviceMonitor.batteryState
+    }
+    
+    var isConnectedDevice: Bool {
+        deviceMonitor.isConnected
+    }
+    
+    var lastSyncTime: Date? {
+        deviceMonitor.lastSyncTime
+    }
+    
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
+        
+        // Bind device monitor updates to refresh UI
+        deviceMonitor.$lastSyncTime
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+        
+        deviceMonitor.$batteryLevel
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+        
         fetchLatestData()
     }
     
@@ -68,10 +114,61 @@ class HomeViewModel: BaseViewModel {
         showEventDetail = true
     }
     
+    // MARK: - Real Edit Function (REPLACED PLACEHOLDER)
     func editEvent(_ event: TimelineEvent) {
         selectedEvent = event
-        showEditSheet = true
         showEventDetail = false
+        
+        switch event.type {
+        case .meal:
+            guard let carbEntry = dataService.fetchEntry(
+                context: viewContext,
+                type: CarbEntry.self,
+                at: event.timestamp
+            ) else { return }
+            
+            editOperation = DraftOperation(
+                withExistingObject: carbEntry,
+                inParentContext: viewContext,
+                onSave: { [weak self] in
+                    self?.fetchTimelineEvents()
+                }
+            )
+            
+        case .bolus:
+            guard let insulinEntry = dataService.fetchEntry(
+                context: viewContext,
+                type: InsulinEntry.self,
+                at: event.timestamp
+            ) else { return }
+            
+            editOperation = DraftOperation(
+                withExistingObject: insulinEntry,
+                inParentContext: viewContext,
+                onSave: { [weak self] in
+                    self?.fetchTimelineEvents()
+                }
+            )
+            
+        case .siteChange:
+            guard let siteChange = dataService.fetchEntry(
+                context: viewContext,
+                type: SiteChange.self,
+                at: event.timestamp
+            ) else { return }
+            
+            editOperation = DraftOperation(
+                withExistingObject: siteChange,
+                inParentContext: viewContext,
+                onSave: { [weak self] in
+                    self?.fetchTimelineEvents()
+                }
+            )
+            
+        case .activity:
+            // Handle activity editing if needed
+            break
+        }
     }
     
     func deleteEvent(_ event: TimelineEvent) {
@@ -121,13 +218,17 @@ class HomeViewModel: BaseViewModel {
         }
     }
     
+    // MARK: - Real Reminder Actions (REPLACED MOCK)
     func snoozeReminder(_ reminder: Reminder) {
         reminderService.snoozeReminder(reminder, minutes: 15)
-        reminderService.completeReminder(reminder, from: &upcomingReminders)
+        // Refresh reminders list
+        upcomingReminders = reminderService.upcomingReminders
     }
     
     func completeReminder(_ reminder: Reminder) {
-        reminderService.completeReminder(reminder, from: &upcomingReminders)
+        reminderService.completeReminder(reminder)
+        // Refresh reminders list
+        upcomingReminders = reminderService.upcomingReminders
     }
     
     // MARK: - Data Fetching
@@ -147,14 +248,25 @@ class HomeViewModel: BaseViewModel {
         fetchReminders()
         generateSmartSuggestion()
         checkForCriticalAlerts()
+        
+        // Update device monitor with latest sync
+        if latestGlucoseReading != nil {
+            deviceMonitor.recordSync()
+        }
     }
     
     private func fetchTimelineEvents() {
         timelineEvents = timelineService.buildTimeline(context: viewContext, hoursBack: 12)
     }
     
+    // MARK: - Real Reminders (REPLACED MOCK)
     private func fetchReminders() {
-        upcomingReminders = reminderService.generateMockReminders()
+        reminderService.scheduleReminders(
+            for: lastSiteChange,
+            insulinOnBoard: insulinOnBoard,
+            context: viewContext
+        )
+        upcomingReminders = reminderService.upcomingReminders
     }
     
     private func generateSmartSuggestion() {
@@ -182,6 +294,7 @@ class HomeViewModel: BaseViewModel {
         criticalAlert = nil
     }
     
+    // MARK: - Real Alert Actions (REPLACED PRINT STATEMENTS)
     func handleCriticalAlertAction() {
         guard let alert = criticalAlert else { return }
         let action = alertService.handleAlertAction(alert)
@@ -190,9 +303,9 @@ class HomeViewModel: BaseViewModel {
         case .showAddCarb:
             showAddCarbSheet = true
         case .showKetoneInfo:
-            print("Show ketone checking information")
+            showKetoneInfoSheet = true  // REPLACED: print("Show ketone...")
         case .showDeviceTroubleshooting:
-            print("Show device troubleshooting steps")
+            showTroubleshootingSheet = true  // REPLACED: print("Show device...")
         case .showSiteChange:
             showAddSiteChangeSheet = true
         }

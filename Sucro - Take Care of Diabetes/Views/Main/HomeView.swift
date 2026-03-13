@@ -182,13 +182,24 @@ struct HomeView: View {
                     }
                 )
             }
-            // Edit sheet - simplified placeholder
-            .sheet(isPresented: $viewModel.showEditSheet) {
-                EditEventPlaceholderView(
-                    onClose: {
-                        viewModel.showEditSheet = false
+            // MARK: - Real Edit Sheet (REPLACED PLACEHOLDER)
+            .sheet(item: .constant(viewModel.editOperation)) { operation in
+                DraftingView(operation: operation) { draft in
+                    if let carbEntry = draft as? CarbEntry {
+                        EditCarbView(entry: carbEntry)
+                    } else if let insulinEntry = draft as? InsulinEntry {
+                        EditInsulinView(entry: insulinEntry)
+                    } else if let siteChange = draft as? SiteChange {
+                        EditSiteChangeView(entry: siteChange)
                     }
-                )
+                }
+            }
+            // MARK: - New Alert Sheets (REPLACED PRINT STATEMENTS)
+            .sheet(isPresented: $viewModel.showKetoneInfoSheet) {
+                KetoneInfoView()
+            }
+            .sheet(isPresented: $viewModel.showTroubleshootingSheet) {
+                DeviceTroubleshootingView()
             }
             .fullScreenCover(isPresented: $showingMonitor) {
                 MonitorView()
@@ -198,42 +209,7 @@ struct HomeView: View {
     }
 }
 
-// Placeholder view for edit functionality
-struct EditEventPlaceholderView: View {
-    let onClose: () -> Void
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Image(systemName: "pencil.circle")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                
-                Text("Edit Event")
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                Text("Full edit functionality coming soon")
-                    .foregroundColor(.secondary)
-                
-                Button("Close") {
-                    onClose()
-                }
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-            }
-            .navigationTitle("Edit")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onClose)
-                }
-            }
-        }
-    }
-}
+// REMOVED: EditEventPlaceholderView - no longer needed
 
 private let timeFormatter: DateFormatter = {
     let formatter = DateFormatter()

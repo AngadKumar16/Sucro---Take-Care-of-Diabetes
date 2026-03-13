@@ -178,4 +178,27 @@ class DataService {
         }
         return false
     }
+    
+    func fetchEntry<T: NSManagedObject>(
+        context: NSManagedObjectContext,
+        type: T.Type,
+        at timestamp: Date
+    ) -> T? {
+        let request = T.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "timestamp >= %@ AND timestamp <= %@",
+            timestamp.addingTimeInterval(-1) as CVarArg,
+            timestamp.addingTimeInterval(1) as CVarArg
+        )
+        request.fetchLimit = 1
+        
+        do {
+            let results = try context.fetch(request)
+            return results.first as? T
+        } catch {
+            print("Error fetching entry: \(error)")
+            return nil
+        }
+    }
 }
+

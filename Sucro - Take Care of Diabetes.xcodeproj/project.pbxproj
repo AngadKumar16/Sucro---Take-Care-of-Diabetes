@@ -29,9 +29,33 @@
 		2FE786382F62060E00A04A50 /* Sucro - Take Care of DiabetesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sucro - Take Care of DiabetesUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2FE789562F63BF1800A04A50 /* Exceptions for "Sucro - Take Care of Diabetes" folder in "Sucro - Take Care of Diabetes" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/Components/EditViews/OptionalBinding.swift,
+			);
+			target = 2FE7861B2F62060A00A04A50 /* Sucro - Take Care of Diabetes */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		2FE789572F63BF1800A04A50 /* Exceptions for "Sucro - Take Care of Diabetes" folder in "Copy Bundle Resources" phase from "Sucro - Take Care of Diabetes" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 2FE7861A2F62060A00A04A50 /* Resources */;
+			membershipExceptions = (
+				Views/Components/EditViews/OptionalBinding.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2FE7861E2F62060A00A04A50 /* Sucro - Take Care of Diabetes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2FE789562F63BF1800A04A50 /* Exceptions for "Sucro - Take Care of Diabetes" folder in "Sucro - Take Care of Diabetes" target */,
+				2FE789572F63BF1800A04A50 /* Exceptions for "Sucro - Take Care of Diabetes" folder in "Copy Bundle Resources" phase from "Sucro - Take Care of Diabetes" target */,
+			);
 			path = "Sucro - Take Care of Diabetes";
 			sourceTree = "<group>";
 		};
@@ -400,6 +424,7 @@
 				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "\"Sucro needs Bluetooth to connect to your CGM device for glucose monitoring.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +457,7 @@
 				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "\"Sucro needs Bluetooth to connect to your CGM device for glucose monitoring.\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
