@@ -163,11 +163,9 @@ struct HomeView: View {
                         event: event,
                         onEdit: {
                             viewModel.editEvent(event)
-                            viewModel.showEventDetail = false
                         },
                         onDelete: {
                             viewModel.deleteEvent(event)
-                            viewModel.showEventDetail = false
                         },
                         onAddNote: {
                             viewModel.showEventDetail = false
@@ -184,9 +182,54 @@ struct HomeView: View {
                     }
                 )
             }
+            // Edit sheet - simplified placeholder
+            .sheet(isPresented: $viewModel.showEditSheet) {
+                EditEventPlaceholderView(
+                    onClose: {
+                        viewModel.showEditSheet = false
+                    }
+                )
+            }
             .fullScreenCover(isPresented: $showingMonitor) {
                 MonitorView()
                     .environmentObject(viewModel)
+            }
+        }
+    }
+}
+
+// Placeholder view for edit functionality
+struct EditEventPlaceholderView: View {
+    let onClose: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Image(systemName: "pencil.circle")
+                    .font(.system(size: 60))
+                    .foregroundColor(.blue)
+                
+                Text("Edit Event")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                Text("Full edit functionality coming soon")
+                    .foregroundColor(.secondary)
+                
+                Button("Close") {
+                    onClose()
+                }
+                .padding()
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+            }
+            .navigationTitle("Edit")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onClose)
+                }
             }
         }
     }
