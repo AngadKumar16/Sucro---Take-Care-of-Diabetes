@@ -18,6 +18,8 @@ class InsightsViewModel: BaseViewModel {
     @Published var carbStats = CarbStatistics()
     @Published var correlations: [DataCorrelation] = []
     @Published var trends: [DailyGlucoseTrend] = []
+    @Published var generatedInsights: [GeneratedInsight] = []
+    @Published var weeklyPatterns: [WeekdayPattern] = []
     
     enum TimeRange: String, CaseIterable {
         case day = "1 Day"
@@ -48,6 +50,13 @@ class InsightsViewModel: BaseViewModel {
         fetchCarbStatistics()
         fetchCorrelations()
         fetchTrends()
+        generateInsights()
+        generateWeeklyPatterns()
+    }
+
+    func updateTimeRange(_ range: TimeRange) {
+        timeRange = range
+        fetchInsights()
     }
     
     private func fetchGlucoseStatistics() {
@@ -149,6 +158,104 @@ class InsightsViewModel: BaseViewModel {
         }
     }
     
+    // MARK: - Insight Generation (replaces hardcoded InsightsView content)
+
+    private func generateInsights() {
+        var insights: [GeneratedInsight] = []
+
+        // 1. Trend analysis — compare first vs second half of the trend window.
+        let sorted = trends.sorted { $0.date < $1.date }
+        if sorted.count >= 2 {
+            let mid = sorted.count / 2
+            let firstHalf = sorted.prefix(mid)
+            let secondHalf = sorted.suffix(sorted.count - mid)
+            let firstAvg = firstHalf.map { $0.average }.reduce(0, +) / Double(max(firstHalf.count, 1))
+            let secondAvg = secondHalf.map { $0.average }.reduce(0, +) / Double(max(secondHalf.count, 1))
+            if firstAvg > 0 {
+                let change = ((secondAvg - firstAvg) / firstAvg) * 100
+                if abs(change) >= 2 {
+                    let direction = change < 0 ? "decreased" : "increased"
+                    insights.append(GeneratedInsight(
+                        title: "Trend Analysis",
+                        description: "Your average glucose has \(direction) by \(String(format: "%.0f", abs(change)))% over this period",
+                        type: change < 0 ? .positive : .warning
+                    ))
+                }
+            }
+        }
+
+        // 2. Pattern detection — strongest carb→glucose correlation.
+        if let top = correlations.first, top.effect > 30 {
+            insights.append(GeneratedInsight(
+                title: "Pattern Detection",
+                description: top.description,
+                type: .warning
+            ))
+        }
+
+        // 3. Time-in-range recommendation.
+        let tir = glucoseStats.timeInRange.percentage
+        if glucoseStats.average > 0 {
+            if tir < 70 {
+                insights.append(GeneratedInsight(
+                    title: "Recommendation",
+                    description: "Time in range is \(String(format: "%.0f", tir))%. Aim for 70%+ by reviewing meals before glucose spikes.",
+                    type: .info
+                ))
+            } else {
+                insights.append(GeneratedInsight(
+                    title: "Great Work",
+                    description: "Time in range is \(String(format: "%.0f", tir))% — you're meeting the recommended target.",
+                    type: .positive
+                ))
+            }
+        }
+
+        if insights.isEmpty {
+            insights.append(GeneratedInsight(
+                title: "Not Enough Data",
+                description: "Log glucose, meals, and insulin for a few days to unlock personalized insights.",
+                type: .info
+            ))
+        }
+
+        generatedInsights = insights
+    }
+
+    private func generateWeeklyPatterns() {
+        let calendar = Calendar.current
+        let startDate = calendar.date(byAdding: .day, value: -7, to: Date())!
+
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", startDate as NSDate)
+
+        let readings = (try? viewContext.fetch(request)) ?? []
+        guard !readings.isEmpty else {
+            weeklyPatterns = []
+            return
+        }
+
+        // Group by weekday, compute per-day average.
+        let grouped = Dictionary(grouping: readings) { reading -> Int in
+            calendar.component(.weekday, from: reading.timestamp ?? Date())
+        }
+
+        let formatter = DateFormatter()
+        let weekdaySymbols = formatter.weekdaySymbols ?? []
+
+        var patterns: [WeekdayPattern] = []
+        for (weekday, dayReadings) in grouped {
+            let avg = dayReadings.reduce(0) { $0 + $1.value } / Double(dayReadings.count)
+            let trend = GlucoseCalculator.calculateTrend(
+                readings: dayReadings.sorted { ($0.timestamp ?? Date()) < ($1.timestamp ?? Date()) }
+            )
+            let name = (weekday - 1) < weekdaySymbols.count ? weekdaySymbols[weekday - 1] : "Day \(weekday)"
+            patterns.append(WeekdayPattern(weekdayIndex: weekday, name: name, average: avg, trend: trend))
+        }
+
+        weeklyPatterns = patterns.sorted { $0.weekdayIndex < $1.weekdayIndex }
+    }
+
     private func analyzeCorrelations(carbEntries: [CarbEntry], glucoseReadings: [GlucoseReading]) -> [DataCorrelation] {
         var correlations: [DataCorrelation] = []
         
@@ -263,4 +370,19 @@ struct DailyGlucoseTrend {
     let trend: GlucoseTrend
     let min: Double
     let max: Double
+}
+
+struct GeneratedInsight: Identifiable {
+    let id = UUID()
+    let title: String
+    let description: String
+    let type: InsightCard.InsightType
+}
+
+struct WeekdayPattern: Identifiable {
+    let id = UUID()
+    let weekdayIndex: Int
+    let name: String
+    let average: Double
+    let trend: GlucoseTrend
 }

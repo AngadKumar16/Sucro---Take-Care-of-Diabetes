@@ -179,6 +179,56 @@ class DataService {
         return false
     }
     
+    // MARK: - Range Fetches (used by Reports & Export)
+
+    func fetchGlucoseReadings(context: NSManagedObjectContext, in range: DateInterval) -> [GlucoseReading] {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    func fetchInsulinEntries(context: NSManagedObjectContext, in range: DateInterval) -> [InsulinEntry] {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    func fetchCarbEntries(context: NSManagedObjectContext, in range: DateInterval) -> [CarbEntry] {
+        let request: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \CarbEntry.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    // MARK: - Destructive Operations
+
+    /// Deletes every record in every entity. Used by Settings > Clear All Data.
+    func clearAllData(context: NSManagedObjectContext) -> Bool {
+        let entityNames = ["GlucoseReading", "InsulinEntry", "CarbEntry", "ActivityEntry", "SiteChange", "DeviceStatus"]
+        do {
+            for name in entityNames {
+                let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: name)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
+                deleteRequest.resultType = .resultTypeObjectIDs
+                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                if let objectIDs = result?.result as? [NSManagedObjectID], !objectIDs.isEmpty {
+                    // Keep the in-memory view context in sync with the store.
+                    NSManagedObjectContext.mergeChanges(
+                        fromRemoteContextSave: [NSDeletedObjectsKey: objectIDs],
+                        into: [context]
+                    )
+                }
+            }
+            try context.save()
+            return true
+        } catch {
+            print("Error clearing all data: \(error.localizedDescription)")
+            return false
+        }
+    }
+
     func fetchEntry<T: NSManagedObject>(
         context: NSManagedObjectContext,
         type: T.Type,

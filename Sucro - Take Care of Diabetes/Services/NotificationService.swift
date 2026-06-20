@@ -57,8 +57,15 @@ class NotificationService: NSObject {
     }
     
     // MARK: - Schedule Notifications
-    
+
+    /// User-facing preference gate. When disabled in Settings, no new
+    /// notifications are scheduled.
+    private var notificationsEnabled: Bool {
+        SettingsStore.shared.notificationsEnabled
+    }
+
     func scheduleSiteChangeReminder(days: Int, completion: ((Error?) -> Void)? = nil) {
+        guard notificationsEnabled else { completion?(nil); return }
         // Validate: max 30 days for timeInterval trigger
         let validDays = min(days, 30)
         
@@ -85,6 +92,7 @@ class NotificationService: NSObject {
     }
     
     func scheduleCriticalGlucoseAlert(value: Double, isLow: Bool) {
+        guard notificationsEnabled else { return }
         let content = UNMutableNotificationContent()
         content.title = isLow ? "LOW GLUCOSE" : "HIGH GLUCOSE"
         content.body = isLow ?
@@ -120,6 +128,7 @@ class NotificationService: NSObject {
     }
     
     func scheduleDeviceOfflineAlert(deviceName: String) {
+        guard notificationsEnabled else { return }
         let content = UNMutableNotificationContent()
         content.title = "Device Offline"
         content.body = "\(deviceName) has not synced recently. Check connection."

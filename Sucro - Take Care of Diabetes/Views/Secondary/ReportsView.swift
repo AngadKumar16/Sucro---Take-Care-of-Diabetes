@@ -6,71 +6,99 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct ReportsView: View {
-    @State private var selectedReport: ReportType = .weekly
-    
-    enum ReportType: String, CaseIterable {
-        case weekly = "Weekly"
-        case monthly = "Monthly"
-        case quarterly = "Quarterly"
-        case yearly = "Yearly"
-    }
-    
+    @EnvironmentObject var viewModel: ReportsViewModel
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
                     // Report Type Selector
-                    Picker("Report Type", selection: $selectedReport) {
-                        ForEach(ReportType.allCases, id: \.self) { type in
+                    Picker("Report Type", selection: $viewModel.period) {
+                        ForEach(ReportsViewModel.Period.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
-                    
+
                     // Summary Statistics
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Summary Statistics")
                             .font(.headline)
-                        
+
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 12) {
-                            StatCard(title: "Avg Glucose", value: "142", unit: "mg/dL")
-                            StatCard(title: "Time in Range", value: "73", unit: "%")
-                            StatCard(title: "Total Insulin", value: "28.5", unit: "units/day")
-                            StatCard(title: "Avg Carbs", value: "156", unit: "g/day")
+                            StatCard(title: "Avg Glucose", value: viewModel.avgGlucose, unit: viewModel.glucoseUnitLabel)
+                            StatCard(title: "Time in Range", value: viewModel.timeInRange, unit: "%")
+                            StatCard(title: "Total Insulin", value: viewModel.insulinPerDay, unit: "units/day")
+                            StatCard(title: "Avg Carbs", value: viewModel.carbsPerDay, unit: "g/day")
+                        }
+
+                        if !viewModel.hasData {
+                            Text("No data logged for this period yet.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
-                    
+
                     // Export Options
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Export Reports")
                             .font(.headline)
-                        
+
                         VStack(spacing: 8) {
-                            ExportButton(title: "Export as PDF", icon: "doc.fill")
-                            ExportButton(title: "Share with Doctor", icon: "square.and.arrow.up")
-                            ExportButton(title: "Print Report", icon: "printer")
+                            ExportButton(title: "Export as PDF", icon: "doc.fill") {
+                                viewModel.exportPDF()
+                            }
+                            ExportButton(title: "Share with Doctor", icon: "square.and.arrow.up") {
+                                viewModel.exportPDF()
+                            }
+                            ExportButton(title: "Print Report", icon: "printer") {
+                                viewModel.printReport()
+                            }
+                        }
+
+                        if viewModel.isExporting {
+                            HStack {
+                                ProgressView()
+                                Text("Generating report…")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.top, 4)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
-                    
+
                     Spacer()
                 }
                 .padding()
             }
             .navigationTitle("Reports")
+            .onAppear { viewModel.recalculate() }
+            .sheet(isPresented: $viewModel.showShareSheet) {
+                if let url = viewModel.exportURL {
+                    ShareSheet(items: [url])
+                }
+            }
+            .alert("Sucro", isPresented: $viewModel.showStatusAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.statusMessage ?? "")
+            }
         }
     }
 }
@@ -78,11 +106,10 @@ struct ReportsView: View {
 struct ExportButton: View {
     let title: String
     let icon: String
-    
+    let action: () -> Void
+
     var body: some View {
-        Button(action: {
-            // Handle export action
-        }) {
+        Button(action: action) {
             HStack {
                 Image(systemName: icon)
                 Text(title)
@@ -101,4 +128,5 @@ struct ExportButton: View {
 
 #Preview {
     ReportsView()
+        .environmentObject(ReportsViewModel(context: PersistenceController.preview.container.viewContext))
 }

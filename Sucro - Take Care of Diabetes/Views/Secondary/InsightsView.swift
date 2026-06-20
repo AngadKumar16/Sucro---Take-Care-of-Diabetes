@@ -6,73 +6,80 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct InsightsView: View {
+    @EnvironmentObject var viewModel: InsightsViewModel
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
+                    // Time Range Selector
+                    Picker("Time Range", selection: Binding(
+                        get: { viewModel.timeRange },
+                        set: { viewModel.updateTimeRange($0) }
+                    )) {
+                        ForEach(InsightsViewModel.TimeRange.allCases, id: \.self) { range in
+                            Text(range.rawValue).tag(range)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+
                     // AI Insights Section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("AI-Powered Insights")
                             .font(.headline)
-                        
-                        InsightCard(
-                            title: "Trend Analysis",
-                            description: "Your average glucose has decreased by 8% over the past week",
-                            type: .positive
-                        )
-                        
-                        InsightCard(
-                            title: "Pattern Detection",
-                            description: "Higher glucose readings observed after breakfast meals",
-                            type: .warning
-                        )
-                        
-                        InsightCard(
-                            title: "Recommendation",
-                            description: "Consider reducing morning carb intake by 10-15g",
-                            type: .info
-                        )
+
+                        if viewModel.generatedInsights.isEmpty {
+                            Text("Log data to unlock insights.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(viewModel.generatedInsights) { insight in
+                                InsightCard(
+                                    title: insight.title,
+                                    description: insight.description,
+                                    type: insight.type
+                                )
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
-                    
+
                     // Weekly Patterns
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Weekly Patterns")
                             .font(.headline)
-                        
-                        PatternCard(
-                            dayOfWeek: "Monday",
-                            avgGlucose: 145,
-                            trend: .stable
-                        )
-                        
-                        PatternCard(
-                            dayOfWeek: "Tuesday",
-                            avgGlucose: 132,
-                            trend: .improving
-                        )
-                        
-                        PatternCard(
-                            dayOfWeek: "Wednesday",
-                            avgGlucose: 158,
-                            trend: .worsening
-                        )
+
+                        if viewModel.weeklyPatterns.isEmpty {
+                            Text("No readings in the past week.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(viewModel.weeklyPatterns) { pattern in
+                                PatternCard(
+                                    dayOfWeek: pattern.name,
+                                    avgGlucose: Int(pattern.average),
+                                    trend: PatternCard.TrendType(glucoseTrend: pattern.trend)
+                                )
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
-                    
+
                     Spacer()
                 }
                 .padding()
             }
             .navigationTitle("Insights")
+            .onAppear { viewModel.fetchInsights() }
         }
     }
 }
@@ -133,7 +140,18 @@ struct PatternCard: View {
     
     enum TrendType {
         case improving, worsening, stable
-        
+
+        init(glucoseTrend: GlucoseTrend) {
+            switch glucoseTrend {
+            case .falling, .fallingFast:
+                self = .improving
+            case .rising, .risingFast:
+                self = .worsening
+            case .stable:
+                self = .stable
+            }
+        }
+
         var icon: String {
             switch self {
             case .improving: return "arrow.down.right"
@@ -172,4 +190,5 @@ struct PatternCard: View {
 
 #Preview {
     InsightsView()
+        .environmentObject(InsightsViewModel(context: PersistenceController.preview.container.viewContext))
 }

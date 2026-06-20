@@ -28,7 +28,7 @@ struct AppNavigationView: View {
                 }
                 .sheet(isPresented: $showingSecondary) {
                     NavigationView {
-                        SecondaryTabView()
+                        SecondaryTabView(context: PersistenceController.shared.container.viewContext)
                             .navigationTitle("More")
                             .navigationBarTitleDisplayMode(.large)
                             .toolbar {

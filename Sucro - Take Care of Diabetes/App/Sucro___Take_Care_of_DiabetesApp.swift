@@ -9,6 +9,7 @@ struct SucroApp: App {
     
     // Add this: Create the view model as StateObject
     @StateObject private var monitorViewModel: MonitorViewModel
+    @StateObject private var settings = SettingsStore.shared
 
     init() {
         // Initialize with the persistence context
@@ -21,6 +22,8 @@ struct SucroApp: App {
             AppNavigationView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environmentObject(monitorViewModel) // ✅ Inject here
+                .environmentObject(settings)
+                .preferredColorScheme(settings.preferredColorScheme)
         }
     }
 }

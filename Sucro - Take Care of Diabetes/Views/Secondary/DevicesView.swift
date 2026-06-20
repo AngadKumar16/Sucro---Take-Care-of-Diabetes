@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct DevicesView: View {
+    @EnvironmentObject private var settings: SettingsStore
     @State private var connectedDevices: [Device] = [
         Device(name: "Dexcom G6", type: "CGM", batteryLevel: 85, isConnected: true),
         Device(name: "Omnipod 5", type: "Insulin Pump", batteryLevel: 62, isConnected: true)
@@ -69,9 +70,9 @@ struct DevicesView: View {
                             .font(.headline)
                         
                         VStack(spacing: 8) {
-                            SettingsButton(title: "Auto-sync", icon: "arrow.triangle.2.circlepath", isOn: true)
-                            SettingsButton(title: "Background Monitoring", icon: "waveform.path.ecg", isOn: true)
-                            SettingsButton(title: "Low Battery Alerts", icon: "battery.25", isOn: true)
+                            SettingsButton(title: "Auto-sync", icon: "arrow.triangle.2.circlepath", isOn: $settings.autoSyncEnabled)
+                            SettingsButton(title: "Background Monitoring", icon: "waveform.path.ecg", isOn: $settings.backgroundMonitoringEnabled)
+                            SettingsButton(title: "Low Battery Alerts", icon: "battery.25", isOn: $settings.lowBatteryAlertsEnabled)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -157,21 +158,20 @@ struct AvailableDeviceCard: View {
 struct SettingsButton: View {
     let title: String
     let icon: String
-    let isOn: Bool
-    
+    @Binding var isOn: Bool
+
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .foregroundColor(.blue)
                 .frame(width: 24)
-            
+
             Text(title)
                 .font(.subheadline)
-            
+
             Spacer()
-            
-            Toggle("", isOn: .constant(isOn))
-                .disabled(true)
+
+            Toggle("", isOn: $isOn)
         }
         .padding(.vertical, 8)
     }
@@ -179,4 +179,5 @@ struct SettingsButton: View {
 
 #Preview {
     DevicesView()
+        .environmentObject(SettingsStore())
 }
