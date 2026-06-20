@@ -51,7 +51,6 @@ class HomeViewModel: BaseViewModel {
     private let timelineService = TimelineService.shared
     private let alertService = AlertService.shared
     
-    // REPLACED: private let reminderService = ReminderService.shared
     private let reminderService = RealReminderService.shared
     
     // ADDED: Real device monitoring
@@ -99,6 +98,21 @@ class HomeViewModel: BaseViewModel {
     
     func logMeal() {
         showAddCarbSheet = true
+    }
+
+    /// Logs a one-tap preset meal (Breakfast/Lunch/Dinner) directly, without
+    /// opening the full carb-entry form. Mirrors to Apple Health.
+    func logMeal(preset: MealTemplate) {
+        let timestamp = Date()
+        let entry = CarbEntry(context: viewContext)
+        entry.id = UUID()
+        entry.grams = preset.carbs
+        entry.mealType = preset.name
+        entry.timestamp = timestamp
+
+        save()
+        HealthKitManager.shared.saveCarbohydrateIntake(preset.carbs, timestamp: timestamp)
+        fetchLatestData()
     }
         
     func quickBolus() {

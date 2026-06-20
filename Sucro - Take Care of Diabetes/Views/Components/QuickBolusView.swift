@@ -88,15 +88,17 @@ struct QuickBolusView: View {
     
     private func deliverBolus() {
         // Create insulin entry
+        let timestamp = Date()
         let entry = InsulinEntry(context: viewModel.viewContext)
         entry.id = UUID()
         entry.units = units
         entry.type = InsulinType.bolus.rawValue
         entry.deliveryMethod = "Quick Bolus"
-        entry.timestamp = Date()
+        entry.timestamp = timestamp
         entry.notes = notes.isEmpty ? nil : notes
-        
+
         viewModel.save()
+        HealthKitManager.shared.saveInsulinDose(units, type: InsulinType.bolus.rawValue, timestamp: timestamp)
         viewModel.fetchLatestData() // Refresh IOB and totals
         
         // Send notification for high bolus

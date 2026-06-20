@@ -15,6 +15,7 @@ final class SucroFlowUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
         app.launch()
         dismissNotificationPromptIfPresent()
     }
@@ -131,6 +132,35 @@ final class SucroFlowUITests: XCTestCase {
         let appeared = alert.waitForExistence(timeout: 5) || shareSheet.waitForExistence(timeout: 5)
         XCTAssertTrue(appeared, "Export as PDF should respond")
         if alert.exists { alert.buttons.firstMatch.tap() }
+    }
+
+    func testLogMealFromHomeOpensCarbForm() {
+        // Regression: Home injected the wrong VM type into AddCarbView, which
+        // crashed on tap. The form should now open without crashing.
+        let logMeal = app.buttons["Log Meal"]
+        XCTAssertTrue(logMeal.waitForExistence(timeout: 5))
+        logMeal.tap()
+
+        XCTAssertTrue(app.navigationBars["Add Carbs"].waitForExistence(timeout: 5),
+                      "Tapping Log Meal should open the Add Carbs form")
+        // Dismiss the form.
+        app.buttons["Cancel"].tap()
+    }
+
+    func testMealPresetLogsInstantly() {
+        let logMeal = app.buttons["Log Meal"]
+        XCTAssertTrue(logMeal.waitForExistence(timeout: 5))
+
+        // Long-press surfaces the Quick Presets menu.
+        logMeal.press(forDuration: 1.0)
+
+        let presetAlert = app.alerts["Quick Presets"]
+        XCTAssertTrue(presetAlert.waitForExistence(timeout: 5), "Long-press should show presets")
+        XCTAssertTrue(presetAlert.buttons["Breakfast (40g carbs)"].exists)
+
+        // Logging a preset should dismiss the menu (carb entry written in the background).
+        presetAlert.buttons["Breakfast (40g carbs)"].tap()
+        XCTAssertFalse(presetAlert.exists)
     }
 
     func testInsightsLoadsAndTimeRangeSwitches() {

@@ -10,13 +10,21 @@ import Combine  // ADD THIS
 import HealthKit
 
 class HealthKitManager: ObservableObject {
+    static let shared = HealthKitManager()
+
     private let healthStore = HKHealthStore()
-    
+
     @Published var isAuthorized = false
     @Published var authorizationStatus: HKAuthorizationStatus = .notDetermined
-    
+
+    /// True only on devices/simulators where HealthKit is supported.
+    var isHealthDataAvailable: Bool {
+        HKHealthStore.isHealthDataAvailable()
+    }
+
     // MARK: - Authorization
     func requestAuthorization() {
+        guard isHealthDataAvailable else { return }
         guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose),
               let insulinType = HKObjectType.quantityType(forIdentifier: .insulinDelivery),
               let carbType = HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates) else {

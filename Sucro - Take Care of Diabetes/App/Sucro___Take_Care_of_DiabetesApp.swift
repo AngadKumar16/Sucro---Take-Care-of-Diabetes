@@ -24,6 +24,13 @@ struct SucroApp: App {
                 .environmentObject(monitorViewModel) // ✅ Inject here
                 .environmentObject(settings)
                 .preferredColorScheme(settings.preferredColorScheme)
+                .task {
+                    // Ask for Apple Health access so logged data can mirror there.
+                    // Skipped during UI tests to avoid the system permission sheet.
+                    if !ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+                        HealthKitManager.shared.requestAuthorization()
+                    }
+                }
         }
     }
 }

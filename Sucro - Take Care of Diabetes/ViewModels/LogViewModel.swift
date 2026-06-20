@@ -88,55 +88,68 @@ class LogViewModel: BaseViewModel {
     }
     
     func addGlucoseReading(value: Double, unit: String, context: String?, notes: String?) {
+        let timestamp = Date()
         let reading = GlucoseReading(context: viewContext)
         reading.id = UUID()
         reading.value = value
         reading.unit = unit
-        reading.timestamp = Date()
+        reading.timestamp = timestamp
         reading.context = context
         reading.notes = notes
-        
+
         save()
+        HealthKitManager.shared.saveGlucoseReading(value, unit: unit, timestamp: timestamp)
         fetchEntriesForDate(selectedDate)
     }
-    
+
     func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?) {
+        let timestamp = Date()
         let entry = CarbEntry(context: viewContext)
         entry.id = UUID()
         entry.grams = grams
         entry.mealType = mealType
         entry.foodItems = foodItems
-        entry.timestamp = Date()
+        entry.timestamp = timestamp
         entry.notes = notes
-        
+
         save()
+        HealthKitManager.shared.saveCarbohydrateIntake(grams, timestamp: timestamp)
         fetchEntriesForDate(selectedDate)
     }
-    
+
     func addInsulinEntry(units: Double, type: String?, deliveryMethod: String?, notes: String?) {
+        let timestamp = Date()
         let entry = InsulinEntry(context: viewContext)
         entry.id = UUID()
         entry.units = units
         entry.type = type
         entry.deliveryMethod = deliveryMethod
-        entry.timestamp = Date()
+        entry.timestamp = timestamp
         entry.notes = notes
-        
+
         save()
+        HealthKitManager.shared.saveInsulinDose(units, type: type ?? "bolus", timestamp: timestamp)
         fetchEntriesForDate(selectedDate)
     }
-    
+
     func addActivityEntry(type: String?, duration: Int16, intensity: String?, caloriesBurned: Double, notes: String?) {
+        let timestamp = Date()
         let entry = ActivityEntry(context: viewContext)
         entry.id = UUID()
         entry.type = type
         entry.duration = duration
         entry.intensity = intensity
         entry.caloriesBurned = caloriesBurned
-        entry.timestamp = Date()
+        entry.timestamp = timestamp
         entry.notes = notes
-        
+
         save()
+        HealthKitManager.shared.saveWorkout(
+            type ?? "Activity",
+            duration: TimeInterval(duration) * 60,
+            caloriesBurned: caloriesBurned,
+            timestamp: timestamp
+        )
         fetchEntriesForDate(selectedDate)
     }
 }

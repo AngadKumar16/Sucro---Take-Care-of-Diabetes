@@ -11,17 +11,20 @@ struct QuickActionButtonsView: View {
     let onLogMeal: () -> Void
     let onQuickBolus: () -> Void
     let onChangeSite: () -> Void
-    
+    var onLogPreset: ((MealTemplate) -> Void)? = nil
+
     var body: some View {
         HStack(spacing: 16) {
-            // Log Meal Button
+            // Log Meal Button — long-press for quick presets.
             QuickActionButton(
                 title: "Log Meal",
                 icon: "camera.fill",
                 color: .blue,
-                action: onLogMeal
+                action: onLogMeal,
+                presets: MealTemplate.standardPresets,
+                onPreset: onLogPreset
             )
-            
+
             // Quick Bolus Button
             QuickActionButton(
                 title: "Quick Bolus",
@@ -29,7 +32,7 @@ struct QuickActionButtonsView: View {
                 color: .green,
                 action: onQuickBolus
             )
-            
+
             // Change Site Button
             QuickActionButton(
                 title: "Change Site",
@@ -47,9 +50,13 @@ struct QuickActionButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
-    
+    var presets: [MealTemplate] = []
+    var onPreset: ((MealTemplate) -> Void)? = nil
+
     @State private var isPressed = false
     @State private var showingPresets = false
+
+    private var supportsPresets: Bool { !presets.isEmpty && onPreset != nil }
     
     var body: some View {
         Button(action: action) {
@@ -73,36 +80,31 @@ struct QuickActionButton: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .onLongPressGesture(
-            minimumDuration: 0.5,
-            maximumDistance: 10,
-            pressing: { pressing in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressed = pressing
+        .scaleEffect(isPressed ? 0.95 : 1.0)
+        // simultaneousGesture fires reliably alongside the Button's tap; a plain
+        // .onLongPressGesture perform is swallowed by the Button.
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onChanged { _ in
+                    guard supportsPresets else { return }
+                    withAnimation(.easeInOut(duration: 0.1)) { isPressed = true }
                 }
-            },
-            perform: {
-                // Haptic feedback
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-                
-                // Show presets (could be expanded with actual preset UI)
-                showingPresets = true
-            }
+                .onEnded { _ in
+                    withAnimation(.easeInOut(duration: 0.1)) { isPressed = false }
+                    guard supportsPresets else { return }
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    showingPresets = true
+                }
         )
         .alert("Quick Presets", isPresented: $showingPresets) {
-            Button("Breakfast (40g carbs)") {
-                // Handle breakfast preset
-            }
-            Button("Lunch (60g carbs)") {
-                // Handle lunch preset
-            }
-            Button("Dinner (70g carbs)") {
-                // Handle dinner preset
+            ForEach(presets) { preset in
+                Button("\(preset.name) (\(Int(preset.carbs))g carbs)") {
+                    onPreset?(preset)
+                }
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Select a preset meal option")
+            Text("Log a preset meal instantly")
         }
     }
 }

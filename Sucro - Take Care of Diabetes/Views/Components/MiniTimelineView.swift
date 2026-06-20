@@ -14,32 +14,13 @@ struct MiniTimelineView: View {
     let events: [TimelineEvent]
     let onExpand: () -> Void
     let onEventTap: (TimelineEvent) -> Void
-    
-    @State private var selectedEvent: TimelineEvent?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             headerView
             chartContainer
         }
         .padding(.horizontal, 16)
-        .sheet(item: $selectedEvent) { event in
-            EventDetailView(
-                event: event,
-                onEdit: {
-                    // Handle edit - pass up to parent
-                    onEventTap(event)
-                },
-                onDelete: {
-                    // Handle delete - pass up to parent
-                    selectedEvent = nil
-                },
-                onAddNote: {
-                    // Handle add note - pass up to parent
-                    onEventTap(event)
-                }
-            )
-        }
     }
     
     private var headerView: some View {
@@ -127,7 +108,7 @@ struct MiniTimelineView: View {
                 event: event,
                 chartWidth: chartWidth,
                 chartHeight: chartHeight,
-                onTap: { selectedEvent = event }
+                onTap: { onEventTap(event) }
             )
         }
     }

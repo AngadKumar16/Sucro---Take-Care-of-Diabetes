@@ -12,6 +12,12 @@ import Charts
 struct HomeView: View {
     @EnvironmentObject var viewModel: HomeViewModel
     @State private var showingMonitor = false
+
+    // Dedicated VM for the carb-entry form presented from Home. AddCarbView
+    // requires a LogViewModel in the environment; Home only has a HomeViewModel.
+    @StateObject private var carbLogViewModel = LogViewModel(
+        context: PersistenceController.shared.container.viewContext
+    )
     
     var body: some View {
         NavigationView {
@@ -59,6 +65,9 @@ struct HomeView: View {
                         },
                         onChangeSite: {
                             viewModel.changeSite()
+                        },
+                        onLogPreset: { preset in
+                            viewModel.logMeal(preset: preset)
                         }
                     )
                     
@@ -145,9 +154,11 @@ struct HomeView: View {
                 viewModel.fetchLatestData()
             }
             // MARK: - Sheets
-            .sheet(isPresented: $viewModel.showAddCarbSheet) {
+            .sheet(isPresented: $viewModel.showAddCarbSheet, onDismiss: {
+                viewModel.fetchLatestData()
+            }) {
                 AddCarbView()
-                    .environmentObject(viewModel)
+                    .environmentObject(carbLogViewModel)
             }
             .sheet(isPresented: $viewModel.showQuickBolusSheet) {
                 QuickBolusView()

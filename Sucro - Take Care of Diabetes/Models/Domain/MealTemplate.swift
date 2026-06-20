@@ -36,3 +36,12 @@ struct MealTemplate: Identifiable, Codable {
         self.createdAt = Date()
     }
 }
+
+extension MealTemplate {
+    /// Built-in quick-log presets surfaced from the Home screen's Log Meal button.
+    static let standardPresets: [MealTemplate] = [
+        MealTemplate(name: "Breakfast", carbs: 40),
+        MealTemplate(name: "Lunch", carbs: 60),
+        MealTemplate(name: "Dinner", carbs: 70)
+    ]
+}

@@ -10,7 +10,7 @@ import SwiftUI
 struct RemindersView: View {
     let reminders: [Reminder]
     let suggestion: String?
-    let onSnooze: (Reminder) -> Void
+    let onSnooze: (Reminder, Int) -> Void
     let onComplete: (Reminder) -> Void
     
     var body: some View {
@@ -30,7 +30,7 @@ struct RemindersView: View {
                     ForEach(reminders.prefix(3)) { reminder in
                         ReminderCard(
                             reminder: reminder,
-                            onSnooze: { onSnooze(reminder) },
+                            onSnooze: { minutes in onSnooze(reminder, minutes) },
                             onComplete: { onComplete(reminder) }
                         )
                     }
@@ -77,9 +77,9 @@ struct SuggestionCard: View {
 
 struct ReminderCard: View {
     let reminder: Reminder
-    let onSnooze: () -> Void
+    let onSnooze: (Int) -> Void
     let onComplete: () -> Void
-    
+
     @State private var showingSnoozeOptions = false
     
     var body: some View {
@@ -107,7 +107,7 @@ struct ReminderCard: View {
             
             // Action Buttons
             HStack(spacing: 8) {
-                Button(action: onSnooze) {
+                Button(action: { showingSnoozeOptions = true }) {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.blue)
