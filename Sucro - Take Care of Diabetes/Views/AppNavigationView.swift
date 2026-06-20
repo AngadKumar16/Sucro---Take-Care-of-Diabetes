@@ -24,6 +24,8 @@ struct AppNavigationView: View {
                             Image(systemName: "ellipsis.circle")
                                 .font(.title2)
                         }
+                        .accessibilityLabel("More")
+                        .accessibilityIdentifier("moreButton")
                     }
                 }
                 .sheet(isPresented: $showingSecondary) {

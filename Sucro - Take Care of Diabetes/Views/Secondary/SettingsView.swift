@@ -265,6 +265,7 @@ struct ToggleRow: View {
             Spacer()
 
             Toggle("", isOn: $isOn)
+                .accessibilityIdentifier(title)
         }
         .padding(.vertical, 8)
     }
