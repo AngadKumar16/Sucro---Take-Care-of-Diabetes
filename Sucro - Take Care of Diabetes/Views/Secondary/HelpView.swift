@@ -145,6 +145,7 @@ struct HelpView: View {
 struct EmergencyMedicalIDView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var settings: SettingsStore
 
     private let dataService = DataService.shared
 
@@ -152,14 +153,14 @@ struct EmergencyMedicalIDView: View {
         NavigationView {
             List {
                 Section("Medical Information") {
-                    LabeledContent("Name", value: "Angad Kumar")
-                    LabeledContent("Condition", value: "Type 1 Diabetes")
+                    LabeledContent("Name", value: settings.userName)
+                    LabeledContent("Condition", value: settings.diabetesType)
                     LabeledContent("Blood Type", value: "—")
                 }
 
                 Section("Latest Glucose") {
                     if let latest = dataService.fetchLatestGlucoseReading(context: viewContext) {
-                        LabeledContent("Value", value: "\(Int(latest.value)) mg/dL")
+                        LabeledContent("Value", value: settings.formattedGlucose(latest.value))
                         LabeledContent("Logged", value: latest.timestamp?.formatted() ?? "—")
                     } else {
                         Text("No readings recorded")

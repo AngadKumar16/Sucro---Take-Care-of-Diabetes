@@ -275,7 +275,7 @@ class InsightsViewModel: BaseViewModel {
                     factor: "Carbohydrates",
                     value: carbEntry.grams,
                     effect: spikeMagnitude,
-                    description: "\(Int(carbEntry.grams))g carbs led to \(Int(spikeMagnitude)) mg/dL spike"
+                    description: "\(Int(carbEntry.grams))g carbs led to \(SettingsStore.shared.formattedGlucose(spikeMagnitude)) spike"
                 ))
             }
         }

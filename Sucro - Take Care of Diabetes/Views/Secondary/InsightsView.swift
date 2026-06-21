@@ -63,7 +63,7 @@ struct InsightsView: View {
                             ForEach(viewModel.weeklyPatterns) { pattern in
                                 PatternCard(
                                     dayOfWeek: pattern.name,
-                                    avgGlucose: Int(pattern.average),
+                                    avgGlucose: pattern.average,
                                     trend: PatternCard.TrendType(glucoseTrend: pattern.trend)
                                 )
                             }
@@ -134,8 +134,9 @@ struct InsightCard: View {
 }
 
 struct PatternCard: View {
+    @EnvironmentObject private var settings: SettingsStore
     let dayOfWeek: String
-    let avgGlucose: Int
+    let avgGlucose: Double
     let trend: TrendType
     
     enum TrendType {
@@ -176,7 +177,7 @@ struct PatternCard: View {
             
             Spacer()
             
-            Text("\(avgGlucose) mg/dL")
+            Text(settings.formattedGlucose(avgGlucose))
                 .font(.subheadline)
                 .fontWeight(.medium)
             
@@ -191,4 +192,5 @@ struct PatternCard: View {
 #Preview {
     InsightsView()
         .environmentObject(InsightsViewModel(context: PersistenceController.preview.container.viewContext))
+        .environmentObject(SettingsStore())
 }

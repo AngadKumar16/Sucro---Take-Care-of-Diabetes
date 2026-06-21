@@ -10,6 +10,7 @@ import CoreData
 import Charts
 
 struct MiniTimelineView: View {
+    @EnvironmentObject private var settings: SettingsStore
     let glucoseReadings: [GlucoseReading]
     let events: [TimelineEvent]
     let onExpand: () -> Void
@@ -74,14 +75,14 @@ struct MiniTimelineView: View {
         Chart(glucoseReadings.prefix(24)) { reading in
             LineMark(
                 x: .value("Time", reading.timestamp ?? Date()),
-                y: .value("Glucose", reading.value)
+                y: .value("Glucose", settings.displayGlucose(reading.value))
             )
             .foregroundStyle(.blue)
             .lineStyle(StrokeStyle(lineWidth: 3))
-            
+
             PointMark(
                 x: .value("Time", reading.timestamp ?? Date()),
-                y: .value("Glucose", reading.value)
+                y: .value("Glucose", settings.displayGlucose(reading.value))
             )
             .foregroundStyle(.blue)
             .symbolSize(30)
@@ -95,10 +96,14 @@ struct MiniTimelineView: View {
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
-                AxisValueLabel("\(Int(value.as(Double.self) ?? 0))")
+                AxisValueLabel {
+                    if let v = value.as(Double.self) {
+                        Text(settings.glucoseUnit == "mmol/L" ? String(format: "%.1f", v) : "\(Int(v))")
+                    }
+                }
             }
         }
-        .chartYScale(domain: 40...300)
+        .chartYScale(domain: settings.displayGlucose(40)...settings.displayGlucose(300))
         .frame(width: width, height: height)
     }
     
@@ -188,4 +193,5 @@ func sampleGlucoseReading(value: Double, offset: Int, context: NSManagedObjectCo
         onExpand: {},
         onEventTap: { _ in }
     )
+    .environmentObject(SettingsStore())
 }

@@ -78,11 +78,11 @@ struct TimelineCard: View {
             
             // Glucose Context
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Int(event.glucoseValue))")
+                Text(settings.glucoseValueString(event.glucoseValue))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(glucoseColor(event.glucoseValue))
-                
-                Text("mg/dL")
+
+                Text(settings.glucoseUnit)
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }
@@ -160,16 +160,13 @@ struct TimelineCard: View {
     }
     
     private func glucoseColor(_ value: Double) -> Color {
-        switch value {
-        case 70...180:
-            return .green
-        case 50..<70:
-            return .orange
-        case 180..<250:
-            return .orange
-        default:
+        if value < settings.urgentLow || value > settings.urgentHigh {
             return .red
         }
+        if settings.isInTargetRange(value) {
+            return .green
+        }
+        return .orange
     }
 }
 
@@ -196,4 +193,5 @@ private let relativeTimeFormatter: RelativeDateTimeFormatter = {
     }
     .padding()
     .background(Color(.systemGroupedBackground))
+    .environmentObject(SettingsStore())
 }

@@ -10,6 +10,7 @@ import CoreData
 
 struct LogView: View {
     @EnvironmentObject var viewModel: LogViewModel
+    @EnvironmentObject private var settings: SettingsStore
     @State private var selectedLogType: LogType = .glucose
     
     enum LogType: String, CaseIterable {
@@ -113,7 +114,7 @@ struct LogView: View {
                 ForEach(viewModel.glucoseReadings) { reading in
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("\(Int(reading.value)) \(reading.unit)")
+                            Text(settings.formattedGlucose(reading.value))
                                 .font(.body)
                                 .fontWeight(.medium)
                             
@@ -265,4 +266,5 @@ private let timeFormatter: DateFormatter = {
 #Preview {
     LogView()
         .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environmentObject(SettingsStore())
 }

@@ -10,8 +10,9 @@ import CoreData
 
 struct AddGlucoseView: View {
     @EnvironmentObject var viewModel: LogViewModel
+    @EnvironmentObject private var settings: SettingsStore
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var glucoseValue: String = ""
     @State private var selectedUnit: String = "mg/dL"
     @State private var selectedContext: String = "Fasting"
@@ -51,6 +52,7 @@ struct AddGlucoseView: View {
             }
             .navigationTitle("Add Glucose")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { selectedUnit = settings.glucoseUnit }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -90,4 +92,5 @@ struct AddGlucoseView: View {
 #Preview {
     AddGlucoseView()
         .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environmentObject(SettingsStore())
 }
