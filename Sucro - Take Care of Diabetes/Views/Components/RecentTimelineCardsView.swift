@@ -37,12 +37,13 @@ struct RecentTimelineCardsView: View {
 }
 
 struct TimelineCard: View {
+    @EnvironmentObject private var settings: SettingsStore
     let event: TimelineEvent
     let onTap: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
     let onAddNote: () -> Void
-    
+
     @State private var dragOffset: CGFloat = 0
     @State private var showingDeleteAlert = false
     

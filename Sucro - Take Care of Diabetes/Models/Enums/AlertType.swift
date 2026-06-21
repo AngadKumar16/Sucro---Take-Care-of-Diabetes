@@ -38,9 +38,9 @@ enum AlertType {
     var message: String {
         switch self {
         case .lowGlucose(let value):
-            return "\(Int(value)) mg/dL - Treat immediately"
+            return "\(SettingsStore.shared.formattedGlucose(value)) - Treat immediately"
         case .highGlucose(let value):
-            return "\(Int(value)) mg/dL - Check for ketones"
+            return "\(SettingsStore.shared.formattedGlucose(value)) - Check for ketones"
         case .deviceOffline:
             return "CGM sensor needs replacement"
         case .siteChangeOverdue(let days):

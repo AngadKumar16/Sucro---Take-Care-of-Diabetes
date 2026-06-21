@@ -9,6 +9,7 @@ import SwiftUI
 
 struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var settings: SettingsStore
     let event: TimelineEvent
     var onEdit: () -> Void
     var onDelete: () -> Void
@@ -41,7 +42,7 @@ struct EventDetailView: View {
                     // Timestamp & Glucose
                     VStack(alignment: .leading, spacing: 12) {
                         DetailRow(icon: "clock", label: "Time", value: event.timestamp.formatted(date: .abbreviated, time: .shortened))
-                        DetailRow(icon: "drop.fill", label: "Glucose", value: "\(Int(event.glucoseValue)) mg/dL")
+                        DetailRow(icon: "drop.fill", label: "Glucose", value: settings.formattedGlucose(event.glucoseValue))
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -150,4 +151,5 @@ struct DetailRow: View {
         onDelete: {},
         onAddNote: {}
     )
+    .environmentObject(SettingsStore())
 }

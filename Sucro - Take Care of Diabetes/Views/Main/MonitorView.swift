@@ -11,7 +11,8 @@ import Charts
 
 struct MonitorView: View {
     @EnvironmentObject var viewModel: MonitorViewModel
-    
+    @EnvironmentObject private var settings: SettingsStore
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -30,8 +31,8 @@ struct MonitorView: View {
                     
                     // Statistics Cards
                     HStack(spacing: 16) {
-                        StatCard(title: "Average", value: "\(Int(viewModel.averageGlucose))", unit: "mg/dL")
-                        StatCard(title: "Range", value: "\(Int(viewModel.glucoseRange.min))-\(Int(viewModel.glucoseRange.max))", unit: "mg/dL")
+                        StatCard(title: "Average", value: settings.glucoseValueString(viewModel.averageGlucose), unit: settings.glucoseUnit)
+                        StatCard(title: "Range", value: "\(settings.glucoseValueString(viewModel.glucoseRange.min))-\(settings.glucoseValueString(viewModel.glucoseRange.max))", unit: settings.glucoseUnit)
                     }
                     
                     StatCard(title: "Time in Range", value: "\(Int(viewModel.timeInRange))", unit: "%")
@@ -121,4 +122,5 @@ struct StatCard: View {
 #Preview {
     MonitorView()
         .environmentObject(MonitorViewModel(context: PersistenceController.preview.container.viewContext))
+        .environmentObject(SettingsStore())
 }

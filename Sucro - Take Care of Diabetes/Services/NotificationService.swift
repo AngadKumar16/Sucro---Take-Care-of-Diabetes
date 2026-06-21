@@ -95,9 +95,10 @@ class NotificationService: NSObject {
         guard notificationsEnabled else { return }
         let content = UNMutableNotificationContent()
         content.title = isLow ? "LOW GLUCOSE" : "HIGH GLUCOSE"
+        let formatted = SettingsStore.shared.formattedGlucose(value)
         content.body = isLow ?
-            "Glucose is \(Int(value)) mg/dL. Treat with 15g fast carbs." :
-            "Glucose is \(Int(value)) mg/dL. Check for ketones."
+            "Glucose is \(formatted). Treat with 15g fast carbs." :
+            "Glucose is \(formatted). Check for ketones."
         
         // Use appropriate sound based on iOS version
         if #available(iOS 15.0, *) {

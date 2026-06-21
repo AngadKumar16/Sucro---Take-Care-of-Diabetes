@@ -26,14 +26,15 @@ class AlertService {
         lastSiteChange: SiteChange?
     ) -> AlertType? {
         
-        // Check glucose levels
+        // Check glucose levels against the user's configured target range.
         if let latest = latestReading {
-            if latest.value < 70 {
+            let settings = SettingsStore.shared
+            if latest.value < settings.targetLow {
                 NotificationService.shared.scheduleCriticalGlucoseAlert(value: latest.value, isLow: true)
                 return .lowGlucose(latest.value)
             }
-            
-            if latest.value > 250 {
+
+            if latest.value > settings.urgentHigh {
                 NotificationService.shared.scheduleCriticalGlucoseAlert(value: latest.value, isLow: false)
                 return .highGlucose(latest.value)
             }

@@ -30,6 +30,11 @@ struct SucroApp: App {
                     if !ProcessInfo.processInfo.arguments.contains("-uiTesting") {
                         HealthKitManager.shared.requestAuthorization()
                     }
+
+                    // Run a daily backup if the user has Auto Backup enabled.
+                    BackupService.shared.performBackupIfNeeded(
+                        context: persistenceController.container.viewContext
+                    )
                 }
         }
     }

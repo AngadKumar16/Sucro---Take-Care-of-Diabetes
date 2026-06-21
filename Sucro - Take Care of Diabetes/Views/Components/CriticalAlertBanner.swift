@@ -94,7 +94,7 @@ struct CriticalAlertBanner: View {
 extension CriticalAlertBanner {
     init(glucoseValue: Double, onTap: @escaping () -> Void) {
         self.init(
-            alert: glucoseValue < 70 ? .lowGlucose(glucoseValue) : .highGlucose(glucoseValue),
+            alert: glucoseValue < SettingsStore.shared.targetLow ? .lowGlucose(glucoseValue) : .highGlucose(glucoseValue),
             onDismiss: {},
             onAction: onTap
         )

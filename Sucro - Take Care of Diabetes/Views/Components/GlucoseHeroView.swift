@@ -9,12 +9,14 @@ import SwiftUI
 import CoreData
 
 struct GlucoseHeroView: View {
+    @EnvironmentObject private var settings: SettingsStore
+
     let glucoseReading: GlucoseReading?
     let insulinOnBoard: Double
     let batteryLevel: Double?
     let lastSyncTime: Date?
     let onTap: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Critical Alert Banner (if needed)
@@ -28,21 +30,19 @@ struct GlucoseHeroView: View {
                     // Large glucose reading with trend
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         if let reading = glucoseReading {
-                            Text("\(Int(reading.value))")
+                            Text(settings.glucoseValueString(reading.value))
                                 .font(.system(size: 64, weight: .bold, design: .rounded))
                                 .foregroundColor(glucoseColor(reading.value))
-                            
+
                             if let trend = reading.trend {
                                 Text(trendArrow(for: trend))
                                     .font(.system(size: 32, weight: .medium))
                                     .foregroundColor(glucoseColor(reading.value))
                             }
-                            
-                            if let unit = reading.unit {
-                                Text(unit)
-                                    .font(.title2)
-                                    .foregroundColor(.secondary)
-                            }
+
+                            Text(settings.glucoseUnit)
+                                .font(.title2)
+                                .foregroundColor(.secondary)
                         } else {
                             Text("--")
                                 .font(.system(size: 64, weight: .bold, design: .rounded))
@@ -109,20 +109,17 @@ struct GlucoseHeroView: View {
     }
     
     private func isCriticalGlucose(_ value: Double) -> Bool {
-        return value < 70 || value > 250
+        settings.isCriticalGlucose(value)
     }
-    
+
     private func glucoseColor(_ value: Double) -> Color {
-        switch value {
-        case 70...180:
-            return .green
-        case 50..<70:
-            return .orange
-        case 180..<250:
-            return .orange
-        default:
+        if value < settings.urgentLow || value > settings.urgentHigh {
             return .red
         }
+        if settings.isInTargetRange(value) {
+            return .green
+        }
+        return .orange
     }
     
     private func trendArrow(for trend: String) -> String {
@@ -189,4 +186,5 @@ private let relativeTimeFormatter: RelativeDateTimeFormatter = {
         )
     }
     .padding()
+    .environmentObject(SettingsStore())
 }

@@ -50,7 +50,8 @@ class MonitorViewModel: BaseViewModel {
     }
     
     private var cancellables = Set<AnyCancellable>()
-    
+    private let settings = SettingsStore.shared
+
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
         fetchDataForTimeRange()
@@ -95,7 +96,7 @@ class MonitorViewModel: BaseViewModel {
         averageGlucose = values.reduce(0, +) / Double(values.count)
         glucoseRange = (values.min() ?? 0, values.max() ?? 0)
         
-        let inRangeCount = values.filter { $0 >= 70 && $0 <= 180 }.count
+        let inRangeCount = values.filter { settings.isInTargetRange($0) }.count
         timeInRange = (Double(inRangeCount) / Double(values.count)) * 100
     }
     

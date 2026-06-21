@@ -61,30 +61,37 @@ struct SettingsView: View {
 
     // MARK: - Sections
 
+    private let diabetesTypes = ["Type 1 Diabetes", "Type 2 Diabetes", "Gestational", "Prediabetes", "Other"]
+
     private var profileSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Profile")
                 .font(.headline)
 
-            HStack {
+            HStack(spacing: 16) {
                 Circle()
                     .fill(Color.blue.opacity(0.2))
                     .frame(width: 60, height: 60)
                     .overlay(
-                        Text("AK")
+                        Text(settings.userInitials)
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
                     )
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Angad Kumar")
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Your name", text: $settings.userName)
                         .font(.subheadline)
                         .fontWeight(.medium)
+                        .textInputAutocapitalization(.words)
 
-                    Text("Type 1 Diabetes")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Picker("Diabetes Type", selection: $settings.diabetesType) {
+                        ForEach(diabetesTypes, id: \.self) { type in
+                            Text(type).tag(type)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
                 }
 
                 Spacer()
@@ -146,7 +153,18 @@ struct SettingsView: View {
                 .font(.headline)
 
             VStack(spacing: 8) {
-                ToggleRow(title: "Auto Backup", isOn: $settings.autoBackupEnabled)
+                VStack(alignment: .leading, spacing: 2) {
+                    ToggleRow(title: "Auto Backup", isOn: $settings.autoBackupEnabled)
+                        .onChange(of: settings.autoBackupEnabled) { enabled in
+                            if enabled { runBackup() }
+                        }
+
+                    if settings.autoBackupEnabled {
+                        Text(backupStatusText)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
 
                 Button(action: exportData) {
                     HStack {
@@ -218,6 +236,21 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private var backupStatusText: String {
+        guard let last = settings.lastBackupDate else {
+            return "No backup yet"
+        }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return "Last backup: \(formatter.string(from: last))"
+    }
+
+    private func runBackup() {
+        // Force a backup now so enabling the toggle has an immediate effect.
+        _ = BackupService.shared.performBackup(context: viewContext)
     }
 
     private func clearAllData() {
