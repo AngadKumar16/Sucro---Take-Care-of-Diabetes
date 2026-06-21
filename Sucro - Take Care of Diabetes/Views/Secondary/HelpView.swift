@@ -17,7 +17,6 @@ import SwiftUI
 
 struct HelpView: View {
     @Environment(\.openURL) private var openURL
-    @State private var selectedSection: HelpSection?
     @State private var showEmergencyCard = false
 
     enum HelpSection: String, CaseIterable {
@@ -26,7 +25,7 @@ struct HelpView: View {
         case cgm = "CGM & Devices"
         case insights = "Understanding Insights"
         case emergency = "Emergency Help"
-        
+
         var icon: String {
             switch self {
             case .gettingStarted: return "star.fill"
@@ -34,6 +33,21 @@ struct HelpView: View {
             case .cgm: return "wifi"
             case .insights: return "chart.bar.fill"
             case .emergency: return "cross.case.fill"
+            }
+        }
+
+        var content: String {
+            switch self {
+            case .gettingStarted:
+                return "Welcome to Sucro. The Home tab shows your latest glucose, insulin on board, and quick actions. Use the Log tab to record readings, meals, insulin, and activity. The Monitor tab charts your glucose over time."
+            case .logging:
+                return "Tap Log Meal, Quick Bolus, or Change Site on Home for fast entry, or open the Log tab for full forms. Long-press Log Meal for one-tap meal presets. Everything you log is also saved to Apple Health."
+            case .cgm:
+                return "Open the Devices screen to manage connected devices and toggle Auto-sync, Background Monitoring, and Low Battery Alerts. If a device drops, use the troubleshooting steps to reconnect."
+            case .insights:
+                return "The Insights screen analyzes your data: average glucose trend, meal-to-glucose patterns, and time-in-range. Time in Range is the percentage of readings between your target low and high (set in Settings)."
+            case .emergency:
+                return "For severe low blood sugar, treat with 15g of fast-acting carbs and recheck in 15 minutes. If unconscious, a caregiver should administer glucagon and call emergency services. Your Medical ID is in Help > Emergency Medical ID."
             }
         }
     }
@@ -60,19 +74,31 @@ struct HelpView: View {
                 // Tutorial Sections
                 Section("Tutorials & Guides") {
                     ForEach(HelpSection.allCases, id: \.self) { section in
-                        Button {
-                            selectedSection = section
+                        NavigationLink {
+                            FAQDetailView(question: section.rawValue, answer: section.content)
                         } label: {
                             Label(section.rawValue, systemImage: section.icon)
                         }
                     }
                 }
-                
+
                 // Video Tutorials
                 Section("Video Tutorials") {
-                    TutorialRow(title: "Quick Logging in 30 Seconds", duration: "0:30")
-                    TutorialRow(title: "Setting Up Your CGM", duration: "2:15")
-                    TutorialRow(title: "Understanding Time in Range", duration: "1:45")
+                    NavigationLink {
+                        FAQDetailView(question: "Quick Logging in 30 Seconds", answer: HelpSection.logging.content)
+                    } label: {
+                        TutorialRow(title: "Quick Logging in 30 Seconds", duration: "0:30")
+                    }
+                    NavigationLink {
+                        FAQDetailView(question: "Setting Up Your CGM", answer: HelpSection.cgm.content)
+                    } label: {
+                        TutorialRow(title: "Setting Up Your CGM", duration: "2:15")
+                    }
+                    NavigationLink {
+                        FAQDetailView(question: "Understanding Time in Range", answer: HelpSection.insights.content)
+                    } label: {
+                        TutorialRow(title: "Understanding Time in Range", duration: "1:45")
+                    }
                 }
                 
                 // FAQ

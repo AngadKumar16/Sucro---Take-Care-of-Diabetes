@@ -203,6 +203,37 @@ struct DataServiceTests {
         #expect(inWindow.count == 1)
         #expect(inWindow.first?.value == 100)
     }
+
+    @Test func editViaDraftOperationPersistsToDisk() {
+        let url = tempStoreURL()
+        defer { removeStore(at: url) }
+
+        // Create and persist a carb entry.
+        let container1 = makeDiskContainer(at: url)
+        let carb = CarbEntry(context: container1.viewContext)
+        carb.id = UUID()
+        carb.timestamp = Date()
+        carb.grams = 30
+        try? container1.viewContext.save()
+
+        // Edit it through a DraftOperation (the app's edit flow) and save.
+        let draft = DraftOperation(
+            withExistingObject: carb,
+            inParentContext: container1.viewContext
+        )
+        draft.draftObject.grams = 99
+        draft.save()
+
+        // A fresh container from disk must see the edited value (regression: the
+        // parent context was never saved, so edits used to be lost on restart).
+        let container2 = makeDiskContainer(at: url)
+        let reloaded = DataService.shared.fetchCarbEntries(
+            context: container2.viewContext,
+            in: DateInterval(start: Date().addingTimeInterval(-3600), end: Date().addingTimeInterval(3600))
+        )
+        #expect(reloaded.count == 1)
+        #expect(reloaded.first?.grams == 99)
+    }
 }
 
 // MARK: - ReportsViewModel (real statistics)

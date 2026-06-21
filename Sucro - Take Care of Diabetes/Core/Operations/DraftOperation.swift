@@ -49,7 +49,13 @@ class DraftOperation<Object: NSManagedObject>: Identifiable {
     
     func save() {
         do {
+            // Push the draft into the parent context...
             try tempContext.save()
+            // ...then persist the parent to the store, otherwise edits only
+            // live in memory and are lost when the app restarts.
+            if let parent = tempContext.parent, parent.hasChanges {
+                try parent.save()
+            }
             onSave()
         } catch {
             print("Error saving draft: \(error)")

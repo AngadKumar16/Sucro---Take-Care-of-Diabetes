@@ -233,8 +233,8 @@ class HomeViewModel: BaseViewModel {
     }
     
     // MARK: - Real Reminder Actions (REPLACED MOCK)
-    func snoozeReminder(_ reminder: Reminder) {
-        reminderService.snoozeReminder(reminder, minutes: 15)
+    func snoozeReminder(_ reminder: Reminder, minutes: Int = 15) {
+        reminderService.snoozeReminder(reminder, minutes: minutes)
         // Refresh reminders list
         upcomingReminders = reminderService.upcomingReminders
     }

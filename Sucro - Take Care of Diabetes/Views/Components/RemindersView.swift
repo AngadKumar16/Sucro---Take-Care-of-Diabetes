@@ -136,9 +136,9 @@ struct ReminderCard: View {
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 1)
         )
         .confirmationDialog("Snooze Reminder", isPresented: $showingSnoozeOptions) {
-            Button("15 minutes") { snoozeFor(15) }
-            Button("1 hour") { snoozeFor(60) }
-            Button("2 hours") { snoozeFor(120) }
+            Button("15 minutes") { onSnooze(15) }
+            Button("1 hour") { onSnooze(60) }
+            Button("2 hours") { onSnooze(120) }
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("How long would you like to snooze this reminder?")
@@ -171,10 +171,6 @@ struct ReminderCard: View {
         }
     }
     
-    private func snoozeFor(_ minutes: Int) {
-        // In a real app, this would update the reminder time
-        print("Snoozing for \(minutes) minutes")
-    }
 }
 
 struct EmptyRemindersView: View {
@@ -217,14 +213,14 @@ private let reminderTimeFormatter: DateFormatter = {
                 Reminder(title: "Take medication", time: Date().addingTimeInterval(10800), type: .medication)
             ],
             suggestion: "Consider changing the site - 2 days since last change",
-            onSnooze: { _ in },
+            onSnooze: { _, _ in },
             onComplete: { _ in }
         )
         
         RemindersView(
             reminders: [],
             suggestion: nil,
-            onSnooze: { _ in },
+            onSnooze: { _, _ in },
             onComplete: { _ in }
         )
     }

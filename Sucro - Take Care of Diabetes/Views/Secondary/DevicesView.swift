@@ -9,23 +9,39 @@ import SwiftUI
 
 struct DevicesView: View {
     @EnvironmentObject private var settings: SettingsStore
-    @State private var connectedDevices: [Device] = [
-        Device(name: "Dexcom G6", type: "CGM", batteryLevel: 85, isConnected: true),
-        Device(name: "Omnipod 5", type: "Insulin Pump", batteryLevel: 62, isConnected: true)
-    ]
-    @State private var availableDevices: [Device] = [
-        Device(name: "Libre 3", type: "CGM", batteryLevel: 0, isConnected: false),
-        Device(name: "Tandem t:slim", type: "Insulin Pump", batteryLevel: 0, isConnected: false)
-    ]
-    
+
     struct Device: Identifiable {
-        let id = UUID()
+        var id: String { name }
         let name: String
         let type: String
         let batteryLevel: Int
-        let isConnected: Bool
     }
-    
+
+    /// Full catalog of devices the app knows how to show.
+    private let catalog: [Device] = [
+        Device(name: "Dexcom G6", type: "CGM", batteryLevel: 85),
+        Device(name: "Omnipod 5", type: "Insulin Pump", batteryLevel: 62),
+        Device(name: "Libre 3", type: "CGM", batteryLevel: 90),
+        Device(name: "Tandem t:slim", type: "Insulin Pump", batteryLevel: 74)
+    ]
+
+    private var connectedDevices: [Device] {
+        catalog.filter { settings.connectedDeviceNames.contains($0.name) }
+    }
+
+    private var availableDevices: [Device] {
+        catalog.filter { !settings.connectedDeviceNames.contains($0.name) }
+    }
+
+    private func connect(_ device: Device) {
+        guard !settings.connectedDeviceNames.contains(device.name) else { return }
+        settings.connectedDeviceNames.append(device.name)
+    }
+
+    private func disconnect(_ device: Device) {
+        settings.connectedDeviceNames.removeAll { $0 == device.name }
+    }
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -35,8 +51,15 @@ struct DevicesView: View {
                         Text("Connected Devices")
                             .font(.headline)
                         
+                        if connectedDevices.isEmpty {
+                            Text("No devices connected")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         ForEach(connectedDevices) { device in
-                            DeviceCard(device: device)
+                            DeviceCard(device: device) {
+                                disconnect(device)
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -49,13 +72,14 @@ struct DevicesView: View {
                         Text("Available Devices")
                             .font(.headline)
                         
+                        if availableDevices.isEmpty {
+                            Text("All known devices are connected")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         ForEach(availableDevices) { device in
                             AvailableDeviceCard(device: device) {
-                                // Handle connection
-                                if let index = availableDevices.firstIndex(where: { $0.id == device.id }) {
-                                    availableDevices.remove(at: index)
-                                    connectedDevices.append(device)
-                                }
+                                connect(device)
                             }
                         }
                     }
@@ -91,32 +115,33 @@ struct DevicesView: View {
 
 struct DeviceCard: View {
     let device: DevicesView.Device
-    
+    let onDisconnect: () -> Void
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(device.name)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 Text(device.type)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: 4) {
                 HStack {
-                    Image(systemName: "battery.\(device.batteryLevel)")
+                    Image(systemName: "battery.100")
                         .foregroundColor(device.batteryLevel > 20 ? .green : .red)
                     Text("\(device.batteryLevel)%")
                         .font(.caption)
                 }
-                
-                Text("Connected")
+
+                Button("Disconnect", role: .destructive, action: onDisconnect)
                     .font(.caption)
-                    .foregroundColor(.green)
+                    .buttonStyle(.borderless)
             }
         }
         .padding()

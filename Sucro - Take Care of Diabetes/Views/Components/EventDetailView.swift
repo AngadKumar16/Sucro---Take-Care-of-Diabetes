@@ -13,7 +13,9 @@ struct EventDetailView: View {
     var onEdit: () -> Void
     var onDelete: () -> Void
     var onAddNote: () -> Void
-    
+
+    @State private var showingDeleteConfirm = false
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -72,7 +74,7 @@ struct EventDetailView: View {
                         }
                         
                         Button(action: {
-                            showDeleteConfirmation()
+                            showingDeleteConfirm = true
                         }) {
                             HStack {
                                 Image(systemName: "trash")
@@ -100,13 +102,16 @@ struct EventDetailView: View {
                     }
                 }
             }
+            .alert("Delete Event", isPresented: $showingDeleteConfirm) {
+                Button("Delete", role: .destructive) {
+                    onDelete()
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to delete this event? This cannot be undone.")
+            }
         }
-    }
-    
-    private func showDeleteConfirmation() {
-        // In a real app, show alert confirmation then call onDelete
-        onDelete()
-        dismiss()
     }
 }
 

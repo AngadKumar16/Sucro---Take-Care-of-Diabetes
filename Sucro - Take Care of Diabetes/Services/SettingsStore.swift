@@ -27,6 +27,7 @@ final class SettingsStore: ObservableObject {
         static let autoSyncEnabled = "settings.autoSyncEnabled"
         static let backgroundMonitoringEnabled = "settings.backgroundMonitoringEnabled"
         static let lowBatteryAlertsEnabled = "settings.lowBatteryAlertsEnabled"
+        static let connectedDevices = "settings.connectedDevices"
     }
 
     // MARK: - Glucose preferences
@@ -62,6 +63,12 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(lowBatteryAlertsEnabled, forKey: Key.lowBatteryAlertsEnabled) }
     }
 
+    /// Names of devices the user has connected. Persists across launches so the
+    /// Devices screen's Connect/Disconnect actions have a real effect.
+    @Published var connectedDeviceNames: [String] {
+        didSet { defaults.set(connectedDeviceNames, forKey: Key.connectedDevices) }
+    }
+
     // MARK: - Init
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -76,7 +83,8 @@ final class SettingsStore: ObservableObject {
             Key.autoBackupEnabled: true,
             Key.autoSyncEnabled: true,
             Key.backgroundMonitoringEnabled: true,
-            Key.lowBatteryAlertsEnabled: true
+            Key.lowBatteryAlertsEnabled: true,
+            Key.connectedDevices: ["Dexcom G6", "Omnipod 5"]
         ])
 
         self.glucoseUnit = defaults.string(forKey: Key.glucoseUnit) ?? "mg/dL"
@@ -88,6 +96,7 @@ final class SettingsStore: ObservableObject {
         self.autoSyncEnabled = defaults.bool(forKey: Key.autoSyncEnabled)
         self.backgroundMonitoringEnabled = defaults.bool(forKey: Key.backgroundMonitoringEnabled)
         self.lowBatteryAlertsEnabled = defaults.bool(forKey: Key.lowBatteryAlertsEnabled)
+        self.connectedDeviceNames = defaults.stringArray(forKey: Key.connectedDevices) ?? []
     }
 
     // MARK: - Derived helpers

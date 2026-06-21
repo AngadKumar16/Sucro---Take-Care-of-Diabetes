@@ -100,8 +100,8 @@ struct HomeView: View {
                     RemindersView(
                         reminders: viewModel.upcomingReminders,
                         suggestion: viewModel.smartSuggestion,
-                        onSnooze: { reminder in
-                            viewModel.snoozeReminder(reminder)
+                        onSnooze: { reminder, minutes in
+                            viewModel.snoozeReminder(reminder, minutes: minutes)
                         },
                         onComplete: { reminder in
                             viewModel.completeReminder(reminder)
