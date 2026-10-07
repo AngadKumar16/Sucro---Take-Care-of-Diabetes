@@ -16,7 +16,7 @@ struct SiteSnapshotView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Infusion Site")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             if let siteChange = lastSiteChange {
                 HStack(spacing: 16) {
@@ -32,22 +32,22 @@ struct SiteSnapshotView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Current Site")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                             
                             Text(siteChange.location ?? "Unknown")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                         }
                         
                         // Time Since Change
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Duration")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                             
                             Text(timeSinceChange(siteChange.timestamp ?? Date()))
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                         }
                         
                         Spacer()
@@ -60,21 +60,21 @@ struct SiteSnapshotView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "questionmark.circle")
                         .font(.system(size: 32))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Text("No site recorded")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Button("Mark New Site") {
                         onChangeSite()
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.blue)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)

@@ -9,182 +9,48 @@ import SwiftUI
 import CoreData
 
 struct GlucoseHeroView: View {
-    @EnvironmentObject private var settings: SettingsStore
-
     let glucoseReading: GlucoseReading?
     let insulinOnBoard: Double
-    let batteryLevel: Double?
-    let lastSyncTime: Date?
     let onTap: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Critical Alert Banner (if needed)
-            if let reading = glucoseReading, isCriticalGlucose(reading.value) {
-                CriticalAlertBanner(glucoseValue: reading.value, onTap: onTap)
+        Button(action: onTap) {
+            // Re-render each minute so "5 min ago" and the stale styling stay
+            // current without new data.
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                GlucoseHeroContent(reading: glucoseReading, insulinOnBoard: insulinOnBoard, now: context.date)
             }
-            
-            // Main Glucose Tile
-            Button(action: onTap) {
-                VStack(spacing: 12) {
-                    // Large glucose reading with trend
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        if let reading = glucoseReading {
-                            Text(settings.glucoseValueString(reading.value))
-                                .font(.system(size: 64, weight: .bold, design: .rounded))
-                                .foregroundColor(glucoseColor(reading.value))
-
-                            if let trend = reading.trend {
-                                Text(trendArrow(for: trend))
-                                    .font(.system(size: 32, weight: .medium))
-                                    .foregroundColor(glucoseColor(reading.value))
-                            }
-
-                            Text(settings.glucoseUnit)
-                                .font(.title2)
-                                .foregroundColor(.secondary)
-                        } else {
-                            Text("--")
-                                .font(.system(size: 64, weight: .bold, design: .rounded))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    // Timestamp
-                    if let reading = glucoseReading, let timestamp = reading.timestamp {
-                        Text("Now • \(timestamp, formatter: timeFormatter)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // Secondary info line
-                    HStack(spacing: 16) {
-                        // IOB
-                        HStack(spacing: 4) {
-                            Image(systemName: "syringe")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(String(format: "%.1f", insulinOnBoard))U")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        // Battery Status
-                        if let battery = batteryLevel {
-                            HStack(spacing: 4) {
-                                Image(systemName: batteryIcon(for: battery))
-                                    .font(.caption)
-                                    .foregroundColor(batteryColor(for: battery))
-                                Text("\(Int(battery * 100))%")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        
-                        // Last Sync
-                        if let syncTime = lastSyncTime {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text("\(syncTime, formatter: relativeTimeFormatter)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .padding(.horizontal, 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(glucoseReading == nil)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .padding(.horizontal, 24)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+            )
         }
-    }
-    
-    private func isCriticalGlucose(_ value: Double) -> Bool {
-        settings.isCriticalGlucose(value)
-    }
-
-    private func glucoseColor(_ value: Double) -> Color {
-        if value < settings.urgentLow || value > settings.urgentHigh {
-            return .red
-        }
-        if settings.isInTargetRange(value) {
-            return .green
-        }
-        return .orange
-    }
-    
-    private func trendArrow(for trend: String) -> String {
-        switch trend.lowercased() {
-        case "up", "rising", "doubleup":
-            return "↑"
-        case "down", "falling", "doubledown":
-            return "↓"
-        case "flat", "stable", "notchanging":
-            return "→"
-        default:
-            return "→"
-        }
-    }
-    
-    private func batteryIcon(for level: Double) -> String {
-        if level > 0.6 { return "battery.100" }
-        if level > 0.3 { return "battery.50" }
-        return "battery.25"
-    }
-    
-    private func batteryColor(for level: Double) -> Color {
-        if level > 0.3 { return .secondary }
-        return .orange
+        .buttonStyle(.plain)
+        .disabled(glucoseReading == nil)
+        .accessibilityHint(glucoseReading == nil ? "" : "Opens the glucose chart")
     }
 }
 
-// Formatters
-private let timeFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.timeStyle = .short
-    return formatter
-}()
-
-private let relativeTimeFormatter: RelativeDateTimeFormatter = {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .abbreviated
-    return formatter
-}()
-
 #Preview {
     let context = PersistenceController.preview.container.viewContext
-    let sampleReading = GlucoseReading(context: context)
-    sampleReading.value = 104
-    sampleReading.unit = "mg/dL"
-    sampleReading.timestamp = Date()
-    sampleReading.trend = "up"
-    
+    let fresh = GlucoseReading(context: context)
+    fresh.value = 104
+    fresh.timestamp = Date().addingTimeInterval(-120)
+    fresh.trend = GlucoseTrend.rising.rawValue
+
+    let old = GlucoseReading(context: context)
+    old.value = 62
+    old.timestamp = Date().addingTimeInterval(-3 * 3600)
+
     return VStack(spacing: 20) {
-        GlucoseHeroView(
-            glucoseReading: nil,
-            insulinOnBoard: 2.5,
-            batteryLevel: 0.8,
-            lastSyncTime: Date().addingTimeInterval(-300),
-            onTap: {}
-        )
-        
-        GlucoseHeroView(
-            glucoseReading: sampleReading,
-            insulinOnBoard: 2.5,
-            batteryLevel: 0.8,
-            lastSyncTime: Date().addingTimeInterval(-300),
-            onTap: {}
-        )
+        GlucoseHeroView(glucoseReading: nil, insulinOnBoard: 0, onTap: {})
+        GlucoseHeroView(glucoseReading: fresh, insulinOnBoard: 2.5, onTap: {})
+        GlucoseHeroView(glucoseReading: old, insulinOnBoard: 0, onTap: {})
     }
     .padding()
-    .environmentObject(SettingsStore())
+    .environment(SettingsStore())
 }

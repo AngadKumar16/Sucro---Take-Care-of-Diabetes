@@ -28,48 +28,48 @@ struct DeviceTroubleshootingView: View {
     ]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Image(systemName: "antenna.radiowaves.left.and.right")
                     .font(.system(size: 60))
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .symbolEffect(.pulse)
                 
                 Text("Connection Troubleshooting")
                     .font(.title2)
-                    .fontWeight(.bold)
+                    .bold()
                 
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(0..<steps.count, id: \.self) { index in
-                        HStack(alignment: .top, spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(index <= currentStep ? Color.blue : Color.gray.opacity(0.3))
-                                    .frame(width: 28, height: 28)
-                                
-                                if index < currentStep {
-                                    Image(systemName: "checkmark")
-                                        .font(.caption)
-                                        .foregroundColor(.white)
-                                } else {
-                                    Text("\(index + 1)")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(index == currentStep ? .white : .primary)
+                        Button {
+                            completeStep(index)
+                        } label: {
+                            HStack(alignment: .top, spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(index <= currentStep ? Color.blue : Color.gray.opacity(0.3))
+                                        .frame(width: 28, height: 28)
+                                    
+                                    if index < currentStep {
+                                        Image(systemName: "checkmark")
+                                            .font(.caption)
+                                            .foregroundStyle(.white)
+                                    } else {
+                                        Text("\(index + 1)")
+                                            .font(.caption)
+                                            .bold()
+                                            .foregroundStyle(index == currentStep ? .white : .primary)
+                                    }
                                 }
-                            }
-                            
-                            Text(steps[index])
-                                .strikethrough(index < currentStep)
-                                .foregroundColor(index < currentStep ? .secondary : .primary)
-                            
-                            Spacer()
-                        }
-                        .onTapGesture {
-                            withAnimation {
-                                currentStep = index + 1
+                                
+                                Text(steps[index])
+                                    .strikethrough(index < currentStep)
+                                    .foregroundStyle(index < currentStep ? .secondary : .primary)
+                                
+                                Spacer()
                             }
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding()
@@ -91,6 +91,12 @@ struct DeviceTroubleshootingView: View {
                     Button("Close") { dismiss() }
                 }
             }
+        }
+    }
+
+    private func completeStep(_ index: Int) {
+        withAnimation {
+            currentStep = index + 1
         }
     }
 }

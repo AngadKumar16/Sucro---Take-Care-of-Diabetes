@@ -7,91 +7,53 @@
 
 import Foundation
 import CoreData
-import Combine
-import UIKit
 
 @MainActor
+@Observable
 class HomeViewModel: BaseViewModel {
     // MARK: - Published Properties
-    @Published var latestGlucoseReading: GlucoseReading?
-    @Published var recentReadings: [GlucoseReading] = []
-    @Published var todayInsulinTotal: Double = 0.0
-    @Published var todayCarbTotal: Double = 0.0
-    @Published var insulinOnBoard: Double = 0.0
-    
-    // REMOVED: Hardcoded fake values
-    // @Published var batteryLevel: Double = 0.85
-    // @Published var lastSyncTime: Date? = Date().addingTimeInterval(-300)
-    // @Published var isConnectedDevice: Bool = true
-    
-    @Published var timelineEvents: [TimelineEvent] = []
-    @Published var upcomingReminders: [Reminder] = []
-    @Published var smartSuggestion: String?
-    @Published var lastSiteChange: SiteChange?
-    @Published var criticalAlert: AlertType?
+    var latestGlucoseReading: GlucoseReading?
+    var recentReadings: [GlucoseReading] = []
+    var todayInsulinTotal: Double = 0.0
+    var todayCarbTotal: Double = 0.0
+    var insulinOnBoard: Double = 0.0
+    var timelineEvents: [TimelineEvent] = []
+    /// Today's Plan, straight from the reminder service so snoozes and
+    /// completions show immediately.
+    var upcomingReminders: [Reminder] { reminderService.upcomingReminders }
+    var smartSuggestion: String?
+    var lastSiteChange: SiteChange?
+    var criticalAlert: AlertType?
+    /// Id of the banner the user closed; it stays hidden until the alert is
+    /// about a different event.
+    private var dismissedAlertID: String?
     
     // MARK: - Navigation State
-    @Published var showAddCarbSheet = false
-    @Published var showQuickBolusSheet = false
-    @Published var showAddSiteChangeSheet = false
-    @Published var selectedEvent: TimelineEvent?
-    @Published var showEventDetail = false
-    @Published var showNoteInput = false
-    @Published var noteEventTitle: String = ""
+    var showAddCarbSheet = false
+    var showQuickBolusSheet = false
+    var showAddSiteChangeSheet = false
+    /// The event being edited or annotated.
+    var selectedEvent: TimelineEvent?
+    /// The event whose detail sheet is open.
+    var detailEvent: TimelineEvent?
+    var showNoteInput = false
+    var noteEventTitle: String = ""
     
-    // REMOVED: @Published var showEditSheet = false (replaced with editOperation)
-    
-    // MARK: - New Published Properties for Real Implementations
+    // MARK: - Edit and Alert Sheets
     var editOperation: DraftOperation<NSManagedObject>?
-    @Published var showKetoneInfoSheet = false
-    @Published var showTroubleshootingSheet = false
+    var showKetoneInfoSheet = false
+    var showTroubleshootingSheet = false
     
     // MARK: - Services
     private let dataService = DataService.shared
     private let timelineService = TimelineService.shared
     private let alertService = AlertService.shared
-    
-    private let reminderService = RealReminderService.shared
-    
-    // ADDED: Real device monitoring
-    private let deviceMonitor = DeviceMonitorService.shared
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    // MARK: - Computed Properties for Device Status (REPLACED HARDCODED VALUES)
-    var batteryLevel: Double {
-        deviceMonitor.batteryLevel
-    }
-    
-    var batteryState: UIDevice.BatteryState {
-        deviceMonitor.batteryState
-    }
-    
-    var isConnectedDevice: Bool {
-        deviceMonitor.isConnected
-    }
-    
-    var lastSyncTime: Date? {
-        deviceMonitor.lastSyncTime
-    }
-    
+    private let reminderService = ReminderService.shared
+    private let settings = SettingsStore.shared
+
+
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
-        
-        // Bind device monitor updates to refresh UI
-        deviceMonitor.$lastSyncTime
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
-        deviceMonitor.$batteryLevel
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
-        fetchLatestData()
     }
     
     // MARK: - Navigation Actions
@@ -125,13 +87,13 @@ class HomeViewModel: BaseViewModel {
     
     func showEventDetails(_ event: TimelineEvent) {
         selectedEvent = event
-        showEventDetail = true
+        detailEvent = event
     }
     
-    // MARK: - Real Edit Function (REPLACED PLACEHOLDER)
+    // MARK: - Editing
     func editEvent(_ event: TimelineEvent) {
         selectedEvent = event
-        showEventDetail = false
+        detailEvent = nil
         
         switch event.type {
         case .meal:
@@ -200,7 +162,7 @@ class HomeViewModel: BaseViewModel {
         
         if success {
             selectedEvent = nil
-            showEventDetail = false
+            detailEvent = nil
             fetchTimelineEvents()
         }
     }
@@ -232,20 +194,27 @@ class HomeViewModel: BaseViewModel {
         }
     }
     
-    // MARK: - Real Reminder Actions (REPLACED MOCK)
+    // MARK: - Reminder Actions
     func snoozeReminder(_ reminder: Reminder, minutes: Int = 15) {
-        reminderService.snoozeReminder(reminder, minutes: minutes)
-        // Refresh reminders list
-        upcomingReminders = reminderService.upcomingReminders
+        reminderService.snooze(reminder, minutes: minutes)
     }
-    
+
     func completeReminder(_ reminder: Reminder) {
-        reminderService.completeReminder(reminder)
-        // Refresh reminders list
-        upcomingReminders = reminderService.upcomingReminders
+        reminderService.complete(reminder)
     }
     
     // MARK: - Data Fetching
+
+    /// Refreshes once a minute until the calling task is cancelled, so the
+    /// banner, IOB and reminders stay current while Home is on screen (for
+    /// example, a CGM gap shows up without a manual refresh).
+    func refreshWhileVisible() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(60))
+            guard !Task.isCancelled else { return }
+            fetchLatestData()
+        }
+    }
     
     func fetchLatestData() {
         latestGlucoseReading = dataService.fetchLatestGlucoseReading(context: viewContext)
@@ -259,56 +228,49 @@ class HomeViewModel: BaseViewModel {
         lastSiteChange = dataService.fetchLastSiteChange(context: viewContext)
         
         fetchTimelineEvents()
-        fetchReminders()
+        reminderService.refresh(context: viewContext)
         generateSmartSuggestion()
         checkForCriticalAlerts()
-        
-        // Update device monitor with latest sync
-        if latestGlucoseReading != nil {
-            deviceMonitor.recordSync()
-        }
     }
     
     private func fetchTimelineEvents() {
         timelineEvents = timelineService.buildTimeline(context: viewContext, hoursBack: 12)
     }
     
-    // MARK: - Real Reminders (REPLACED MOCK)
-    private func fetchReminders() {
-        reminderService.scheduleReminders(
-            for: lastSiteChange,
-            insulinOnBoard: insulinOnBoard,
-            context: viewContext
-        )
-        upcomingReminders = reminderService.upcomingReminders
-    }
-    
     private func generateSmartSuggestion() {
-        guard let latest = latestGlucoseReading else { return }
-        
-        if latest.value > 180 && latest.trend == GlucoseTrend.rising.rawValue {
+        smartSuggestion = nil
+
+        if let latest = latestGlucoseReading,
+           let timestamp = latest.timestamp,
+           Date().timeIntervalSince(timestamp) <= 30 * 60,
+           settings.zone(for: latest.value) == .high,
+           GlucoseTrend(stored: latest.trend)?.isRising == true {
             smartSuggestion = "Glucose is high and still rising. Check ketones."
-        } else if let lastChange = lastSiteChange {
-            let daysSince = Calendar.current.dateComponents([.day], from: lastChange.timestamp ?? Date(), to: Date()).day ?? 0
-            if daysSince >= 2 {
-                smartSuggestion = "Your site is \(daysSince) days old. Plan to change it soon."
+            return
+        }
+
+        // A day before the site is due. Once it's due, the banner takes over.
+        if let lastChange = lastSiteChange, let changed = lastChange.timestamp {
+            let rotationDays = SiteLocation(rawValue: lastChange.location ?? "")?.rotationDays ?? 3
+            let daysSince = Calendar.current.dateComponents([.day], from: changed, to: Date()).day ?? 0
+            if daysSince == rotationDays - 1 {
+                smartSuggestion = "Your site is \(daysSince) \(daysSince == 1 ? "day" : "days") old. Plan to change it tomorrow."
             }
         }
     }
-    
+
     private func checkForCriticalAlerts() {
-        criticalAlert = alertService.checkForCriticalAlerts(
-            latestReading: latestGlucoseReading,
-            isConnected: isConnectedDevice,
-            lastSiteChange: lastSiteChange
-        )
+        let alert = alertService.evaluate(context: viewContext)
+        let id = alert?.id(readingDate: latestGlucoseReading?.timestamp)
+        criticalAlert = (id != nil && id == dismissedAlertID) ? nil : alert
     }
-    
+
     func dismissCriticalAlert() {
+        dismissedAlertID = criticalAlert?.id(readingDate: latestGlucoseReading?.timestamp)
         criticalAlert = nil
     }
-    
-    // MARK: - Real Alert Actions (REPLACED PRINT STATEMENTS)
+
+    // MARK: - Alert Actions
     func handleCriticalAlertAction() {
         guard let alert = criticalAlert else { return }
         let action = alertService.handleAlertAction(alert)
@@ -317,9 +279,9 @@ class HomeViewModel: BaseViewModel {
         case .showAddCarb:
             showAddCarbSheet = true
         case .showKetoneInfo:
-            showKetoneInfoSheet = true  // REPLACED: print("Show ketone...")
+            showKetoneInfoSheet = true
         case .showDeviceTroubleshooting:
-            showTroubleshootingSheet = true  // REPLACED: print("Show device...")
+            showTroubleshootingSheet = true
         case .showSiteChange:
             showAddSiteChangeSheet = true
         }

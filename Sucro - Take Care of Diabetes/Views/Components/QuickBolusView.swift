@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
-import CoreData  // ADD THIS
+import CoreData
 
 struct QuickBolusView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var viewModel: HomeViewModel
+    @Environment(HomeViewModel.self) private var viewModel
     
     @State private var units: Double = 0.0
     @State private var selectedPreset: BolusPreset?
     @State private var notes: String = ""
+    @State private var confirmLargeDose = false
+
+    /// Doses above this ask for confirmation before they're logged, to catch
+    /// a slip of the slider or stepper.
+    private let largeDoseUnits = 10.0
     
     let presets = [
         BolusPreset(name: "Small", units: 2.0),
@@ -24,7 +29,7 @@ struct QuickBolusView: View {
     ]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Quick Presets") {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -46,31 +51,37 @@ struct QuickBolusView: View {
                     HStack {
                         Text("Units")
                         Spacer()
-                        Text(String(format: "%.1f", units))
+                        Text(units.formatted(.number.precision(.fractionLength(1))))
                             .font(.title2)
-                            .fontWeight(.bold)
+                            .bold()
                     }
                     
                     Slider(value: $units, in: 0...20, step: 0.5)
                     
-                    Stepper("Adjust: \(String(format: "%.1f", units)) units", value: $units, in: 0...30, step: 0.5)
+                    Stepper("Adjust: \(units.formatted(.number.precision(.fractionLength(1)))) units", value: $units, in: 0...30, step: 0.5)
                 }
                 
                 Section("Notes (Optional)") {
-                    TextEditor(text: $notes)
-                        .frame(height: 80)
+                    TextField("Notes", text: $notes, axis: .vertical)
+                        .lineLimit(3...8)
                 }
                 
                 Section {
-                    Button("Deliver Bolus") {
-                        deliverBolus()
+                    Button("Log Bolus") {
+                        if units > largeDoseUnits {
+                            confirmLargeDose = true
+                        } else {
+                            logBolus()
+                        }
                     }
                     .frame(maxWidth: .infinity)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding()
                     .background(units > 0 ? Color.blue : Color.gray)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                     .disabled(units <= 0)
+                } footer: {
+                    Text("This records a dose you've taken or are taking. It doesn't control your pump.")
                 }
                 .listRowBackground(Color.clear)
             }
@@ -83,10 +94,16 @@ struct QuickBolusView: View {
                     }
                 }
             }
+            .alert("Log \(units, format: .number) units?", isPresented: $confirmLargeDose) {
+                Button("Log Dose") { logBolus() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("That's more than \(Int(largeDoseUnits)) units. Make sure the amount is right.")
+            }
         }
     }
-    
-    private func deliverBolus() {
+
+    private func logBolus() {
         // Create insulin entry
         let timestamp = Date()
         let entry = InsulinEntry(context: viewModel.viewContext)
@@ -99,13 +116,7 @@ struct QuickBolusView: View {
 
         viewModel.save()
         HealthKitManager.shared.saveInsulinDose(units, type: InsulinType.bolus.rawValue, timestamp: timestamp)
-        viewModel.fetchLatestData() // Refresh IOB and totals
-        
-        // Send notification for high bolus
-        if units > 10 {
-            NotificationService.shared.scheduleCriticalGlucoseAlert(value: 0, isLow: false) // Just a notification
-        }
-        
+        viewModel.fetchLatestData() // Refresh IOB, totals and reminders
         dismiss()
     }
 }
@@ -120,25 +131,25 @@ struct PresetButton: View {
             VStack(spacing: 8) {
                 Text(preset.name)
                     .font(.headline)
-                Text(String(format: "%.1f U", preset.units))
+                Text("\(preset.units.formatted(.number.precision(.fractionLength(1)))) U")
                     .font(.title3)
-                    .fontWeight(.bold)
+                    .bold()
             }
             .frame(maxWidth: .infinity)
             .padding()
             .background(isSelected ? Color.blue.opacity(0.2) : Color(.systemGray6))
-            .foregroundColor(isSelected ? .blue : .primary)
-            .overlay(
+            .foregroundStyle(isSelected ? .blue : .primary)
+            .overlay {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-            .cornerRadius(8)
+            }
+            .clipShape(.rect(cornerRadius: 8))
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
 #Preview {
     QuickBolusView()
-        .environmentObject(HomeViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(HomeViewModel(context: PersistenceController.preview.container.viewContext))
 }

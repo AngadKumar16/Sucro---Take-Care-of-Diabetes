@@ -9,7 +9,7 @@
 import Foundation
 
 struct MealTemplate: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var name: String
     var carbs: Double
     var protein: Double?

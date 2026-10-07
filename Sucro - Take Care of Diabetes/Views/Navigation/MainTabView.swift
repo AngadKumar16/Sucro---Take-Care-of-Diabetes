@@ -9,43 +9,51 @@ import SwiftUI
 import CoreData
 
 struct MainTabView: View {
-    @StateObject private var homeViewModel: HomeViewModel
-    @StateObject private var logViewModel: LogViewModel
-    @StateObject private var monitorViewModel: MonitorViewModel
-    
-    init(context: NSManagedObjectContext) {
-        _homeViewModel = StateObject(wrappedValue: HomeViewModel(context: context))
-        _logViewModel = StateObject(wrappedValue: LogViewModel(context: context))
-        _monitorViewModel = StateObject(wrappedValue: MonitorViewModel(context: context))
-    }
-    
+    // Shared with the full-screen Monitor opened from Home; owned by the app.
+    @Environment(MonitorViewModel.self) private var monitorViewModel
+
+    @State private var selection: MainTab = .home
+    // Creating these is cheap (they load data when their screen appears),
+    // so it's fine that SwiftUI may evaluate this more than once.
+    @State private var homeViewModel = HomeViewModel(context: PersistenceController.shared.container.viewContext)
+    @State private var logViewModel = LogViewModel(context: PersistenceController.shared.container.viewContext)
+
+    let showMore: () -> Void
+
     var body: some View {
-        TabView {
-            HomeView()
-                .environmentObject(homeViewModel)
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
+        TabView(selection: $selection) {
+            Tab("Home", systemImage: "house.fill", value: .home) {
+                NavigationStack {
+                    HomeView()
+                        .environment(homeViewModel)
+                        .moreButton(action: showMore)
                 }
-            
-            LogView()
-                .environmentObject(logViewModel)
-                .tabItem {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Log")
+            }
+
+            Tab("Log", systemImage: "plus.circle.fill", value: .log) {
+                NavigationStack {
+                    LogView()
+                        .environment(logViewModel)
+                        .moreButton(action: showMore)
                 }
-            
-            MonitorView()
-                .environmentObject(monitorViewModel)
-                .tabItem {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                    Text("Monitor")
+            }
+
+            Tab("Monitor", systemImage: "chart.line.uptrend.xyaxis", value: .monitor) {
+                NavigationStack {
+                    MonitorView()
+                        .environment(monitorViewModel)
+                        .moreButton(action: showMore)
                 }
+            }
         }
-        .accentColor(.blue)
+        .tint(.blue)
     }
 }
 
 #Preview {
-    MainTabView(context: PersistenceController.preview.container.viewContext)
+    let context = PersistenceController.preview.container.viewContext
+    MainTabView(showMore: {})
+        .environment(\.managedObjectContext, context)
+        .environment(MonitorViewModel(context: context))
+        .environment(SettingsStore())
 }

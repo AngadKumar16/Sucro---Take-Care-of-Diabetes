@@ -20,8 +20,8 @@ final class BackupService {
     /// Minimum time between automatic backups.
     private let minimumInterval: TimeInterval = 24 * 60 * 60
 
-    init(settings: SettingsStore = .shared) {
-        self.settings = settings
+    init(settings: SettingsStore? = nil) {
+        self.settings = settings ?? .shared
     }
 
     /// Directory where backups are stored: Documents/Backups.

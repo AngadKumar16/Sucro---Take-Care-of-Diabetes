@@ -7,13 +7,13 @@
 
 import Foundation
 import SwiftUI
-import Combine  // ADD THIS
 
 struct TimelineEvent: Identifiable {
     let id = UUID()
     let type: EventType
     let timestamp: Date
-    let glucoseValue: Double
+    /// Glucose around the time of the event, if a reading was logged.
+    let glucoseValue: Double?
     let title: String
     let subtitle: String?
     

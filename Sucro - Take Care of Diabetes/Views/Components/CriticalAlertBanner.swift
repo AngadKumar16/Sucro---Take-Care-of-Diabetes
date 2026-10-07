@@ -8,120 +8,68 @@
 import SwiftUI
 
 struct CriticalAlertBanner: View {
-    let alert: AlertType?
+    let alert: AlertType
     let onDismiss: () -> Void
     let onAction: () -> Void
-    
+
     var body: some View {
-        if let alert = alert {
-            VStack(spacing: 12) {
-                HStack {
-                    Image(systemName: alert.icon)
-                        .font(.title2)
-                        .foregroundColor(alert.color)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(alert.title)
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(alert.color)
-                        
-                        Text(alert.message)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: onDismiss) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                    }
+        VStack(spacing: 12) {
+            HStack(alignment: .top) {
+                Image(systemName: alert.icon)
+                    .font(.title2)
+                    .foregroundStyle(alert.color)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(alert.title)
+                        .font(.headline)
+                        .bold()
+                        .foregroundStyle(alert.color)
+
+                    Text(alert.message)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                
-                Button(action: onAction) {
-                    HStack {
-                        Image(systemName: actionIcon(for: alert))
-                        Text(actionText(for: alert))
-                    }
+                .accessibilityElement(children: .combine)
+
+                Spacer()
+
+                Button("Dismiss", systemImage: "xmark.circle.fill", action: onDismiss)
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 44, minHeight: 44, alignment: .topTrailing)
+                    .contentShape(.rect)
+                    .buttonStyle(.plain)
+            }
+
+            Button(action: onAction) {
+                Label(alert.actionTitle, systemImage: alert.actionIcon)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(alert.color)
-                    .cornerRadius(8)
-                }
+                    .background(alert.color, in: RoundedRectangle(cornerRadius: 8))
             }
-            .padding()
-            .background(Color(.systemBackground))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(alert.color, lineWidth: 2)
-            )
-            .cornerRadius(12)
-            .shadow(color: alert.color.opacity(0.3), radius: 8, x: 0, y: 4)
+            .buttonStyle(.plain)
         }
-    }
-    
-    private func actionIcon(for alert: AlertType) -> String {
-        switch alert {
-        case .lowGlucose:
-            return "cross.fill"
-        case .highGlucose:
-            return "drop.fill"
-        case .deviceOffline:
-            return "arrow.clockwise"
-        case .siteChangeOverdue:
-            return "arrow.triangle.2.circlepath"
-        }
-    }
-    
-    private func actionText(for alert: AlertType) -> String {
-        switch alert {
-        case .lowGlucose:
-            return "Treat Now"
-        case .highGlucose:
-            return "Check Ketones"
-        case .deviceOffline:
-            return "Troubleshoot"
-        case .siteChangeOverdue:
-            return "Change Site"
-        }
-    }
-}
-
-extension CriticalAlertBanner {
-    init(glucoseValue: Double, onTap: @escaping () -> Void) {
-        self.init(
-            alert: glucoseValue < SettingsStore.shared.targetLow ? .lowGlucose(glucoseValue) : .highGlucose(glucoseValue),
-            onDismiss: {},
-            onAction: onTap
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .stroke(alert.color, lineWidth: 2)
         )
+        .shadow(color: alert.color.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
 #Preview {
     VStack(spacing: 20) {
-        CriticalAlertBanner(
-            alert: .lowGlucose(65),
-            onDismiss: {},
-            onAction: {}
-        )
-        
-        CriticalAlertBanner(
-            alert: .highGlucose(250),
-            onDismiss: {},
-            onAction: {}
-        )
-        
-        CriticalAlertBanner(
-            alert: .siteChangeOverdue(4),
-            onDismiss: {},
-            onAction: {}
-        )
-        
-        CriticalAlertBanner(glucoseValue: 65) {}
+        CriticalAlertBanner(alert: .lowGlucose(65), onDismiss: {}, onAction: {})
+        CriticalAlertBanner(alert: .highGlucose(290), onDismiss: {}, onAction: {})
+        CriticalAlertBanner(alert: .cgmDataStale(minutes: 42), onDismiss: {}, onAction: {})
+        CriticalAlertBanner(alert: .siteChangeOverdue(4), onDismiss: {}, onAction: {})
     }
     .padding()
 }

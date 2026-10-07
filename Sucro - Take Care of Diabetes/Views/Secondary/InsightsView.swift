@@ -9,78 +9,73 @@ import SwiftUI
 import CoreData
 
 struct InsightsView: View {
-    @EnvironmentObject var viewModel: InsightsViewModel
+    @Environment(InsightsViewModel.self) private var viewModel
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Time Range Selector
-                    Picker("Time Range", selection: Binding(
-                        get: { viewModel.timeRange },
-                        set: { viewModel.updateTimeRange($0) }
-                    )) {
-                        ForEach(InsightsViewModel.TimeRange.allCases, id: \.self) { range in
-                            Text(range.rawValue).tag(range)
-                        }
+        ScrollView {
+            VStack(spacing: 20) {
+                // Time Range Selector
+                Picker("Time Range", selection: Bindable(viewModel).timeRange) {
+                    ForEach(InsightsViewModel.TimeRange.allCases, id: \.self) { range in
+                        Text(range.rawValue).tag(range)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-
-                    // AI Insights Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("What Stands Out")
-                            .font(.headline)
-
-                        if viewModel.generatedInsights.isEmpty {
-                            Text("Log a few days of data to see insights here.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(viewModel.generatedInsights) { insight in
-                                InsightCard(
-                                    title: insight.title,
-                                    description: insight.description,
-                                    type: insight.type
-                                )
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-
-                    // Weekly Patterns
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Weekly Patterns")
-                            .font(.headline)
-
-                        if viewModel.weeklyPatterns.isEmpty {
-                            Text("No readings in the past week.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(viewModel.weeklyPatterns) { pattern in
-                                PatternCard(
-                                    dayOfWeek: pattern.name,
-                                    avgGlucose: pattern.average,
-                                    trend: PatternCard.TrendType(glucoseTrend: pattern.trend)
-                                )
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-
-                    Spacer()
                 }
+                .pickerStyle(.segmented)
+
+                // AI Insights Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("What Stands Out")
+                        .font(.headline)
+
+                    if viewModel.generatedInsights.isEmpty {
+                        Text("Log a few days of data to see insights here.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(viewModel.generatedInsights) { insight in
+                            InsightCard(
+                                title: insight.title,
+                                description: insight.description,
+                                type: insight.type
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+
+                // Weekly Patterns
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Weekly Patterns")
+                        .font(.headline)
+
+                    if viewModel.weeklyPatterns.isEmpty {
+                        Text("No readings in the past week.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(viewModel.weeklyPatterns) { pattern in
+                            PatternCard(
+                                dayOfWeek: pattern.name,
+                                avgGlucose: pattern.average,
+                                trend: PatternCard.TrendType(glucoseTrend: pattern.trend)
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+
+                Spacer()
             }
-            .navigationTitle("Insights")
-            .onAppear { viewModel.fetchInsights() }
+            .padding()
         }
+        .navigationTitle("Insights")
+        .onAppear { viewModel.fetchInsights() }
     }
 }
 
@@ -112,7 +107,7 @@ struct InsightCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: type.icon)
-                .foregroundColor(type.color)
+                .foregroundStyle(type.color)
                 .font(.title3)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -122,19 +117,19 @@ struct InsightCard: View {
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
 struct PatternCard: View {
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(SettingsStore.self) private var settings
     let dayOfWeek: String
     let avgGlucose: Double
     let trend: TrendType
@@ -182,7 +177,7 @@ struct PatternCard: View {
                 .fontWeight(.medium)
             
             Image(systemName: trend.icon)
-                .foregroundColor(trend.color)
+                .foregroundStyle(trend.color)
                 .font(.caption)
         }
         .padding(.vertical, 8)
@@ -191,6 +186,6 @@ struct PatternCard: View {
 
 #Preview {
     InsightsView()
-        .environmentObject(InsightsViewModel(context: PersistenceController.preview.container.viewContext))
-        .environmentObject(SettingsStore())
+        .environment(InsightsViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(SettingsStore())
 }

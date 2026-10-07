@@ -10,7 +10,8 @@ import CoreData
 import Charts
 
 struct MiniTimelineView: View {
-    @EnvironmentObject private var settings: SettingsStore
+    @State private var containerWidth = 0.0
+    @Environment(SettingsStore.self) private var settings
     let glucoseReadings: [GlucoseReading]
     let events: [TimelineEvent]
     let onExpand: () -> Void
@@ -28,7 +29,7 @@ struct MiniTimelineView: View {
         HStack {
             Text("Glucose Timeline")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Spacer()
             
@@ -36,23 +37,27 @@ struct MiniTimelineView: View {
                 onExpand()
             }
             .font(.caption)
-            .foregroundColor(.blue)
+            .foregroundStyle(.blue)
         }
     }
     
     private var chartContainer: some View {
-        GeometryReader { geometry in
-            ScrollView(.horizontal, showsIndicators: false) {
-                chartContent(geometry: geometry)
-            }
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onEnded { value in
-                        if value.translation.width < -50 {
-                            onExpand()
-                        }
+        ScrollView(.horizontal) {
+            chartContent
+        }
+        .scrollIndicators(.hidden)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onEnded { value in
+                    if value.translation.width < -50 {
+                        onExpand()
                     }
-            )
+                }
+        )
+        .onGeometryChange(for: Double.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            containerWidth = width
         }
         .frame(height: 120)
         .background(
@@ -61,10 +66,11 @@ struct MiniTimelineView: View {
         )
     }
     
-    private func chartContent(geometry: GeometryProxy) -> some View {
-        let chartWidth = max(geometry.size.width * 2, 400)
-        let chartHeight: CGFloat = 120
-        
+    /// The chart is twice the visible width so it can be scrolled.
+    private var chartContent: some View {
+        let chartWidth = max(containerWidth * 2, 400)
+        let chartHeight = 120.0
+
         return ZStack {
             glucoseChart(width: chartWidth, height: chartHeight)
             eventOverlays(chartWidth: chartWidth, chartHeight: chartHeight)
@@ -98,7 +104,7 @@ struct MiniTimelineView: View {
                 AxisGridLine()
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
-                        Text(settings.glucoseUnit == "mmol/L" ? String(format: "%.1f", v) : "\(Int(v))")
+                        Text(settings.glucoseUnit == "mmol/L" ? v.formatted(.number.precision(.fractionLength(1))) : "\(Int(v))")
                     }
                 }
             }
@@ -129,20 +135,20 @@ struct EventMarker: View {
         Button(action: onTap) {
             Image(systemName: event.icon)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
                 .background(event.color)
                 .clipShape(Circle())
-                .overlay(
+                .overlay {
                     Circle()
                         .stroke(Color.white, lineWidth: 2)
-                )
+                }
         }
         .position(
             x: xPosition,
             y: chartHeight - yPosition
         )
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
     
     private var xPosition: CGFloat {
@@ -150,7 +156,9 @@ struct EventMarker: View {
     }
     
     private var yPosition: CGFloat {
-        let normalizedValue = (event.glucoseValue - 40) / (300 - 40)
+        // Events without a reading sit in the middle of the chart.
+        guard let glucose = event.glucoseValue else { return chartHeight / 2 }
+        let normalizedValue = (glucose - 40) / (300 - 40)
         return CGFloat(normalizedValue) * chartHeight
     }
 }
@@ -193,5 +201,5 @@ func sampleGlucoseReading(value: Double, offset: Int, context: NSManagedObjectCo
         onExpand: {},
         onEventTap: { _ in }
     )
-    .environmentObject(SettingsStore())
+    .environment(SettingsStore())
 }

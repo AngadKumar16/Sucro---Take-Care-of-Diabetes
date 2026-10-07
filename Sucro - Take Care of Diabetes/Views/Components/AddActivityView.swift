@@ -9,7 +9,7 @@ import SwiftUI
 import CoreData
 
 struct AddActivityView: View {
-    @EnvironmentObject var viewModel: LogViewModel
+    @Environment(LogViewModel.self) private var viewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedActivityType: String = "Walking"
@@ -22,7 +22,7 @@ struct AddActivityView: View {
     private let intensities = ["Light", "Moderate", "Vigorous"]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Activity Details")) {
                     Picker("Activity Type", selection: $selectedActivityType) {
@@ -35,7 +35,7 @@ struct AddActivityView: View {
                         TextField("Duration", text: $duration)
                             .keyboardType(.numberPad)
                         Text("minutes")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Picker("Intensity", selection: $selectedIntensity) {
@@ -48,7 +48,7 @@ struct AddActivityView: View {
                         TextField("Calories", text: $caloriesBurned)
                             .keyboardType(.decimalPad)
                         Text("kcal")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -60,13 +60,13 @@ struct AddActivityView: View {
             .navigationTitle("Add Activity")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         saveActivityEntry()
                     }
@@ -94,5 +94,5 @@ struct AddActivityView: View {
 
 #Preview {
     AddActivityView()
-        .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
 }

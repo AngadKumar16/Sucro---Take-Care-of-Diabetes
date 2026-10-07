@@ -17,7 +17,7 @@ struct RemindersView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Today's Plan")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             // Smart Suggestion
             if let suggestion = suggestion {
@@ -50,14 +50,14 @@ struct SuggestionCard: View {
         HStack(spacing: 12) {
             Image(systemName: "lightbulb.fill")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.yellow)
+                .foregroundStyle(.yellow)
                 .frame(width: 32, height: 32)
                 .background(Color.yellow.opacity(0.2))
                 .clipShape(Circle())
             
             Text(suggestion)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
             
             Spacer()
@@ -67,10 +67,10 @@ struct SuggestionCard: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.yellow.opacity(0.1))
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                )
+                }
         )
     }
 }
@@ -85,47 +85,35 @@ struct ReminderCard: View {
     var body: some View {
         HStack(spacing: 12) {
             // Reminder Icon
-            Image(systemName: reminderIcon)
+            Image(systemName: reminder.type.icon)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 32, height: 32)
-                .background(reminderColor)
+                .background(reminder.type.tint)
                 .clipShape(Circle())
             
             // Reminder Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(reminder.time, formatter: reminderTimeFormatter)
                     .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             // Action Buttons
             HStack(spacing: 8) {
-                Button(action: { showingSnoozeOptions = true }) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.blue)
-                        .frame(width: 32, height: 32)
-                        .background(Color.blue.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                Button(action: onComplete) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.green)
-                        .frame(width: 32, height: 32)
-                        .background(Color.green.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(PlainButtonStyle())
+                Button("Snooze \(reminder.title)", systemImage: "clock.arrow.circlepath", action: showSnoozeOptions)
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(ReminderIconButtonStyle(tint: .blue))
+
+                Button("Mark \(reminder.title) done", systemImage: "checkmark.circle.fill", action: onComplete)
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(ReminderIconButtonStyle(tint: .green))
             }
         }
         .padding(.horizontal, 16)
@@ -144,33 +132,10 @@ struct ReminderCard: View {
             Text("Snooze for how long?")
         }
     }
-    
-    private var reminderIcon: String {
-        switch reminder.type {
-        case .siteChange:
-            return "bandage.fill"
-        case .deviceCheck:
-            return "iphone.radiowaves.left.and.right"
-        case .medication:
-            return "pills.fill"
-        @unknown default:
-                return "bell.fill"
-        }
+
+    private func showSnoozeOptions() {
+        showingSnoozeOptions = true
     }
-    
-    private var reminderColor: Color {
-        switch reminder.type {
-        case .siteChange:
-            return .purple
-        case .deviceCheck:
-            return .blue
-        case .medication:
-            return .green
-        @unknown default:
-               return .gray
-        }
-    }
-    
 }
 
 struct EmptyRemindersView: View {
@@ -178,16 +143,16 @@ struct EmptyRemindersView: View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 32))
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
             
             Text("All caught up!")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Text("No upcoming reminders")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
@@ -208,9 +173,8 @@ private let reminderTimeFormatter: DateFormatter = {
     VStack(spacing: 16) {
         RemindersView(
             reminders: [
-                Reminder(title: "Change infusion site", time: Date().addingTimeInterval(3600), type: .siteChange),
-                Reminder(title: "Check CGM sensor", time: Date().addingTimeInterval(7200), type: .deviceCheck),
-                Reminder(title: "Take medication", time: Date().addingTimeInterval(10800), type: .medication)
+                Reminder(title: "Site Change Due", time: Date().addingTimeInterval(3600), type: .siteChange),
+                Reminder(title: "Check Glucose", time: Date().addingTimeInterval(7200), type: .glucoseCheck)
             ],
             suggestion: "Your site is 2 days old. Plan to change it soon.",
             onSnooze: { _, _ in },

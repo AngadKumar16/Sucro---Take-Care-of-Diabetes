@@ -9,8 +9,8 @@ import SwiftUI
 import CoreData
 
 struct AddGlucoseView: View {
-    @EnvironmentObject var viewModel: LogViewModel
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(LogViewModel.self) private var viewModel
+    @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) var dismiss
 
     @State private var glucoseValue: String = ""
@@ -22,7 +22,7 @@ struct AddGlucoseView: View {
     private let units = ["mg/dL", "mmol/L"]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Glucose Reading")) {
                     HStack {
@@ -34,7 +34,7 @@ struct AddGlucoseView: View {
                                 Text(unit).tag(unit)
                             }
                         }
-                        .pickerStyle(SegmentedPickerStyle())
+                        .pickerStyle(.segmented)
                         .frame(width: 100)
                     }
                     
@@ -54,13 +54,13 @@ struct AddGlucoseView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { selectedUnit = settings.glucoseUnit }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         saveGlucoseReading()
                     }
@@ -91,6 +91,6 @@ struct AddGlucoseView: View {
 
 #Preview {
     AddGlucoseView()
-        .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
-        .environmentObject(SettingsStore())
+        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(SettingsStore())
 }

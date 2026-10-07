@@ -8,53 +8,61 @@
 import SwiftUI
 import CoreData
 
+/// The More sheet. Each tab has its own navigation stack and a Done button
+/// that closes the sheet.
 struct SecondaryTabView: View {
-    @State private var selectedTab = 0
-
-    @StateObject private var insightsViewModel: InsightsViewModel
-    @StateObject private var reportsViewModel: ReportsViewModel
-
-    init(context: NSManagedObjectContext) {
-        _insightsViewModel = StateObject(wrappedValue: InsightsViewModel(context: context))
-        _reportsViewModel = StateObject(wrappedValue: ReportsViewModel(context: context))
-    }
+    @State private var selection: SecondaryTab = .insights
+    // Creating these is cheap (they load data when their screen appears),
+    // so it's fine that SwiftUI may evaluate this more than once.
+    @State private var insightsViewModel = InsightsViewModel(context: PersistenceController.shared.container.viewContext)
+    @State private var reportsViewModel = ReportsViewModel(context: PersistenceController.shared.container.viewContext)
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            InsightsView()
-                .environmentObject(insightsViewModel)
-                .tabItem {
-                    Image(systemName: "lightbulb.fill")
-                    Text("Insights")
+        TabView(selection: $selection) {
+            Tab("Insights", systemImage: "lightbulb.fill", value: .insights) {
+                NavigationStack {
+                    InsightsView()
+                        .environment(insightsViewModel)
+                        .doneButton()
                 }
-                .tag(0)
+            }
 
-            ReportsView()
-                .environmentObject(reportsViewModel)
-                .tabItem {
-                    Image(systemName: "doc.text.fill")
-                    Text("Reports")
+            Tab("Reports", systemImage: "doc.text.fill", value: .reports) {
+                NavigationStack {
+                    ReportsView()
+                        .environment(reportsViewModel)
+                        .doneButton()
                 }
-                .tag(1)
+            }
 
-            DevicesView()
-                .tabItem {
-                    Image(systemName: "iphone.radiowaves.left.and.right")
-                    Text("Devices")
+            Tab("Devices", systemImage: "iphone.radiowaves.left.and.right", value: .devices) {
+                NavigationStack {
+                    DevicesView()
+                        .doneButton()
                 }
-                .tag(2)
+            }
 
-            SettingsView()
-                .tabItem {
-                    Image(systemName: "gearshape.fill")
-                    Text("Settings")
+            Tab("Settings", systemImage: "gearshape.fill", value: .settings) {
+                NavigationStack {
+                    SettingsView()
+                        .doneButton()
                 }
-                .tag(3)
+            }
+
+            Tab("Help", systemImage: "questionmark.circle.fill", value: .help) {
+                NavigationStack {
+                    HelpView()
+                        .doneButton()
+                }
+            }
         }
-        .accentColor(.blue)
+        .tint(.blue)
     }
 }
 
 #Preview {
-    SecondaryTabView(context: PersistenceController.preview.container.viewContext)
+    let context = PersistenceController.preview.container.viewContext
+    SecondaryTabView()
+        .environment(\.managedObjectContext, context)
+        .environment(SettingsStore())
 }

@@ -84,26 +84,35 @@ class DataService {
         return (insulinTotal, carbTotal)
     }
     
-    func calculateIOB(context: NSManagedObjectContext) -> Double {
-        let calendar = Calendar.current
-        let now = Date()
-        guard let fourHoursAgo = calendar.date(byAdding: .hour, value: -4, to: now) else {
-            return 0
-        }
-        
+    /// Estimated insulin on board from rapid-acting doses within the user's
+    /// insulin action time. See `GlucoseCalculator.insulinOnBoard`.
+    func calculateIOB(context: NSManagedObjectContext, at now: Date = Date()) -> Double {
+        let actionHours = SettingsStore.shared.insulinActionHours
+        let since = now.addingTimeInterval(-actionHours * 3600)
+
         let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
-        request.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", fourHoursAgo as NSDate, InsulinType.bolus.rawValue)
-        
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", since as NSDate, now as NSDate)
+
         do {
-            let entries = try context.fetch(request)
-            return entries.reduce(0) { total, entry in
-                let hoursAgo = now.timeIntervalSince(entry.timestamp ?? now) / 3600
-                let remaining = entry.units * max(0, 1 - (hoursAgo / 4))
-                return total + remaining
-            }
+            let doses = try context.fetch(request).compactMap(\.dose)
+            return GlucoseCalculator.insulinOnBoard(doses: doses, at: now, actionHours: actionHours)
         } catch {
             print("Error calculating IOB: \(error.localizedDescription)")
             return 0
+        }
+    }
+
+    /// Most recent rapid-acting dose, used to time the post-bolus glucose check.
+    func fetchLastRapidActingDose(context: NSManagedObjectContext, since: Date) -> InsulinEntry? {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
+
+        do {
+            return try context.fetch(request).first { InsulinType(stored: $0.type)?.isRapidActing == true }
+        } catch {
+            print("Error fetching last dose: \(error.localizedDescription)")
+            return nil
         }
     }
     
@@ -120,18 +129,18 @@ class DataService {
         }
     }
     
-    func getGlucoseAtTime(context: NSManagedObjectContext, time: Date) -> Double {
+    /// The latest reading taken up to 30 minutes before `time`, or `nil` if
+    /// there isn't one. Older readings say nothing about glucose at `time`.
+    func getGlucoseAtTime(context: NSManagedObjectContext, time: Date) -> Double? {
         let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
-        request.predicate = NSPredicate(format: "timestamp <= %@", time as NSDate)
+        request.predicate = NSPredicate(
+            format: "timestamp >= %@ AND timestamp <= %@",
+            time.addingTimeInterval(-30 * 60) as NSDate,
+            time as NSDate
+        )
         request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: false)]
         request.fetchLimit = 1
-        
-        do {
-            let readings = try context.fetch(request)
-            return readings.first?.value ?? 100.0
-        } catch {
-            return 100.0
-        }
+        return (try? context.fetch(request))?.first?.value
     }
     
     // MARK: - Delete Operations

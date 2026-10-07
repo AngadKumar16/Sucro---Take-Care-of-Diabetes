@@ -9,8 +9,8 @@ import SwiftUI
 import CoreData
 
 struct LogView: View {
-    @EnvironmentObject var viewModel: LogViewModel
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(LogViewModel.self) private var viewModel
+    @Environment(SettingsStore.self) private var settings
     @State private var selectedLogType: LogType = .glucose
     
     enum LogType: String, CaseIterable {
@@ -21,87 +21,86 @@ struct LogView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
-                // Date Picker
-                DatePicker("Date", selection: $viewModel.selectedDate, displayedComponents: .date)
-                    .datePickerStyle(GraphicalDatePickerStyle())
-                    .padding()
-                    .onChange(of: viewModel.selectedDate) { _ in
-                        viewModel.fetchEntriesForDate(viewModel.selectedDate)
-                    }
-                
-                // Log Type Selector
-                Picker("Log Type", selection: $selectedLogType) {
-                    ForEach(LogType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
-                    }
+        VStack {
+            // Date Picker
+            DatePicker("Date", selection: Bindable(viewModel).selectedDate, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding()
+                .onChange(of: viewModel.selectedDate) { _, date in
+                    viewModel.fetchEntriesForDate(date)
                 }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                
-                // Content based on selection
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        switch selectedLogType {
-                        case .glucose:
-                            glucoseLogSection
-                        case .carbs:
-                            carbLogSection
-                        case .insulin:
-                            insulinLogSection
-                        case .activity:
-                            activityLogSection
-                        }
-                    }
-                    .padding()
+            
+            // Log Type Selector
+            Picker("Log Type", selection: $selectedLogType) {
+                ForEach(LogType.allCases, id: \.self) { type in
+                    Text(type.rawValue).tag(type)
                 }
-                
-                Spacer()
-                
-                // Add Button
-                Button(action: {
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            
+            // Content based on selection
+            ScrollView {
+                LazyVStack(spacing: 16) {
                     switch selectedLogType {
                     case .glucose:
-                        viewModel.showAddGlucose = true
+                        glucoseLogSection
                     case .carbs:
-                        viewModel.showAddCarbs = true
+                        carbLogSection
                     case .insulin:
-                        viewModel.showAddInsulin = true
+                        insulinLogSection
                     case .activity:
-                        viewModel.showAddActivity = true
+                        activityLogSection
                     }
-                }) {
-                    Text("Add \(selectedLogType.rawValue)")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
                 }
                 .padding()
             }
-            .navigationTitle("Log")
-            .sheet(isPresented: $viewModel.showAddGlucose) {
-                AddGlucoseView()
-                    .environmentObject(viewModel)
+            
+            Spacer()
+            
+            // Add Button
+            Button(action: showAddForm) {
+                Text("Add \(selectedLogType.rawValue)")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .clipShape(.rect(cornerRadius: 12))
             }
-            .sheet(isPresented: $viewModel.showAddCarbs) {
-                AddCarbView()
-                    .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $viewModel.showAddInsulin) {
-                AddInsulinView()
-                    .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $viewModel.showAddActivity) {
-                AddActivityView()
-                    .environmentObject(viewModel)
-            }
+            .padding()
+        }
+        .navigationTitle("Log")
+        .task {
+            viewModel.fetchEntriesForDate(viewModel.selectedDate)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddGlucose) {
+            AddGlucoseView()
+                .environment(viewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddCarbs) {
+            AddCarbView()
+                .environment(viewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddInsulin) {
+            AddInsulinView()
+                .environment(viewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddActivity) {
+            AddActivityView()
+                .environment(viewModel)
         }
     }
     
+    private func showAddForm() {
+        switch selectedLogType {
+        case .glucose: viewModel.showAddGlucose = true
+        case .carbs: viewModel.showAddCarbs = true
+        case .insulin: viewModel.showAddInsulin = true
+        case .activity: viewModel.showAddActivity = true
+        }
+    }
+
     private var glucoseLogSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Glucose Readings")
@@ -109,7 +108,7 @@ struct LogView: View {
             
             if viewModel.glucoseReadings.isEmpty {
                 Text("No glucose readings for this date")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(viewModel.glucoseReadings) { reading in
                     HStack {
@@ -121,7 +120,7 @@ struct LogView: View {
                             if let context = reading.context {
                                 Text(context)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         
@@ -130,12 +129,12 @@ struct LogView: View {
                         if let timestamp = reading.timestamp {
                             Text(timestamp, formatter: timeFormatter)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }
@@ -148,7 +147,7 @@ struct LogView: View {
             
             if viewModel.carbEntries.isEmpty {
                 Text("No carb entries for this date")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(viewModel.carbEntries) { entry in
                     HStack {
@@ -160,7 +159,7 @@ struct LogView: View {
                             if let mealType = entry.mealType {
                                 Text(mealType)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         
@@ -169,12 +168,12 @@ struct LogView: View {
                         if let timestamp = entry.timestamp {
                             Text(timestamp, formatter: timeFormatter)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }
@@ -187,7 +186,7 @@ struct LogView: View {
             
             if viewModel.insulinEntries.isEmpty {
                 Text("No insulin entries for this date")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(viewModel.insulinEntries) { entry in
                     HStack {
@@ -199,7 +198,7 @@ struct LogView: View {
                             if let type = entry.type {
                                 Text(type)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         
@@ -208,12 +207,12 @@ struct LogView: View {
                         if let timestamp = entry.timestamp {
                             Text(timestamp, formatter: timeFormatter)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }
@@ -226,7 +225,7 @@ struct LogView: View {
             
             if viewModel.activityEntries.isEmpty {
                 Text("No activity entries for this date")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(viewModel.activityEntries) { entry in
                     HStack {
@@ -237,7 +236,7 @@ struct LogView: View {
                             
                             Text("\(entry.duration) min")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
@@ -245,12 +244,12 @@ struct LogView: View {
                         if let timestamp = entry.timestamp {
                             Text(timestamp, formatter: timeFormatter)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }
@@ -265,6 +264,6 @@ private let timeFormatter: DateFormatter = {
 
 #Preview {
     LogView()
-        .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
-        .environmentObject(SettingsStore())
+        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(SettingsStore())
 }

@@ -5,50 +5,29 @@
 //  Created by Angad Kumar on 3/12/26.
 //
 
-
-//
-//  ReminderType.swift
-//  Sucro - Take Care of Diabetes
-//
-//  Created by Angad Kumar on 3/13/26.
-//
-
-import Foundation
+import SwiftUI
 
 enum ReminderType: String, CaseIterable, Codable {
     case siteChange = "Site Change"
+    case glucoseCheck = "Glucose Check"
     case deviceCheck = "Device Check"
     case medication = "Medication"
-    case appointment = "Appointment"
-    case labTest = "Lab Test"
-    
+
     var icon: String {
         switch self {
-        case .siteChange:
-            return "bandage.fill"
-        case .deviceCheck:
-            return "iphone.radiowaves.left.and.right"
-        case .medication:
-            return "pills.fill"
-        case .appointment:
-            return "calendar"
-        case .labTest:
-            return "cross.vial.fill"
+        case .siteChange: return "bandage.fill"
+        case .glucoseCheck: return "drop.fill"
+        case .deviceCheck: return "sensor.tag.radiowaves.forward.fill"
+        case .medication: return "pills.fill"
         }
     }
-    
-    var color: String {
+
+    var tint: Color {
         switch self {
-        case .siteChange:
-            return "orange"
-        case .deviceCheck:
-            return "blue"
-        case .medication:
-            return "purple"
-        case .appointment:
-            return "green"
-        case .labTest:
-            return "red"
+        case .siteChange: return .purple
+        case .glucoseCheck: return .red
+        case .deviceCheck: return .blue
+        case .medication: return .green
         }
     }
 }

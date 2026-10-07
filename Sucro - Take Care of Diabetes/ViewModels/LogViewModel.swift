@@ -7,25 +7,23 @@
 
 import Foundation
 import CoreData
-import Combine
 
 @MainActor
+@Observable
 class LogViewModel: BaseViewModel {
-    @Published var glucoseReadings: [GlucoseReading] = []
-    @Published var carbEntries: [CarbEntry] = []
-    @Published var insulinEntries: [InsulinEntry] = []
-    @Published var activityEntries: [ActivityEntry] = []
-    @Published var selectedDate: Date = Date()
-    @Published var showAddGlucose = false
-    @Published var showAddCarbs = false
-    @Published var showAddInsulin = false
-    @Published var showAddActivity = false
+    var glucoseReadings: [GlucoseReading] = []
+    var carbEntries: [CarbEntry] = []
+    var insulinEntries: [InsulinEntry] = []
+    var activityEntries: [ActivityEntry] = []
+    var selectedDate: Date = Date()
+    var showAddGlucose = false
+    var showAddCarbs = false
+    var showAddInsulin = false
+    var showAddActivity = false
     
-    private var cancellables = Set<AnyCancellable>()
     
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
-        fetchEntriesForDate(selectedDate)
     }
     
     func fetchEntriesForDate(_ date: Date) {
@@ -96,10 +94,25 @@ class LogViewModel: BaseViewModel {
         reading.timestamp = timestamp
         reading.context = context
         reading.notes = notes
+        reading.trend = trendIncluding(GlucoseSample(date: timestamp, mgdl: value))?.rawValue
 
         save()
         HealthKitManager.shared.saveGlucoseReading(value, unit: unit, timestamp: timestamp)
+        AlertService.shared.evaluate(context: viewContext)
         fetchEntriesForDate(selectedDate)
+    }
+
+    /// Trend arrow for a new reading, measured against the readings logged
+    /// just before it. `nil` when there aren't any recent enough.
+    private func trendIncluding(_ sample: GlucoseSample) -> GlucoseTrend? {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "timestamp >= %@ AND timestamp < %@",
+            sample.date.addingTimeInterval(-GlucoseCalculator.trendWindow) as NSDate,
+            sample.date as NSDate
+        )
+        let earlier = ((try? viewContext.fetch(request)) ?? []).compactMap(\.sample)
+        return GlucoseCalculator.trend(samples: earlier + [sample])
     }
 
     func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?) {
@@ -128,7 +141,8 @@ class LogViewModel: BaseViewModel {
         entry.notes = notes
 
         save()
-        HealthKitManager.shared.saveInsulinDose(units, type: type ?? "bolus", timestamp: timestamp)
+        HealthKitManager.shared.saveInsulinDose(units, type: type ?? InsulinType.bolus.rawValue, timestamp: timestamp)
+        ReminderService.shared.refresh(context: viewContext)
         fetchEntriesForDate(selectedDate)
     }
 

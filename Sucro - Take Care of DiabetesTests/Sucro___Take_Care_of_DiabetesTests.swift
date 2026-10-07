@@ -43,6 +43,7 @@ private func removeStore(at url: URL) {
 
 // MARK: - SettingsStore (UserDefaults persistence)
 
+@MainActor
 struct SettingsStoreTests {
 
     @Test func valuesPersistAcrossInstances() {

@@ -18,7 +18,7 @@ import CoreData
 
 struct AddSiteChangeView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var viewModel: HomeViewModel
+    @Environment(HomeViewModel.self) private var viewModel
     
     @State private var selectedLocation: SiteLocation = .abdomenLeft
     @State private var notes: String = ""
@@ -26,7 +26,7 @@ struct AddSiteChangeView: View {
     @State private var sitePhoto: UIImage?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Site Location") {
                     Picker("Location", selection: $selectedLocation) {
@@ -42,11 +42,11 @@ struct AddSiteChangeView: View {
                     
                     Text("Body Region: \(selectedLocation.bodyRegion)")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Text("Change every \(selectedLocation.rotationDays) days")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Section("Photo (Optional)") {
@@ -55,7 +55,7 @@ struct AddSiteChangeView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(height: 200)
-                            .cornerRadius(8)
+                            .clipShape(.rect(cornerRadius: 8))
                     }
                     
                     Button(sitePhoto == nil ? "Add Photo" : "Change Photo") {
@@ -64,8 +64,8 @@ struct AddSiteChangeView: View {
                 }
                 
                 Section("Notes") {
-                    TextEditor(text: $notes)
-                        .frame(height: 100)
+                    TextField("Notes", text: $notes, axis: .vertical)
+                        .lineLimit(3...8)
                 }
                 
                 Section {
@@ -73,10 +73,10 @@ struct AddSiteChangeView: View {
                         saveSiteChange()
                     }
                     .frame(maxWidth: .infinity)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding()
                     .background(Color.blue)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
                 .listRowBackground(Color.clear)
             }
@@ -110,13 +110,8 @@ struct AddSiteChangeView: View {
         }
         
         viewModel.save()
-        viewModel.fetchLatestData() // Refresh to show new site change
-        
-        // Schedule reminder for next change
-        NotificationService.shared.scheduleSiteChangeReminder(days: selectedLocation.rotationDays) { _ in
-            print("Site change reminder scheduled")
-        }
-        
+        // Refreshing also schedules the reminder for the next change.
+        viewModel.fetchLatestData()
         dismiss()
     }
 }
@@ -161,5 +156,5 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 #Preview {
     AddSiteChangeView()
-        .environmentObject(HomeViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(HomeViewModel(context: PersistenceController.preview.container.viewContext))
 }

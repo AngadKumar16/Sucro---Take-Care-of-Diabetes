@@ -10,10 +10,7 @@ import CoreData
 
 struct SettingsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @EnvironmentObject private var settings: SettingsStore
-
-    // Local mirror for the target-range text field; committed on change.
-    @State private var targetRangeText: String = ""
+    @Environment(SettingsStore.self) private var settings
 
     // Export / clear state
     @State private var exportURL: URL?
@@ -27,35 +24,33 @@ struct SettingsView: View {
     private let exportService = ExportService.shared
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    profileSection
-                    glucoseSection
-                    notificationsSection
-                    dataManagementSection
-                    Spacer()
-                }
-                .padding()
+        ScrollView {
+            VStack(spacing: 20) {
+                profileSection
+                glucoseSection
+                InsulinSettingsSection()
+                notificationsSection
+                dataManagementSection
+                Spacer()
             }
-            .navigationTitle("Settings")
-            .onAppear { targetRangeText = settings.targetRangeString }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportURL {
-                    ShareSheet(items: [url])
-                }
+            .padding()
+        }
+        .navigationTitle("Settings")
+        .sheet(isPresented: $showShareSheet) {
+            if let url = exportURL {
+                ShareSheet(items: [url])
             }
-            .alert("Clear All Data?", isPresented: $showClearConfirm) {
-                Button("Cancel", role: .cancel) {}
-                Button("Delete Everything", role: .destructive) { clearAllData() }
-            } message: {
-                Text("This permanently deletes all glucose readings, insulin, carbs, activity, and site changes. This cannot be undone.")
-            }
-            .alert("Sucro", isPresented: $showStatusAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(statusMessage ?? "")
-            }
+        }
+        .alert("Clear All Data?", isPresented: $showClearConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete Everything", role: .destructive) { clearAllData() }
+        } message: {
+            Text("This permanently deletes all glucose readings, insulin, carbs, activity, and site changes. This cannot be undone.")
+        }
+        .alert("Sucro", isPresented: $showStatusAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(statusMessage ?? "")
         }
     }
 
@@ -72,20 +67,20 @@ struct SettingsView: View {
                 Circle()
                     .fill(Color.blue.opacity(0.2))
                     .frame(width: 60, height: 60)
-                    .overlay(
+                    .overlay {
                         Text(settings.userInitials)
                             .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.blue)
-                    )
+                            .bold()
+                            .foregroundStyle(.blue)
+                    }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("Your name", text: $settings.userName)
+                    TextField("Your name", text: Bindable(settings).userName)
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .textInputAutocapitalization(.words)
 
-                    Picker("Diabetes Type", selection: $settings.diabetesType) {
+                    Picker("Diabetes Type", selection: Bindable(settings).diabetesType) {
                         ForEach(diabetesTypes, id: \.self) { type in
                             Text(type).tag(type)
                         }
@@ -100,7 +95,7 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     private var glucoseSection: some View {
@@ -110,25 +105,27 @@ struct SettingsView: View {
 
             VStack(spacing: 8) {
                 SettingsRow(title: "Unit", value: settings.glucoseUnit) {
-                    Picker("Unit", selection: $settings.glucoseUnit) {
+                    Picker("Unit", selection: Bindable(settings).glucoseUnit) {
                         Text("mg/dL").tag("mg/dL")
                         Text("mmol/L").tag("mmol/L")
                     }
                     .pickerStyle(.menu)
                 }
 
-                SettingsRow(title: "Target Range", value: settings.targetRangeString) {
-                    TextField("70-180", text: $targetRangeText)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 90)
-                        .onSubmit { settings.targetRangeString = targetRangeText }
-                }
+                ThresholdRow(title: "Urgent Low", value: Bindable(settings).urgentLow, bounds: settings.urgentLowBounds)
+                ThresholdRow(title: "Low", value: Bindable(settings).targetLow, bounds: settings.targetLowBounds)
+                ThresholdRow(title: "High", value: Bindable(settings).targetHigh, bounds: settings.targetHighBounds)
+                ThresholdRow(title: "Urgent High", value: Bindable(settings).urgentHigh, bounds: settings.urgentHighBounds)
             }
+
+            Text("Readings between Low and High count as in range. You get an alert below Low and above Urgent High.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     private var notificationsSection: some View {
@@ -137,14 +134,17 @@ struct SettingsView: View {
                 .font(.headline)
 
             VStack(spacing: 8) {
-                ToggleRow(title: "Enable Notifications", isOn: $settings.notificationsEnabled)
-                ToggleRow(title: "Dark Mode", isOn: $settings.darkModeEnabled)
+                ToggleRow(title: "Enable Notifications", isOn: Bindable(settings).notificationsEnabled)
+                    .onChange(of: settings.notificationsEnabled) { _, enabled in
+                        notificationsToggled(enabled)
+                    }
+                ToggleRow(title: "Dark Mode", isOn: Bindable(settings).darkModeEnabled)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     private var dataManagementSection: some View {
@@ -154,15 +154,15 @@ struct SettingsView: View {
 
             VStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
-                    ToggleRow(title: "Auto Backup", isOn: $settings.autoBackupEnabled)
-                        .onChange(of: settings.autoBackupEnabled) { enabled in
+                    ToggleRow(title: "Auto Backup", isOn: Bindable(settings).autoBackupEnabled)
+                        .onChange(of: settings.autoBackupEnabled) { _, enabled in
                             if enabled { runBackup() }
                         }
 
                     if settings.autoBackupEnabled {
                         Text(backupStatusText)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -177,32 +177,32 @@ struct SettingsView: View {
                                 .font(.caption)
                         }
                     }
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .padding()
                     .background(Color(.systemBackground))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
                 .disabled(isExporting)
 
                 Button(action: { showClearConfirm = true }) {
                     HStack {
                         Text("Clear All Data")
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                         Spacer()
                         Image(systemName: "trash")
                             .font(.caption)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                     }
                     .padding()
                     .background(Color(.systemBackground))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     // MARK: - Actions
@@ -223,18 +223,13 @@ struct SettingsView: View {
             return
         }
 
-        exportService.exportToCSV(glucoseReadings: readings) { result in
-            DispatchQueue.main.async {
-                isExporting = false
-                switch result {
-                case .success(let url):
-                    exportURL = url
-                    showShareSheet = true
-                case .failure(let error):
-                    statusMessage = error.localizedDescription
-                    showStatusAlert = true
-                }
-            }
+        defer { isExporting = false }
+        do {
+            exportURL = try exportService.exportToCSV(glucoseReadings: readings)
+            showShareSheet = true
+        } catch {
+            statusMessage = error.localizedDescription
+            showStatusAlert = true
         }
     }
 
@@ -253,8 +248,23 @@ struct SettingsView: View {
         _ = BackupService.shared.performBackup(context: viewContext)
     }
 
+    private func notificationsToggled(_ enabled: Bool) {
+        guard enabled else {
+            NotificationService.shared.cancelAll()
+            return
+        }
+        ReminderService.shared.refresh(context: viewContext)
+        AlertService.shared.evaluate(context: viewContext)
+        Task { await NotificationService.shared.requestAuthorizationIfNeeded() }
+    }
+
     private func clearAllData() {
         let success = dataService.clearAllData(context: viewContext)
+        if success {
+            AlertService.shared.reset()
+            ReminderService.shared.reset()
+            NotificationService.shared.cancelAll()
+        }
         statusMessage = success
             ? "All your data has been deleted."
             : "Couldn't delete your data. Please try again."
@@ -307,5 +317,5 @@ struct ToggleRow: View {
 #Preview {
     SettingsView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-        .environmentObject(SettingsStore())
+        .environment(SettingsStore())
 }

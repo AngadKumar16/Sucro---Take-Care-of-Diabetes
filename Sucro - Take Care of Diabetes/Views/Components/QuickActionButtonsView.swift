@@ -55,6 +55,7 @@ struct QuickActionButton: View {
 
     @State private var isPressed = false
     @State private var showingPresets = false
+    @State private var presetHaptic = 0
 
     private var supportsPresets: Bool { !presets.isEmpty && onPreset != nil }
     
@@ -63,11 +64,11 @@ struct QuickActionButton: View {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 
                 Text(title)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -79,7 +80,7 @@ struct QuickActionButton: View {
                     .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         // simultaneousGesture fires reliably alongside the Button's tap; a plain
         // .onLongPressGesture perform is swallowed by the Button.
@@ -92,10 +93,11 @@ struct QuickActionButton: View {
                 .onEnded { _ in
                     withAnimation(.easeInOut(duration: 0.1)) { isPressed = false }
                     guard supportsPresets else { return }
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    presetHaptic += 1
                     showingPresets = true
                 }
         )
+        .sensoryFeedback(.impact(weight: .medium), trigger: presetHaptic)
         .alert("Quick Presets", isPresented: $showingPresets) {
             ForEach(presets) { preset in
                 Button("\(preset.name) (\(Int(preset.carbs))g carbs)") {

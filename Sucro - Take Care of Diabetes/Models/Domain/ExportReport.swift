@@ -14,7 +14,7 @@
 import Foundation
 
 struct ExportReport: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var startDate: Date
     var endDate: Date
     var reportType: ReportType

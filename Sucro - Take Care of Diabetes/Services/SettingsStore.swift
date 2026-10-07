@@ -8,13 +8,14 @@
 //
 
 import Foundation
-import Combine
 import SwiftUI
 
-final class SettingsStore: ObservableObject {
+@MainActor
+@Observable
+final class SettingsStore {
     static let shared = SettingsStore()
 
-    private let defaults: UserDefaults
+    @ObservationIgnored private let defaults: UserDefaults
 
     // MARK: - Keys
     private enum Key {
@@ -23,6 +24,10 @@ final class SettingsStore: ObservableObject {
         static let glucoseUnit = "settings.glucoseUnit"
         static let targetLow = "settings.targetLow"
         static let targetHigh = "settings.targetHigh"
+        static let urgentLow = "settings.urgentLow"
+        static let urgentHigh = "settings.urgentHigh"
+        static let insulinActionHours = "settings.insulinActionHours"
+        static let acceptedDisclaimerVersion = "settings.acceptedDisclaimerVersion"
         static let notificationsEnabled = "settings.notificationsEnabled"
         static let darkModeEnabled = "settings.darkModeEnabled"
         static let autoBackupEnabled = "settings.autoBackupEnabled"
@@ -34,54 +39,81 @@ final class SettingsStore: ObservableObject {
     }
 
     // MARK: - Profile
-    @Published var userName: String {
+    var userName: String {
         didSet { defaults.set(userName, forKey: Key.userName) }
     }
-    @Published var diabetesType: String {
+    var diabetesType: String {
         didSet { defaults.set(diabetesType, forKey: Key.diabetesType) }
     }
 
     // MARK: - Glucose preferences
-    @Published var glucoseUnit: String {
+    var glucoseUnit: String {
         didSet { defaults.set(glucoseUnit, forKey: Key.glucoseUnit) }
     }
-    @Published var targetLow: Double {
+    var targetLow: Double {
         didSet { defaults.set(targetLow, forKey: Key.targetLow) }
     }
-    @Published var targetHigh: Double {
+    var targetHigh: Double {
         didSet { defaults.set(targetHigh, forKey: Key.targetHigh) }
+    }
+    /// Readings below this are an urgent low. Always below `targetLow`.
+    var urgentLow: Double {
+        didSet { defaults.set(urgentLow, forKey: Key.urgentLow) }
+    }
+    /// Readings above this are an urgent high. Always above `targetHigh`.
+    var urgentHigh: Double {
+        didSet { defaults.set(urgentHigh, forKey: Key.urgentHigh) }
+    }
+
+    // MARK: - Insulin
+    /// Duration of insulin action (DIA) in hours for rapid-acting insulin.
+    /// Drives the insulin-on-board estimate.
+    var insulinActionHours: Double {
+        didSet { defaults.set(insulinActionHours, forKey: Key.insulinActionHours) }
+    }
+
+    // MARK: - Disclaimer
+    /// Version of the medical disclaimer the user last accepted. Bump
+    /// `currentDisclaimerVersion` when the wording changes materially.
+    var acceptedDisclaimerVersion: Int {
+        didSet { defaults.set(acceptedDisclaimerVersion, forKey: Key.acceptedDisclaimerVersion) }
+    }
+    static let currentDisclaimerVersion = 1
+
+    var hasAcceptedDisclaimer: Bool {
+        acceptedDisclaimerVersion >= Self.currentDisclaimerVersion
     }
 
     // MARK: - App preferences
-    @Published var notificationsEnabled: Bool {
+    var notificationsEnabled: Bool {
         didSet { defaults.set(notificationsEnabled, forKey: Key.notificationsEnabled) }
     }
-    @Published var darkModeEnabled: Bool {
+    var darkModeEnabled: Bool {
         didSet { defaults.set(darkModeEnabled, forKey: Key.darkModeEnabled) }
     }
-    @Published var autoBackupEnabled: Bool {
+    var autoBackupEnabled: Bool {
         didSet { defaults.set(autoBackupEnabled, forKey: Key.autoBackupEnabled) }
     }
     /// Timestamp of the last automatic backup. Used to throttle backups to
     /// once per day. `nil` until the first backup runs.
-    @Published var lastBackupDate: Date? {
+    var lastBackupDate: Date? {
         didSet { defaults.set(lastBackupDate, forKey: Key.lastBackupDate) }
     }
 
     // MARK: - Device preferences
-    @Published var autoSyncEnabled: Bool {
+    var autoSyncEnabled: Bool {
         didSet { defaults.set(autoSyncEnabled, forKey: Key.autoSyncEnabled) }
     }
-    @Published var backgroundMonitoringEnabled: Bool {
+    var backgroundMonitoringEnabled: Bool {
         didSet { defaults.set(backgroundMonitoringEnabled, forKey: Key.backgroundMonitoringEnabled) }
     }
-    @Published var lowBatteryAlertsEnabled: Bool {
+    var lowBatteryAlertsEnabled: Bool {
         didSet { defaults.set(lowBatteryAlertsEnabled, forKey: Key.lowBatteryAlertsEnabled) }
     }
 
     /// Names of devices the user has connected. Persists across launches so the
     /// Devices screen's Connect/Disconnect actions have a real effect.
-    @Published var connectedDeviceNames: [String] {
+    var connectedDeviceNames: [String] {
         didSet { defaults.set(connectedDeviceNames, forKey: Key.connectedDevices) }
     }
 
@@ -96,6 +128,10 @@ final class SettingsStore: ObservableObject {
             Key.glucoseUnit: "mg/dL",
             Key.targetLow: 70.0,
             Key.targetHigh: 180.0,
+            Key.urgentLow: 55.0,
+            Key.urgentHigh: 250.0,
+            Key.insulinActionHours: 4.0,
+            Key.acceptedDisclaimerVersion: 0,
             Key.notificationsEnabled: true,
             Key.darkModeEnabled: false,
             Key.autoBackupEnabled: true,
@@ -110,6 +146,10 @@ final class SettingsStore: ObservableObject {
         self.glucoseUnit = defaults.string(forKey: Key.glucoseUnit) ?? "mg/dL"
         self.targetLow = defaults.double(forKey: Key.targetLow)
         self.targetHigh = defaults.double(forKey: Key.targetHigh)
+        self.urgentLow = defaults.double(forKey: Key.urgentLow)
+        self.urgentHigh = defaults.double(forKey: Key.urgentHigh)
+        self.insulinActionHours = defaults.double(forKey: Key.insulinActionHours)
+        self.acceptedDisclaimerVersion = defaults.integer(forKey: Key.acceptedDisclaimerVersion)
         self.notificationsEnabled = defaults.bool(forKey: Key.notificationsEnabled)
         self.darkModeEnabled = defaults.bool(forKey: Key.darkModeEnabled)
         self.autoBackupEnabled = defaults.bool(forKey: Key.autoBackupEnabled)
@@ -118,6 +158,19 @@ final class SettingsStore: ObservableObject {
         self.lowBatteryAlertsEnabled = defaults.bool(forKey: Key.lowBatteryAlertsEnabled)
         self.connectedDeviceNames = defaults.stringArray(forKey: Key.connectedDevices) ?? []
         self.lastBackupDate = defaults.object(forKey: Key.lastBackupDate) as? Date
+
+        normalizeThresholds()
+        insulinActionHours = min(max(insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)
+    }
+
+    /// Older builds only stored a target range, and allowed any low < high.
+    /// Nudge the urgent lines so the four thresholds are strictly ordered.
+    private func normalizeThresholds() {
+        let step = Self.thresholdStep
+        if targetHigh - targetLow < 2 * step { targetHigh = targetLow + 2 * step }
+        if urgentLow >= targetLow { urgentLow = max(40, targetLow - step) }
+        if urgentLow >= targetLow { targetLow = urgentLow + step }
+        if urgentHigh <= targetHigh { urgentHigh = targetHigh + step }
     }
 
     // MARK: - Derived helpers
@@ -132,7 +185,9 @@ final class SettingsStore: ObservableObject {
             guard parts.count == 2,
                   let low = Double(parts[0]),
                   let high = Double(parts[1]),
-                  low < high else { return }
+                  low < high,
+                  low > urgentLow,
+                  high < urgentHigh else { return }
             targetLow = low
             targetHigh = high
         }
@@ -161,8 +216,8 @@ final class SettingsStore: ObservableObject {
     /// mmol/L is shown with one decimal, mg/dL as a whole number.
     func glucoseValueString(_ mgdl: Double) -> String {
         glucoseUnit == "mmol/L"
-            ? String(format: "%.1f", displayGlucose(mgdl))
-            : String(format: "%.0f", mgdl)
+            ? displayGlucose(mgdl).formatted(.number.precision(.fractionLength(1)))
+            : mgdl.formatted(.number.precision(.fractionLength(0)))
     }
 
     /// Formatted glucose value including the unit suffix.
@@ -170,23 +225,45 @@ final class SettingsStore: ObservableObject {
         "\(glucoseValueString(mgdl)) \(glucoseUnit)"
     }
 
-    // MARK: - Glucose thresholds (driven by the user's target range)
+    // MARK: - Glucose thresholds
 
-    /// Above this a reading is treated as urgently high (red / critical banner).
-    /// Sits a fixed margin above the target ceiling so it tracks the user's range.
-    var urgentHigh: Double { targetHigh + 70 }
+    /// The four user thresholds as one value. Every color, banner and alert
+    /// classifies readings through this, so they can't disagree.
+    var thresholds: GlucoseThresholds {
+        GlucoseThresholds(
+            urgentLow: urgentLow,
+            targetLow: targetLow,
+            targetHigh: targetHigh,
+            urgentHigh: urgentHigh
+        )
+    }
 
-    /// Below this a reading is treated as urgently low (red).
-    var urgentLow: Double { targetLow - 20 }
+    func zone(for mgdl: Double) -> GlucoseZone {
+        thresholds.zone(for: mgdl)
+    }
 
     /// Whether a stored mg/dL reading falls inside the user's target range.
     func isInTargetRange(_ mgdl: Double) -> Bool {
-        mgdl >= targetLow && mgdl <= targetHigh
+        zone(for: mgdl) == .inRange
     }
 
-    /// Whether a reading is critical: below the target floor or urgently high.
-    /// Drives the red critical banner and scheduled critical alerts.
+    /// Whether a reading needs action now: any low, or an urgent high.
     func isCriticalGlucose(_ mgdl: Double) -> Bool {
-        mgdl < targetLow || mgdl > urgentHigh
+        zone(for: mgdl).needsAction
     }
+
+    // Allowed ranges for each threshold in mg/dL, keeping them strictly
+    // ordered: urgentLow < targetLow < targetHigh < urgentHigh.
+    static let thresholdStep: Double = 5
+    var urgentLowBounds: ClosedRange<Double> { Self.range(40, targetLow - Self.thresholdStep) }
+    var targetLowBounds: ClosedRange<Double> { Self.range(urgentLow + Self.thresholdStep, targetHigh - 2 * Self.thresholdStep) }
+    var targetHighBounds: ClosedRange<Double> { Self.range(targetLow + 2 * Self.thresholdStep, urgentHigh - Self.thresholdStep) }
+    var urgentHighBounds: ClosedRange<Double> { Self.range(targetHigh + Self.thresholdStep, 400) }
+
+    /// A range that never traps, even if the bounds cross.
+    private static func range(_ lower: Double, _ upper: Double) -> ClosedRange<Double> {
+        lower...max(lower, upper)
+    }
+
+    static let insulinActionBounds: ClosedRange<Double> = 3...6
 }

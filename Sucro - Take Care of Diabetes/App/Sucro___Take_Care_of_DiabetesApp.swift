@@ -1,40 +1,54 @@
-//___FILEHEADER___
+//
+//  Sucro___Take_Care_of_DiabetesApp.swift
+//  Sucro - Take Care of Diabetes
+//
 
 import SwiftUI
 import CoreData
 
 @main
 struct SucroApp: App {
-    let persistenceController = PersistenceController.shared
-    
-    // Add this: Create the view model as StateObject
-    @StateObject private var monitorViewModel: MonitorViewModel
-    @StateObject private var settings = SettingsStore.shared
+    @State private var persistence = PersistenceController.shared
+    @State private var settings = SettingsStore.shared
+    // Shared by the Monitor tab and the full-screen Monitor opened from Home.
+    @State private var monitorViewModel: MonitorViewModel
+
+    private static let isUITesting = ProcessInfo.processInfo.arguments.contains("-uiTesting")
 
     init() {
-        // Initialize with the persistence context
-        let context = persistenceController.container.viewContext
-        _monitorViewModel = StateObject(wrappedValue: MonitorViewModel(context: context))
+        _monitorViewModel = State(
+            initialValue: MonitorViewModel(context: PersistenceController.shared.container.viewContext)
+        )
+
+        // UI tests skip the safety notice unless a test asks to see it.
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-resetDisclaimer") {
+            SettingsStore.shared.acceptedDisclaimerVersion = 0
+        } else if Self.isUITesting {
+            SettingsStore.shared.acceptedDisclaimerVersion = SettingsStore.currentDisclaimerVersion
+        }
     }
 
     var body: some Scene {
         WindowGroup {
-            AppNavigationView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environmentObject(monitorViewModel) // ✅ Inject here
-                .environmentObject(settings)
+            RootView()
+                .environment(\.managedObjectContext, persistence.container.viewContext)
+                .environment(persistence)
+                .environment(monitorViewModel)
+                .environment(settings)
                 .preferredColorScheme(settings.preferredColorScheme)
                 .task {
-                    // Ask for Apple Health access so logged data can mirror there.
-                    // Skipped during UI tests to avoid the system permission sheet.
-                    if !ProcessInfo.processInfo.arguments.contains("-uiTesting") {
-                        HealthKitManager.shared.requestAuthorization()
+                    // Run a daily backup if the user has Auto Backup enabled.
+                    if persistence.loadError == nil {
+                        BackupService.shared.performBackupIfNeeded(context: persistence.container.viewContext)
                     }
 
-                    // Run a daily backup if the user has Auto Backup enabled.
-                    BackupService.shared.performBackupIfNeeded(
-                        context: persistenceController.container.viewContext
-                    )
+                    // Permission prompts are skipped during UI tests so system
+                    // sheets don't cover the app.
+                    if !Self.isUITesting {
+                        await HealthKitManager.shared.requestAuthorization()
+                        await NotificationService.shared.requestAuthorizationIfNeeded()
+                    }
                 }
         }
     }

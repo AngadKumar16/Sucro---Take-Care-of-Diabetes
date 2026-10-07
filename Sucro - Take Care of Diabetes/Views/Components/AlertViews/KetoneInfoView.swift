@@ -19,14 +19,14 @@ struct KetoneInfoView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     AlertCard(
                         icon: "exclamationmark.triangle.fill",
                         color: .orange,
-                        title: "High Glucose & Rising",
-                        message: "Your glucose is above 180 mg/dL and still going up. Check your ketones."
+                        title: "High Glucose",
+                        message: "High glucose can lead to ketones, especially if it stays high or you feel unwell. Check them now."
                     )
                     
                     VStack(alignment: .leading, spacing: 12) {
@@ -48,7 +48,7 @@ struct KetoneInfoView: View {
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Ketone Levels")
@@ -84,21 +84,21 @@ struct AlertCard: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
                 Text(message)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
         }
         .padding()
         .background(color.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -109,7 +109,7 @@ struct KetoneGuidanceRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .font(.caption)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -118,7 +118,7 @@ struct KetoneGuidanceRow: View {
                     .fontWeight(.semibold)
                 Text(action)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -155,7 +155,7 @@ struct KetoneLevelIndicator: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: level.icon)
-                .foregroundColor(level.color)
+                .foregroundStyle(level.color)
             
             Text(description)
                 .font(.subheadline)

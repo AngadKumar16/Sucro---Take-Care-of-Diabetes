@@ -7,16 +7,18 @@
 
 import Foundation
 import CoreData
-import Combine
 
 @MainActor
+@Observable
 class MonitorViewModel: BaseViewModel {
-    @Published var glucoseReadings: [GlucoseReading] = []
-    @Published var timeRange: TimeRange = .day
-    @Published var averageGlucose: Double = 0.0
-    @Published var glucoseRange: (min: Double, max: Double) = (0, 0)
-    @Published var timeInRange: Double = 0.0
-    @Published var trendData: [GlucoseTrendPoint] = []
+    var glucoseReadings: [GlucoseReading] = []
+    var timeRange: TimeRange = .day {
+        didSet { fetchDataForTimeRange() }
+    }
+    var averageGlucose: Double = 0.0
+    var glucoseRange: (min: Double, max: Double) = (0, 0)
+    var timeInRange: Double = 0.0
+    var trendData: [GlucoseTrendPoint] = []
     
     enum TimeRange: String, CaseIterable {
         case day = "24h"
@@ -49,18 +51,12 @@ class MonitorViewModel: BaseViewModel {
         let value: Double
     }
     
-    private var cancellables = Set<AnyCancellable>()
     private let settings = SettingsStore.shared
 
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
-        fetchDataForTimeRange()
     }
     
-    func updateTimeRange(_ range: TimeRange) {
-        timeRange = range
-        fetchDataForTimeRange()
-    }
     
     func fetchDataForTimeRange() {
         let calendar = Calendar.current

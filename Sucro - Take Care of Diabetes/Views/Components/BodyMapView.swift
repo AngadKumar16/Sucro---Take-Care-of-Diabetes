@@ -12,6 +12,16 @@ struct BodyMapView: View {
     let onTap: () -> Void
     
     var body: some View {
+        Button(action: onTap) {
+            map
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Current site: \(selectedLocation)")
+        .accessibilityHint("Logs a new site change")
+    }
+
+    private var map: some View {
         VStack(spacing: 8) {
             // Body Outline
             ZStack {
@@ -30,9 +40,6 @@ struct BodyMapView: View {
                             x: 60 + (location.coordinates.x * 100),
                             y: 40 + (location.coordinates.y * 160)
                         )
-                        .onTapGesture {
-                            onTap()
-                        }
                 }
             }
             .frame(width: 120, height: 200)
@@ -41,28 +48,23 @@ struct BodyMapView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Current: \(selectedLocation)")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                 
                 Text("Tap to change")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
 #Preview {
     VStack(spacing: 20) {
-        BodyMapView(selectedLocation: "Abdomen Left") {
-            print("Tapped body map")
-        }
-        
-        BodyMapView(selectedLocation: "Thigh Right") {
-            print("Tapped body map")
-        }
+        BodyMapView(selectedLocation: "Abdomen Left") {}
+        BodyMapView(selectedLocation: "Thigh Right") {}
     }
     .padding()
 }

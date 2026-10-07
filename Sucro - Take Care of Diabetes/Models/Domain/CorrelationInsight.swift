@@ -8,7 +8,7 @@
 import Foundation
 
 struct CorrelationInsight: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var title: String
     var description: String
     var correlationType: CorrelationType

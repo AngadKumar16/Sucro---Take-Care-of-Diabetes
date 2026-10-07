@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DevicesView: View {
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(SettingsStore.self) private var settings
 
     struct Device: Identifiable {
         var id: String { name }
@@ -43,73 +43,71 @@ struct DevicesView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Connected Devices
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Connected Devices")
-                            .font(.headline)
-                        
-                        if connectedDevices.isEmpty {
-                            Text("No devices connected")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        ForEach(connectedDevices) { device in
-                            DeviceCard(device: device) {
-                                disconnect(device)
-                            }
+        ScrollView {
+            VStack(spacing: 20) {
+                // Connected Devices
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Connected Devices")
+                        .font(.headline)
+                    
+                    if connectedDevices.isEmpty {
+                        Text("No devices connected")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(connectedDevices) { device in
+                        DeviceCard(device: device) {
+                            disconnect(device)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    
-                    // Available Devices
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Available Devices")
-                            .font(.headline)
-                        
-                        if availableDevices.isEmpty {
-                            Text("All known devices are connected")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        ForEach(availableDevices) { device in
-                            AvailableDeviceCard(device: device) {
-                                connect(device)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    
-                    // Device Settings
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Device Settings")
-                            .font(.headline)
-                        
-                        VStack(spacing: 8) {
-                            SettingsButton(title: "Auto-sync", icon: "arrow.triangle.2.circlepath", isOn: $settings.autoSyncEnabled)
-                            SettingsButton(title: "Background Monitoring", icon: "waveform.path.ecg", isOn: $settings.backgroundMonitoringEnabled)
-                            SettingsButton(title: "Low Battery Alerts", icon: "battery.25", isOn: $settings.lowBatteryAlertsEnabled)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    
-                    Spacer()
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+                
+                // Available Devices
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Available Devices")
+                        .font(.headline)
+                    
+                    if availableDevices.isEmpty {
+                        Text("All known devices are connected")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(availableDevices) { device in
+                        AvailableDeviceCard(device: device) {
+                            connect(device)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+                
+                // Device Settings
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Device Settings")
+                        .font(.headline)
+                    
+                    VStack(spacing: 8) {
+                        SettingsButton(title: "Auto-sync", icon: "arrow.triangle.2.circlepath", isOn: Bindable(settings).autoSyncEnabled)
+                        SettingsButton(title: "Background Monitoring", icon: "waveform.path.ecg", isOn: Bindable(settings).backgroundMonitoringEnabled)
+                        SettingsButton(title: "Low Battery Alerts", icon: "battery.25", isOn: Bindable(settings).lowBatteryAlertsEnabled)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+                
+                Spacer()
             }
-            .navigationTitle("Devices")
+            .padding()
         }
+        .navigationTitle("Devices")
     }
 }
 
@@ -126,7 +124,7 @@ struct DeviceCard: View {
 
                 Text(device.type)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -134,7 +132,7 @@ struct DeviceCard: View {
             VStack(alignment: .trailing, spacing: 4) {
                 HStack {
                     Image(systemName: "battery.100")
-                        .foregroundColor(device.batteryLevel > 20 ? .green : .red)
+                        .foregroundStyle(device.batteryLevel > 20 ? .green : .red)
                     Text("\(device.batteryLevel)%")
                         .font(.caption)
                 }
@@ -146,7 +144,7 @@ struct DeviceCard: View {
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -163,7 +161,7 @@ struct AvailableDeviceCard: View {
                 
                 Text(device.type)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -176,7 +174,7 @@ struct AvailableDeviceCard: View {
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -188,7 +186,7 @@ struct SettingsButton: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(width: 24)
 
             Text(title)
@@ -204,5 +202,5 @@ struct SettingsButton: View {
 
 #Preview {
     DevicesView()
-        .environmentObject(SettingsStore())
+        .environment(SettingsStore())
 }

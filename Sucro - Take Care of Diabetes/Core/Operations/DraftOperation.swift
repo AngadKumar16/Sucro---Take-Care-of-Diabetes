@@ -8,7 +8,7 @@
 import CoreData
 import SwiftUI
 
-// Generic drafting operation for any Core Data object - NOT an ObservableObject
+// Generic drafting operation for any Core Data object.
 class DraftOperation<Object: NSManagedObject>: Identifiable {
     let id = UUID()
     let tempContext: NSManagedObjectContext
@@ -68,9 +68,9 @@ class DraftOperation<Object: NSManagedObject>: Identifiable {
     }
 }
 
-// View wrapper - use @StateObject or just pass it directly
+// Presents a draft for editing with Cancel and Save buttons.
 struct DraftingView<Object: NSManagedObject, Content: View>: View {
-    let operation: DraftOperation<Object>  // CHANGED: Removed @ObservedObject
+    let operation: DraftOperation<Object>
     @Environment(\.dismiss) private var dismiss
     let content: (Object) -> Content
     
@@ -80,7 +80,7 @@ struct DraftingView<Object: NSManagedObject, Content: View>: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             content(operation.draftObject)
                 .environment(\.managedObjectContext, operation.tempContext)
                 .toolbar {

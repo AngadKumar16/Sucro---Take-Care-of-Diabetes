@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum GlucoseTrend: String, CaseIterable, Codable {
+nonisolated enum GlucoseTrend: String, CaseIterable, Codable, Sendable {
     case risingFast = "rising_fast"
     case rising = "rising"
     case stable = "stable"
@@ -44,6 +44,37 @@ enum GlucoseTrend: String, CaseIterable, Codable {
         }
     }
     
+    /// Reads a stored trend, including the Dexcom-style names older data
+    /// and previews used ("up", "doubleDown", "flat", ...).
+    init?(stored: String?) {
+        guard let key = stored?.lowercased(), !key.isEmpty else { return nil }
+        if let trend = GlucoseTrend(rawValue: key) {
+            self = trend
+            return
+        }
+        switch key {
+        case "doubleup", "risingfast": self = .risingFast
+        case "up", "singleup", "fortyfiveup": self = .rising
+        case "flat", "notchanging", "steady": self = .stable
+        case "down", "singledown", "fortyfivedown": self = .falling
+        case "doubledown", "fallingfast": self = .fallingFast
+        default: return nil
+        }
+    }
+
+    var isRising: Bool { self == .rising || self == .risingFast }
+
+    /// Arrow shown next to the current glucose value.
+    var arrowSymbol: String {
+        switch self {
+        case .risingFast: return "arrow.up"
+        case .rising: return "arrow.up.right"
+        case .stable: return "arrow.right"
+        case .falling: return "arrow.down.right"
+        case .fallingFast: return "arrow.down"
+        }
+    }
+
     var description: String {
         switch self {
         case .risingFast:

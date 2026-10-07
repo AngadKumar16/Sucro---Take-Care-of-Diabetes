@@ -18,7 +18,7 @@ struct RecentTimelineCardsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Activity")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             LazyVStack(spacing: 8) {
                 ForEach(events.prefix(5)) { event in
@@ -37,7 +37,7 @@ struct RecentTimelineCardsView: View {
 }
 
 struct TimelineCard: View {
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(SettingsStore.self) private var settings
     let event: TimelineEvent
     let onTap: () -> Void
     let onEdit: () -> Void
@@ -52,7 +52,7 @@ struct TimelineCard: View {
             // Event Icon
             Image(systemName: event.icon)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 32, height: 32)
                 .background(event.color)
                 .clipShape(Circle())
@@ -61,30 +61,32 @@ struct TimelineCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(event.title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 if let subtitle = event.subtitle {
                     Text(subtitle)
                         .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Text(event.timestamp, formatter: relativeTimeFormatter)
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             // Glucose Context
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(settings.glucoseValueString(event.glucoseValue))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(glucoseColor(event.glucoseValue))
+            if let glucose = event.glucoseValue {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(settings.glucoseValueString(glucose))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(glucoseColor(glucose))
 
-                Text(settings.glucoseUnit)
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                    Text(settings.glucoseUnit)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -115,12 +117,14 @@ struct TimelineCard: View {
                     }
                 }
         )
+        // A tap gesture rather than a Button so it doesn't fight the swipe.
         .onTapGesture {
             if dragOffset == 0 {
                 onTap()
             }
         }
-        .overlay(
+        .accessibilityAddTraits(.isButton)
+        .overlay {
             // Delete/Edit buttons (shown when swiped left)
             HStack {
                 Spacer()
@@ -128,7 +132,7 @@ struct TimelineCard: View {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
                         .background(Color.blue)
                         .clipShape(Circle())
@@ -140,7 +144,7 @@ struct TimelineCard: View {
                 }) {
                     Image(systemName: "trash")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
                         .background(Color.red)
                         .clipShape(Circle())
@@ -148,7 +152,7 @@ struct TimelineCard: View {
                 .offset(x: dragOffset > -80 ? 0 : dragOffset + 80)
             }
             .opacity(dragOffset < -40 ? 1 : 0)
-        )
+        }
         .alert("Delete Event", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {
                 onDelete()
@@ -160,13 +164,7 @@ struct TimelineCard: View {
     }
     
     private func glucoseColor(_ value: Double) -> Color {
-        if value < settings.urgentLow || value > settings.urgentHigh {
-            return .red
-        }
-        if settings.isInTargetRange(value) {
-            return .green
-        }
-        return .orange
+        settings.zone(for: value).color
     }
 }
 
@@ -193,5 +191,5 @@ private let relativeTimeFormatter: RelativeDateTimeFormatter = {
     }
     .padding()
     .background(Color(.systemGroupedBackground))
-    .environmentObject(SettingsStore())
+    .environment(SettingsStore())
 }

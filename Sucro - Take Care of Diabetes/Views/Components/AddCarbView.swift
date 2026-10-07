@@ -9,7 +9,7 @@ import SwiftUI
 import CoreData
 
 struct AddCarbView: View {
-    @EnvironmentObject var viewModel: LogViewModel
+    @Environment(LogViewModel.self) private var viewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var carbGrams: String = ""
@@ -20,14 +20,14 @@ struct AddCarbView: View {
     private let mealTypes = ["Breakfast", "Lunch", "Dinner", "Snack", "Other"]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Carbohydrate Entry")) {
                     HStack {
                         TextField("Enter grams", text: $carbGrams)
                             .keyboardType(.decimalPad)
                         Text("grams")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Picker("Meal Type", selection: $selectedMealType) {
@@ -50,13 +50,13 @@ struct AddCarbView: View {
             .navigationTitle("Add Carbs")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         saveCarbEntry()
                     }
@@ -82,5 +82,5 @@ struct AddCarbView: View {
 
 #Preview {
     AddCarbView()
-        .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
 }

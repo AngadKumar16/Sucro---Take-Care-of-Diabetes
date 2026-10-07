@@ -70,11 +70,12 @@ class TimelineService {
     
     private func fetchBoluses(context: NSManagedObjectContext, since: Date, dataService: DataService) -> [TimelineEvent] {
         let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
-        request.predicate = NSPredicate(format: "timestamp >= %@ AND type == %@", since as NSDate, InsulinType.bolus.rawValue)
+        request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
         
         do {
             let entries = try context.fetch(request)
+                .filter { InsulinType(stored: $0.type)?.isRapidActing == true }
             return entries.prefix(5).map { entry in
                 let glucose = dataService.getGlucoseAtTime(context: context, time: entry.timestamp ?? Date())
                 return TimelineEvent(
@@ -82,7 +83,7 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: "Bolus",
-                    subtitle: String(format: "%.1f units", entry.units)
+                    subtitle: "\(entry.units.formatted(.number.precision(.fractionLength(1)))) units"
                 )
             }
         } catch {

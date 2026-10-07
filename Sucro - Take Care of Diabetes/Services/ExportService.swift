@@ -13,7 +13,6 @@ import CoreData
 enum ExportError: LocalizedError {
     case noDataAvailable
     case pdfGenerationFailed
-    case imageConversionFailed
     case fileWriteFailed
     
     var errorDescription: String? {
@@ -22,8 +21,6 @@ enum ExportError: LocalizedError {
             return "There's nothing to export yet."
         case .pdfGenerationFailed:
             return "Couldn't create the PDF."
-        case .imageConversionFailed:
-            return "Couldn't create the image."
         case .fileWriteFailed:
             return "Couldn't save the file."
         }
@@ -43,13 +40,10 @@ class ExportService {
         glucoseReadings: [GlucoseReading],
         insulinEntries: [InsulinEntry],
         carbEntries: [CarbEntry],
-        dateRange: DateInterval,
-        completion: @escaping (Result<URL, Error>) -> Void
-    ) {
-        // Validate data
+        dateRange: DateInterval
+    ) throws -> URL {
         guard !glucoseReadings.isEmpty || !insulinEntries.isEmpty || !carbEntries.isEmpty else {
-            completion(.failure(ExportError.noDataAvailable))
-            return
+            throw ExportError.noDataAvailable
         }
         
         let tempURL = FileManager.default.temporaryDirectory
@@ -81,52 +75,18 @@ class ExportService {
                 }
             }
             
-            completion(.success(tempURL))
+            return tempURL
         } catch {
             print("PDF generation error: \(error.localizedDescription)")
-            completion(.failure(ExportError.pdfGenerationFailed))
-        }
-    }
-    
-    // MARK: - PNG Export (Snapshot)
-    
-    func exportSnapshotToPNG(
-        view: UIView,
-        completion: @escaping (Result<URL, Error>) -> Void
-    ) {
-        // Ensure we're on main thread for UI operations
-        DispatchQueue.main.async {
-            let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
-            let image = renderer.image { ctx in
-                view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
-            }
-            
-            let tempURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("Sucro_Snapshot_\(self.formattedDate()).png")
-            
-            do {
-                guard let pngData = image.pngData() else {
-                    completion(.failure(ExportError.imageConversionFailed))
-                    return
-                }
-                try pngData.write(to: tempURL)
-                completion(.success(tempURL))
-            } catch {
-                print("PNG export error: \(error.localizedDescription)")
-                completion(.failure(ExportError.fileWriteFailed))
-            }
+            throw ExportError.pdfGenerationFailed
         }
     }
     
     // MARK: - CSV Export
     
-    func exportToCSV(
-        glucoseReadings: [GlucoseReading],
-        completion: @escaping (Result<URL, Error>) -> Void
-    ) {
+    func exportToCSV(glucoseReadings: [GlucoseReading]) throws -> URL {
         guard !glucoseReadings.isEmpty else {
-            completion(.failure(ExportError.noDataAvailable))
-            return
+            throw ExportError.noDataAvailable
         }
         
         var csvString = "Timestamp,Value,Unit,Trend,Notes\n"
@@ -146,10 +106,10 @@ class ExportService {
         
         do {
             try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
-            completion(.success(tempURL))
+            return tempURL
         } catch {
             print("CSV export error: \(error.localizedDescription)")
-            completion(.failure(ExportError.fileWriteFailed))
+            throw ExportError.fileWriteFailed
         }
     }
     
@@ -204,10 +164,10 @@ class ExportService {
         
         // Draw stat boxes
         let stats = [
-            ("Average Glucose", String(format: "%.0f mg/dL", avgGlucose)),
-            ("Time in Range", String(format: "%.0f%%", timeInRange)),
-            ("Total Insulin", String(format: "%.1f units", totalInsulin)),
-            ("Total Carbs", String(format: "%.0f g", totalCarbs))
+            ("Average Glucose", "\(avgGlucose.formatted(.number.precision(.fractionLength(0)))) mg/dL"),
+            ("Time in Range", "\(timeInRange.formatted(.number.precision(.fractionLength(0))))%"),
+            ("Total Insulin", "\(totalInsulin.formatted(.number.precision(.fractionLength(1)))) units"),
+            ("Total Carbs", "\(totalCarbs.formatted(.number.precision(.fractionLength(0)))) g")
         ]
         
         var yOffset: CGFloat = 100
@@ -272,7 +232,7 @@ class ExportService {
         linePath.stroke()
         
         // Data rows (limit to fit page)
-        var yOffset: CGFloat = headerY + 30
+        let yOffset: CGFloat = headerY + 30
         let rowHeight: CGFloat = 20
         let maxRows = Int((bounds.height - yOffset - 50) / rowHeight)
         
@@ -285,7 +245,7 @@ class ExportService {
             ]
             
             let time = formattedTime(reading.timestamp)
-            let value = String(format: "%.0f", reading.value)
+            let value = reading.value.formatted(.number.precision(.fractionLength(0)))
             let unit = reading.unit ?? "mg/dL"
             let trend = reading.trend ?? "-"
             

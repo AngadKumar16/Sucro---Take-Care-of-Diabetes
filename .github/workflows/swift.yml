@@ -1,7 +1,8 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
+# Builds the iOS app and runs the unit + UI tests on an iOS simulator.
+# This is an Xcode project (no Package.swift), so it has to go through
+# xcodebuild rather than `swift build` / `swift test`.
 
-name: Swift
+name: iOS
 
 on:
   push:
@@ -9,14 +10,65 @@ on:
   pull_request:
     branches: [ "main" ]
 
-jobs:
-  build:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-    runs-on: macos-latest
+env:
+  PROJECT: "Sucro - Take Care of Diabetes.xcodeproj"
+  SCHEME: "Sucro - Take Care of Diabetes"
+
+jobs:
+  test:
+    # The app targets iOS 26, which needs Xcode 26.
+    runs-on: macos-26
+    timeout-minutes: 45
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
+
+    - name: Select Xcode 26
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '26'
+
+    - name: Pick an iPhone simulator
+      id: sim
+      run: |
+        # Use the first available iPhone on the newest installed iOS runtime,
+        # so the job doesn't break when the runner image renames devices.
+        UDID=$(xcrun simctl list devices available --json | python3 -c '
+        import json, sys
+        data = json.load(sys.stdin)["devices"]
+        ios = sorted((k for k in data if "iOS" in k),
+                     key=lambda k: [int(x) for x in k.rsplit("iOS-", 1)[-1].split("-")],
+                     reverse=True)
+        for runtime in ios:
+            for d in data[runtime]:
+                if d["name"].startswith("iPhone"):
+                    print(d["udid"]); sys.exit(0)
+        sys.exit("No iPhone simulator found")
+        ')
+        echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+    - name: Build for testing
+      run: |
+        xcodebuild build-for-testing \
+          -project "$PROJECT" \
+          -scheme "$SCHEME" \
+          -destination "id=${{ steps.sim.outputs.udid }}"
+
     - name: Run tests
-      run: swift test -v
+      run: |
+        xcodebuild test-without-building \
+          -project "$PROJECT" \
+          -scheme "$SCHEME" \
+          -destination "id=${{ steps.sim.outputs.udid }}" \
+          -resultBundlePath TestResults.xcresult
+
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: TestResults
+        path: TestResults.xcresult

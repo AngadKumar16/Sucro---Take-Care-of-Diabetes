@@ -13,7 +13,7 @@ struct EditInsulinView: View {
     // Explicit custom bindings
     private var typeBinding: Binding<String> {
         Binding(
-            get: { entry.type ?? "rapid" },
+            get: { InsulinType(stored: entry.type)?.rawValue ?? InsulinType.other.rawValue },
             set: { entry.type = $0 }
         )
     }
@@ -43,9 +43,9 @@ struct EditInsulinView: View {
         Form {
             Section("Insulin Details") {
                 Picker("Type", selection: typeBinding) {
-                    Text("Rapid Acting").tag("rapid")
-                    Text("Long Acting").tag("long")
-                    Text("Intermediate").tag("intermediate")
+                    ForEach(InsulinType.allCases, id: \.self) { type in
+                        Text(type.displayName).tag(type.rawValue)
+                    }
                 }
                 
                 Picker("Delivery Method", selection: deliveryMethodBinding) {
@@ -67,8 +67,8 @@ struct EditInsulinView: View {
             }
             
             Section("Notes") {
-                TextEditor(text: notesBinding)
-                    .frame(height: 100)
+                TextField("Notes", text: notesBinding, axis: .vertical)
+                    .lineLimit(3...8)
             }
         }
     }

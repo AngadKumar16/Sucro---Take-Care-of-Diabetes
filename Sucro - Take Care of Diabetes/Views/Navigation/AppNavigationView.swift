@@ -6,46 +6,28 @@
 //
 
 import SwiftUI
-import CoreData  // ADD THIS LINE
+import CoreData
 
+/// The main tabs, plus the More sheet that holds the secondary tabs.
 struct AppNavigationView: View {
     @State private var showingSecondary = false
-    @State private var selectedSecondaryTab = 0
-    
+
     var body: some View {
-        NavigationView {
-            MainTabView(context: PersistenceController.shared.container.viewContext)
-                .navigationBarTitleDisplayMode(.large)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            showingSecondary.toggle()
-                        }) {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.title2)
-                        }
-                        .accessibilityLabel("More")
-                        .accessibilityIdentifier("moreButton")
-                    }
-                }
-                .sheet(isPresented: $showingSecondary) {
-                    NavigationView {
-                        SecondaryTabView(context: PersistenceController.shared.container.viewContext)
-                            .navigationTitle("More")
-                            .navigationBarTitleDisplayMode(.large)
-                            .toolbar {
-                                ToolbarItem(placement: .navigationBarTrailing) {
-                                    Button("Done") {
-                                        showingSecondary = false
-                                    }
-                                }
-                            }
-                    }
-                }
-        }
+        MainTabView(showMore: showMore)
+            .sheet(isPresented: $showingSecondary) {
+                SecondaryTabView()
+            }
+    }
+
+    private func showMore() {
+        showingSecondary = true
     }
 }
 
 #Preview {
+    let context = PersistenceController.preview.container.viewContext
     AppNavigationView()
+        .environment(\.managedObjectContext, context)
+        .environment(MonitorViewModel(context: context))
+        .environment(SettingsStore())
 }

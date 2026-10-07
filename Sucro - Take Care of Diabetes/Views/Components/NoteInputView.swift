@@ -24,7 +24,7 @@ struct NoteInputView: View {
     @FocusState private var isFocused: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Header
                 VStack(alignment: .leading, spacing: 4) {
@@ -32,7 +32,7 @@ struct NoteInputView: View {
                         .font(.headline)
                     Text("For: \(eventTitle)")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
@@ -48,23 +48,20 @@ struct NoteInputView: View {
                     Spacer()
                     Text("\(noteText.count) characters")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal)
                         .padding(.bottom, 8)
                 }
                 
                 // Save Button
-                Button(action: {
-                    onSave(noteText)
-                    dismiss()
-                }) {
+                Button(action: save) {
                     Text("Save Note")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(noteText.isEmpty ? Color.gray : Color.blue)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                 }
                 .disabled(noteText.isEmpty)
                 .padding()
@@ -73,9 +70,7 @@ struct NoteInputView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel", action: cancel)
                 }
             }
             .onAppear {
@@ -83,10 +78,19 @@ struct NoteInputView: View {
             }
         }
     }
+
+    private func save() {
+        onSave(noteText)
+        dismiss()
+    }
+
+    private func cancel() {
+        dismiss()
+    }
 }
 
 #Preview {
     NoteInputView(eventTitle: "Lunch - 45g carbs") { note in
-        print("Saved note: \(note)")
+        _ = note
     }
 }

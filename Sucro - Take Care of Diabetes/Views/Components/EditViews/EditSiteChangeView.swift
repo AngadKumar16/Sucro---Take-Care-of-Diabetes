@@ -46,8 +46,8 @@ struct EditSiteChangeView: View {
             }
             
             Section("Notes") {
-                TextEditor(text: notesBinding)
-                    .frame(height: 100)
+                TextField("Notes", text: notesBinding, axis: .vertical)
+                    .lineLimit(3...8)
             }
         }
     }

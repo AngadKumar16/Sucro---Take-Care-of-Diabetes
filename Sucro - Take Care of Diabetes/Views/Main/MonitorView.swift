@@ -10,83 +10,78 @@ import CoreData
 import Charts
 
 struct MonitorView: View {
-    @EnvironmentObject var viewModel: MonitorViewModel
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(MonitorViewModel.self) private var viewModel
+    @Environment(SettingsStore.self) private var settings
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Time Range Selector
-                    Picker("Time Range", selection: $viewModel.timeRange) {
-                        ForEach(MonitorViewModel.TimeRange.allCases, id: \.self) { range in
-                            Text(range.rawValue).tag(range)
-                        }
+        ScrollView {
+            VStack(spacing: 20) {
+                // Time Range Selector
+                Picker("Time Range", selection: Bindable(viewModel).timeRange) {
+                    ForEach(MonitorViewModel.TimeRange.allCases, id: \.self) { range in
+                        Text(range.rawValue).tag(range)
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding(.horizontal)
-                    .onChange(of: viewModel.timeRange) { _ in
-                        viewModel.updateTimeRange(viewModel.timeRange)
-                    }
-                    
-                    // Statistics Cards
-                    HStack(spacing: 16) {
-                        StatCard(title: "Average", value: settings.glucoseValueString(viewModel.averageGlucose), unit: settings.glucoseUnit)
-                        StatCard(title: "Range", value: "\(settings.glucoseValueString(viewModel.glucoseRange.min))-\(settings.glucoseValueString(viewModel.glucoseRange.max))", unit: settings.glucoseUnit)
-                    }
-                    
-                    StatCard(title: "Time in Range", value: "\(Int(viewModel.timeInRange))", unit: "%")
-                    
-                    // Glucose Trend Chart
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Glucose Trend")
-                            .font(.headline)
-                        
-                        if #available(iOS 16.0, *) {
-                            Chart(viewModel.trendData) { point in
-                                LineMark(
-                                    x: .value("Time", point.timestamp),
-                                    y: .value("Glucose", point.value)
-                                )
-                                .foregroundStyle(.blue)
-                                .symbol(.circle)
-                            }
-                            .frame(height: 200)
-                            .chartXAxis {
-                                AxisMarks(values: .automatic) { value in
-                                    AxisGridLine()
-                                    AxisValueLabel(format: .dateTime.hour())
-                                }
-                            }
-                            .chartYAxis {
-                                AxisMarks(position: .leading) {
-                                    AxisGridLine()
-                                    AxisValueLabel()
-                                }
-                            }
-                        } else {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(height: 200)
-                                .overlay(
-                                    Text("Charts need iOS 16 or later.")
-                                        .foregroundColor(.secondary)
-                                )
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    
-                    Spacer()
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                
+                // Statistics Cards
+                HStack(spacing: 16) {
+                    StatCard(title: "Average", value: settings.glucoseValueString(viewModel.averageGlucose), unit: settings.glucoseUnit)
+                    StatCard(title: "Range", value: "\(settings.glucoseValueString(viewModel.glucoseRange.min))-\(settings.glucoseValueString(viewModel.glucoseRange.max))", unit: settings.glucoseUnit)
+                }
+                
+                StatCard(title: "Time in Range", value: "\(Int(viewModel.timeInRange))", unit: "%")
+                
+                // Glucose Trend Chart
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Glucose Trend")
+                        .font(.headline)
+                    
+                    if #available(iOS 16.0, *) {
+                        Chart(viewModel.trendData) { point in
+                            LineMark(
+                                x: .value("Time", point.timestamp),
+                                y: .value("Glucose", point.value)
+                            )
+                            .foregroundStyle(.blue)
+                            .symbol(.circle)
+                        }
+                        .frame(height: 200)
+                        .chartXAxis {
+                            AxisMarks(values: .automatic) { value in
+                                AxisGridLine()
+                                AxisValueLabel(format: .dateTime.hour())
+                            }
+                        }
+                        .chartYAxis {
+                            AxisMarks(position: .leading) {
+                                AxisGridLine()
+                                AxisValueLabel()
+                            }
+                        }
+                    } else {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 200)
+                            .overlay {
+                                Text("Charts need iOS 16 or later.")
+                                    .foregroundStyle(.secondary)
+                            }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+                .background(Color(.systemGray6))
+                .clipShape(.rect(cornerRadius: 12))
+                
+                Spacer()
             }
-            .navigationTitle("Monitor")
-            .onAppear {
-                viewModel.fetchDataForTimeRange()
-            }
+            .padding()
+        }
+        .navigationTitle("Monitor")
+        .onAppear {
+            viewModel.fetchDataForTimeRange()
         }
     }
 }
@@ -100,27 +95,27 @@ struct StatCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             HStack(alignment: .bottom, spacing: 4) {
                 Text(value)
                     .font(.title2)
-                    .fontWeight(.bold)
+                    .bold()
                 
                 Text(unit)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
 #Preview {
     MonitorView()
-        .environmentObject(MonitorViewModel(context: PersistenceController.preview.container.viewContext))
-        .environmentObject(SettingsStore())
+        .environment(MonitorViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(SettingsStore())
 }

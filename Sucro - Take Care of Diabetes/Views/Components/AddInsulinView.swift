@@ -9,31 +9,30 @@ import SwiftUI
 import CoreData
 
 struct AddInsulinView: View {
-    @EnvironmentObject var viewModel: LogViewModel
+    @Environment(LogViewModel.self) private var viewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var insulinUnits: String = ""
-    @State private var selectedType: String = "Rapid Acting"
+    @State private var selectedType: InsulinType = .bolus
     @State private var selectedDeliveryMethod: String = "Pump"
     @State private var notes: String = ""
     
-    private let insulinTypes = ["Rapid Acting", "Long Acting", "Mixed", "Other"]
     private let deliveryMethods = ["Pump", "Pen", "Syringe"]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Insulin Entry")) {
                     HStack {
                         TextField("Enter units", text: $insulinUnits)
                             .keyboardType(.decimalPad)
                         Text("units")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Picker("Type", selection: $selectedType) {
-                        ForEach(insulinTypes, id: \.self) { type in
-                            Text(type).tag(type)
+                        ForEach(InsulinType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(type)
                         }
                     }
                     
@@ -52,13 +51,13 @@ struct AddInsulinView: View {
             .navigationTitle("Add Insulin")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         saveInsulinEntry()
                     }
@@ -73,7 +72,7 @@ struct AddInsulinView: View {
         
         viewModel.addInsulinEntry(
             units: units,
-            type: selectedType,
+            type: selectedType.rawValue,
             deliveryMethod: selectedDeliveryMethod,
             notes: notes.isEmpty ? nil : notes
         )
@@ -84,5 +83,5 @@ struct AddInsulinView: View {
 
 #Preview {
     AddInsulinView()
-        .environmentObject(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
 }

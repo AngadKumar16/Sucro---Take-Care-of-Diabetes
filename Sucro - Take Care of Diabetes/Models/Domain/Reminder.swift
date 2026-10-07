@@ -7,29 +7,20 @@
 
 import Foundation
 
-struct Reminder: Identifiable, Codable {
-    let id = UUID()
+struct Reminder: Identifiable, Equatable {
+    /// Stable for a given occurrence (for example the site change due after
+    /// a specific change), and also the notification identifier.
+    let id: String
     let title: String
     let time: Date
     let type: ReminderType
-    let isCompleted: Bool
     let notes: String?
-    
-    init(title: String, time: Date, type: ReminderType, isCompleted: Bool = false, notes: String? = nil) {
+
+    init(id: String = "reminder.\(UUID().uuidString)", title: String, time: Date, type: ReminderType, notes: String? = nil) {
+        self.id = id
         self.title = title
         self.time = time
         self.type = type
-        self.isCompleted = isCompleted
         self.notes = notes
-    }
-    
-    var isOverdue: Bool {
-        !isCompleted && time < Date()
-    }
-    
-    var timeRemaining: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: time, relativeTo: Date())
     }
 }

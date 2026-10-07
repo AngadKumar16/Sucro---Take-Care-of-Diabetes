@@ -7,19 +7,21 @@
 
 import Foundation
 import CoreData
-import Combine
 import Charts
 
 @MainActor
+@Observable
 class InsightsViewModel: BaseViewModel {
-    @Published var timeRange: TimeRange = .week
-    @Published var glucoseStats = GlucoseStatistics()
-    @Published var insulinStats = InsulinStatistics()
-    @Published var carbStats = CarbStatistics()
-    @Published var correlations: [DataCorrelation] = []
-    @Published var trends: [DailyGlucoseTrend] = []
-    @Published var generatedInsights: [GeneratedInsight] = []
-    @Published var weeklyPatterns: [WeekdayPattern] = []
+    var timeRange: TimeRange = .week {
+        didSet { fetchInsights() }
+    }
+    var glucoseStats = GlucoseStatistics()
+    var insulinStats = InsulinStatistics()
+    var carbStats = CarbStatistics()
+    var correlations: [DataCorrelation] = []
+    var trends: [DailyGlucoseTrend] = []
+    var generatedInsights: [GeneratedInsight] = []
+    var weeklyPatterns: [WeekdayPattern] = []
     
     enum TimeRange: String, CaseIterable {
         case day = "1 Day"
@@ -41,7 +43,6 @@ class InsightsViewModel: BaseViewModel {
     
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
-        fetchInsights()
     }
     
     func fetchInsights() {
@@ -54,10 +55,6 @@ class InsightsViewModel: BaseViewModel {
         generateWeeklyPatterns()
     }
 
-    func updateTimeRange(_ range: TimeRange) {
-        timeRange = range
-        fetchInsights()
-    }
     
     private func fetchGlucoseStatistics() {
         let calendar = Calendar.current
@@ -69,7 +66,10 @@ class InsightsViewModel: BaseViewModel {
         
         do {
             let readings = try viewContext.fetch(request)
-            glucoseStats = GlucoseCalculator.calculateStatistics(readings: readings)
+            glucoseStats = GlucoseCalculator.calculateStatistics(
+                samples: readings.compactMap(\.sample),
+                thresholds: SettingsStore.shared.thresholds
+            )
         } catch {
             print("Error fetching glucose statistics: \(error)")
         }
@@ -85,12 +85,17 @@ class InsightsViewModel: BaseViewModel {
         do {
             let entries = try viewContext.fetch(request)
             let totalUnits = entries.reduce(0) { $0 + $1.units }
-            let bolusUnits = entries.filter { $0.type == "bolus" }.reduce(0) { $0 + $1.units }
-            
+            let bolusUnits = entries
+                .filter { InsulinType(stored: $0.type)?.isRapidActing == true }
+                .reduce(0) { $0 + $1.units }
+            let basalUnits = entries
+                .filter { InsulinType(stored: $0.type)?.isBasal == true }
+                .reduce(0) { $0 + $1.units }
+
             insulinStats = InsulinStatistics(
                 totalUnits: totalUnits,
                 bolusUnits: bolusUnits,
-                basalUnits: totalUnits - bolusUnits,
+                basalUnits: basalUnits,
                 averageDailyUnits: totalUnits / Double(timeRange.days)
             )
         } catch {
@@ -177,7 +182,7 @@ class InsightsViewModel: BaseViewModel {
                     let direction = change < 0 ? "down" : "up"
                     insights.append(GeneratedInsight(
                         title: "Average Glucose",
-                        description: "Your average is \(direction) \(String(format: "%.0f", abs(change)))% compared with the start of this period.",
+                        description: "Your average is \(direction) \(abs(change).formatted(.number.precision(.fractionLength(0))))% compared with the start of this period.",
                         type: change < 0 ? .positive : .warning
                     ))
                 }
@@ -199,13 +204,13 @@ class InsightsViewModel: BaseViewModel {
             if tir < 70 {
                 insights.append(GeneratedInsight(
                     title: "Time in Range",
-                    description: "You were in range \(String(format: "%.0f", tir))% of the time. Most people aim for 70% or more. Look at what you ate before your highs.",
+                    description: "You were in range \(tir.formatted(.number.precision(.fractionLength(0))))% of the time. Most people aim for 70% or more. Look at what you ate before your highs.",
                     type: .info
                 ))
             } else {
                 insights.append(GeneratedInsight(
                     title: "On Target",
-                    description: "You were in range \(String(format: "%.0f", tir))% of the time, which meets the usual 70% goal.",
+                    description: "You were in range \(tir.formatted(.number.precision(.fractionLength(0))))% of the time, which meets the usual 70% goal.",
                     type: .positive
                 ))
             }
@@ -246,9 +251,7 @@ class InsightsViewModel: BaseViewModel {
         var patterns: [WeekdayPattern] = []
         for (weekday, dayReadings) in grouped {
             let avg = dayReadings.reduce(0) { $0 + $1.value } / Double(dayReadings.count)
-            let trend = GlucoseCalculator.calculateTrend(
-                readings: dayReadings.sorted { ($0.timestamp ?? Date()) < ($1.timestamp ?? Date()) }
-            )
+            let trend = GlucoseCalculator.direction(samples: dayReadings.compactMap(\.sample))
             let name = (weekday - 1) < weekdaySymbols.count ? weekdaySymbols[weekday - 1] : "Day \(weekday)"
             patterns.append(WeekdayPattern(weekdayIndex: weekday, name: name, average: avg, trend: trend))
         }
@@ -294,7 +297,7 @@ class InsightsViewModel: BaseViewModel {
         for (dateComponents, dayReadings) in groupedReadings {
             if !dayReadings.isEmpty {
                 let average = dayReadings.reduce(0) { $0 + $1.value } / Double(dayReadings.count)
-                let trend = GlucoseCalculator.calculateTrend(readings: Array(dayReadings))
+                let trend = GlucoseCalculator.direction(samples: dayReadings.compactMap(\.sample))
                 
                 trends.append(DailyGlucoseTrend(
                     date: Calendar.current.date(from: dateComponents) ?? Date(),
@@ -307,27 +310,6 @@ class InsightsViewModel: BaseViewModel {
         }
         
         return trends.sorted { $0.date > $1.date }
-    }
-}
-
-struct GlucoseStatistics {
-    let average: Double
-    let standardDeviation: Double
-    let cv: Double
-    let timeInRange: (percentage: Double, hours: Double)
-    let timeBelowRange: (percentage: Double, hours: Double)
-    let timeAboveRange: (percentage: Double, hours: Double)
-    
-    init(average: Double = 0, standardDeviation: Double = 0, cv: Double = 0,
-         timeInRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0),
-         timeBelowRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0),
-         timeAboveRange: (percentage: Double, hours: Double) = (percentage: 0, hours: 0)) {
-        self.average = average
-        self.standardDeviation = standardDeviation
-        self.cv = cv
-        self.timeInRange = timeInRange
-        self.timeBelowRange = timeBelowRange
-        self.timeAboveRange = timeAboveRange
     }
 }
 

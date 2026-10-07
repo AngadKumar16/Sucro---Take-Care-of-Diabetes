@@ -6,16 +6,15 @@
 //
 
 import Foundation
-import Combine  // ADD THIS
 import HealthKit
 
-class HealthKitManager: ObservableObject {
+/// Writes logged data to Apple Health. Nothing in the UI observes it.
+final class HealthKitManager {
     static let shared = HealthKitManager()
 
     private let healthStore = HKHealthStore()
 
-    @Published var isAuthorized = false
-    @Published var authorizationStatus: HKAuthorizationStatus = .notDetermined
+    private(set) var isAuthorized = false
 
     /// True only on devices/simulators where HealthKit is supported.
     var isHealthDataAvailable: Bool {
@@ -23,7 +22,7 @@ class HealthKitManager: ObservableObject {
     }
 
     // MARK: - Authorization
-    func requestAuthorization() {
+    func requestAuthorization() async {
         guard isHealthDataAvailable else { return }
         guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose),
               let insulinType = HKObjectType.quantityType(forIdentifier: .insulinDelivery),
@@ -42,24 +41,23 @@ class HealthKitManager: ObservableObject {
         let typesToWrite: Set<HKSampleType> = [
             glucoseType,
             insulinType,
-            carbType
+            carbType,
+            HKObjectType.workoutType(),
+            HKQuantityType(.activeEnergyBurned)
         ]
         
-        healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { [weak self] success, error in
-            DispatchQueue.main.async {
-                self?.isAuthorized = success
-                if let error = error {
-                    print("HealthKit authorization failed: \(error.localizedDescription)")
-                }
-            }
+        do {
+            try await healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead)
+            isAuthorized = true
+        } catch {
+            print("HealthKit authorization failed: \(error.localizedDescription)")
         }
     }
     
     func checkAuthorizationStatus() {
         guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose) else { return }
         
-        authorizationStatus = healthStore.authorizationStatus(for: glucoseType)
-        isAuthorized = authorizationStatus == .sharingAuthorized
+        isAuthorized = healthStore.authorizationStatus(for: glucoseType) == .sharingAuthorized
     }
     
     // MARK: - Glucose
@@ -115,7 +113,7 @@ class HealthKitManager: ObservableObject {
         
         // FIX: Proper metadata for insulin delivery reason
         var metadata: [String: Any] = [:]
-        if type.lowercased() == "basal" {
+        if InsulinType(stored: type)?.isBasal == true {
             metadata[HKMetadataKeyInsulinDeliveryReason] = HKInsulinDeliveryReason.basal.rawValue
         } else {
             metadata[HKMetadataKeyInsulinDeliveryReason] = HKInsulinDeliveryReason.bolus.rawValue
@@ -150,21 +148,26 @@ class HealthKitManager: ObservableObject {
     
     // MARK: - Workout
     func saveWorkout(_ activityType: String, duration: TimeInterval, caloriesBurned: Double, timestamp: Date) {
-        // FIX: HKWorkoutType is not optional, remove guard let
-        let workout = HKWorkout(
-            activityType: .other,
-            start: timestamp,
-            end: timestamp.addingTimeInterval(duration),
-            workoutEvents: nil,
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: caloriesBurned),
-            totalDistance: nil,
-            metadata: nil
-        )
-        
-        healthStore.save(workout) { success, error in
-            if success {
-                print("Workout saved to HealthKit")
-            } else if let error = error {
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = .other
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: .local())
+        let end = timestamp.addingTimeInterval(duration)
+
+        Task {
+            do {
+                try await builder.beginCollection(at: timestamp)
+                if caloriesBurned > 0 {
+                    let energy = HKQuantitySample(
+                        type: HKQuantityType(.activeEnergyBurned),
+                        quantity: HKQuantity(unit: .kilocalorie(), doubleValue: caloriesBurned),
+                        start: timestamp,
+                        end: end
+                    )
+                    try await builder.addSamples([energy])
+                }
+                try await builder.endCollection(at: end)
+                _ = try await builder.finishWorkout()
+            } catch {
                 print("Failed to save workout to HealthKit: \(error.localizedDescription)")
             }
         }

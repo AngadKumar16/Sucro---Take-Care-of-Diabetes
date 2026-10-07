@@ -9,7 +9,7 @@ import SwiftUI
 
 struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var settings: SettingsStore
+    @Environment(SettingsStore.self) private var settings
     let event: TimelineEvent
     var onEdit: () -> Void
     var onDelete: () -> Void
@@ -18,23 +18,23 @@ struct EventDetailView: View {
     @State private var showingDeleteConfirm = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     // Event Icon & Type
                     VStack(spacing: 12) {
                         Image(systemName: event.icon)
                             .font(.system(size: 60))
-                            .foregroundColor(event.color)
+                            .foregroundStyle(event.color)
                         
                         Text(event.title)
                             .font(.title)
-                            .fontWeight(.bold)
+                            .bold()
                         
                         if let subtitle = event.subtitle {
                             Text(subtitle)
                                 .font(.title3)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
@@ -42,11 +42,13 @@ struct EventDetailView: View {
                     // Timestamp & Glucose
                     VStack(alignment: .leading, spacing: 12) {
                         DetailRow(icon: "clock", label: "Time", value: event.timestamp.formatted(date: .abbreviated, time: .shortened))
-                        DetailRow(icon: "drop.fill", label: "Glucose", value: settings.formattedGlucose(event.glucoseValue))
+                        if let glucose = event.glucoseValue {
+                            DetailRow(icon: "drop.fill", label: "Glucose", value: settings.formattedGlucose(glucose))
+                        }
                     }
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     
                     // Actions
                     VStack(spacing: 12) {
@@ -58,8 +60,8 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .cornerRadius(8)
+                            .foregroundStyle(.blue)
+                            .clipShape(.rect(cornerRadius: 8))
                         }
                         
                         Button(action: onEdit) {
@@ -70,8 +72,8 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.orange.opacity(0.1))
-                            .foregroundColor(.orange)
-                            .cornerRadius(8)
+                            .foregroundStyle(.orange)
+                            .clipShape(.rect(cornerRadius: 8))
                         }
                         
                         Button(action: {
@@ -84,8 +86,8 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .cornerRadius(8)
+                            .foregroundStyle(.red)
+                            .clipShape(.rect(cornerRadius: 8))
                         }
                     }
                     .padding()
@@ -124,11 +126,11 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .frame(width: 24)
             
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
             
@@ -151,5 +153,5 @@ struct DetailRow: View {
         onDelete: {},
         onAddNote: {}
     )
-    .environmentObject(SettingsStore())
+    .environment(SettingsStore())
 }

@@ -7,10 +7,11 @@
 
 import Foundation
 import CoreData
-import Combine
 
+/// Shared Core Data plumbing for the view models. Subclasses are
+/// `@Observable`; this base holds nothing the UI watches.
 @MainActor
-class BaseViewModel: ObservableObject {
+class BaseViewModel {
     internal let viewContext: NSManagedObjectContext
     
     init(context: NSManagedObjectContext) {

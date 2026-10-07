@@ -9,7 +9,7 @@
 import Foundation
 
 struct BolusPreset: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     var name: String
     var units: Double
     var carbs: Double?

@@ -58,25 +58,27 @@ Based on reading the source. **The app was not built or run for this audit** —
 
 ## Plan (suggested order)
 
-### Phase 0 — Baseline (do first)
-- [ ] Open in Xcode, build for an iOS 26 simulator, run unit + UI tests. Record failures.
-- [ ] Fix CI to use `xcodebuild` (bug 14).
-- [ ] Delete `ContentView.swift`, the duplicate `MonitorViewModel` (bug 11), and the stale windsurf plan.
+### Phase 0 — Baseline (done 2026-10-07)
+- [x] Open in Xcode, build for an iOS 26 simulator, run unit + UI tests. Record failures. *(Before any change: all 10 unit and 13 UI tests passed on iPhone 17 / iOS 26.0.)*
+- [x] Fix CI to use `xcodebuild` (bug 14). *(`.github/workflows/swift.yml` now runs `build-for-testing` + `test-without-building` on `macos-26` with Xcode 26 and picks an available iPhone simulator.)*
+- [x] Delete `ContentView.swift`, the duplicate `MonitorViewModel` (bug 11), and the stale windsurf plan. *(Also removed the unused `OptionalBinding.swift` and its project exceptions, which caused a build warning. The app-level `MonitorViewModel` is the one kept: the full-screen Monitor opened from Home needs it, and the Monitor tab now shares it.)*
 
-### Phase 1 — Correctness & safety (before anyone else uses it)
-- [ ] Alert dedupe: one notification per crossing event, with cooldown; stable identifiers (bug 3).
-- [ ] Separate "CGM data stale" from "phone offline"; base staleness on time since last reading (bugs 1, 2).
-- [ ] Explicit threshold settings and one source of truth for low/high/urgent (bug 9).
-- [ ] Fix trend calc: sort by timestamp, rate in mg/dL/min, only compute when readings are ≤15 min apart (bugs 5, 6).
-- [ ] Single IOB implementation + unit tests; label it "estimate" in UI (bug 8).
-- [ ] Merge reminder services (bug 10).
-- [ ] Replace `fatalError` in persistence with a recoverable error screen (bug 12).
-- [ ] In-app disclaimer: not a medical device, not for dosing decisions.
+### Phase 1 — Correctness & safety (done 2026-10-07)
+- [x] Alert dedupe: one notification per crossing event, with cooldown; stable identifiers (bug 3). *(`GlucoseAlertPolicy` in `Services/AlertService.swift`: notifies when a reading crosses into low / urgent low / urgent high, 30 min cooldown per kind, low → urgent low always notifies, readings older than 15 min never notify. State persists in UserDefaults. Notifications are time-sensitive (entitlement added) with ids `alert.glucose.<kind>`.)*
+- [x] Separate "CGM data stale" from "phone offline"; base staleness on time since last reading (bugs 1, 2). *(Network status no longer feeds alerts. A "no recent readings" warning is scheduled 20 min after the last reading, only when recent readings look like a CGM stream, so fingerstick-only users never see it. Fake sync timer removed. Home shows the reading's real age and greys it out after 15 min. Phone battery removed from Home.)*
+- [x] Explicit threshold settings and one source of truth for low/high/urgent (bug 9). *(Settings has Urgent Low / Low / High / Urgent High steppers (default 55/70/180/250), always kept in order. `GlucoseThresholds.zone(for:)` drives colors, banner, alerts and stats. Insights now uses the user's range instead of a hard-coded 70–180.)*
+- [x] Fix trend calc: sort by timestamp, rate in mg/dL/min, only compute when readings are ≤15 min apart (bugs 5, 6). *(`GlucoseCalculator.trend(samples:)`: least-squares rate over the last 15 min, needs ≥5 min span and no gap >15 min; arrows at 1 and 2 mg/dL/min. Set on each new reading. Day/weekday patterns use a separate `direction(samples:)`.)*
+- [x] Single IOB implementation + unit tests; label it "estimate" in UI (bug 8). *(`GlucoseCalculator.insulinOnBoard`, Loop/OpenAPS exponential curve with 75 min peak and a user-set insulin action time (3–6 h, default 4). Counts rapid-acting doses including entries older builds saved as "Rapid Acting". Home shows "x U active (estimate)".)*
+- [x] Merge reminder services (bug 10). *(`RealReminderService` removed. `NotificationService` is the only code touching `UNUserNotificationCenter`; `ReminderService` plans site-change and post-dose glucose-check reminders from the data with stable ids, so refreshes don't duplicate and snooze/complete stick. The 1-minute "missed reading" spam is gone.)*
+- [x] Replace `fatalError` in persistence with a recoverable error screen (bug 12). *(`PersistenceController` publishes `loadError`; `StoreErrorView` offers Try Again or Erase and Start Over.)*
+- [x] In-app disclaimer: not a medical device, not for dosing decisions. *(Shown before first use, must be accepted; rereadable from More → Help → Safety Information. Help is now a tab in More, which also makes the Emergency Medical ID reachable.)*
+
+Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and sent a bogus "HIGH GLUCOSE 0" notification for doses over 10 U; it now says "Log Bolus" and asks to confirm doses over 10 U. Long-acting doses were sent to Apple Health as boluses. The full-screen Monitor opened from Home had no way to close it. Insulin type labels were inconsistent between the Add and Edit forms.
 
 ### Phase 2 — Real data in
 - [ ] Read glucose from Apple Health (`HKObserverQuery` + anchored query, background delivery), dedupe against Health samples the app itself wrote. Set `trend` from rate of change.
 - [ ] Rework Devices tab around what's real: "Apple Health source: connected / last reading X min ago". Remove fake catalog and unused toggles (or implement them).
-- [ ] Only init `CBCentralManager` when the user opts into a device flow, or remove BLE until there is a real integration. (Direct Dexcom/Libre BLE is proprietary; Dexcom has a web API — investigate later.)
+- [x] Only init `CBCentralManager` when the user opts into a device flow, or remove BLE until there is a real integration. *(`DeviceMonitorService` was deleted after Phase 1: nothing used it, and its only effects were the fake phone-battery/network status and the launch-time Bluetooth prompt. A real integration starts fresh. The Bluetooth usage string in the build settings can go too if BLE is dropped for good.)* (Direct Dexcom/Libre BLE is proprietary; Dexcom has a web API — investigate later.)
 
 ### Phase 3 — Features
 - [ ] Glossary/Learn screen from `MedicalTerms.json` (search, category filter). Drop or fix `contentURL`s; decide what `isPremium` means.
@@ -93,7 +95,7 @@ Based on reading the source. **The app was not built or run for this audit** —
 - Entry: `App/Sucro___Take_Care_of_DiabetesApp.swift` → `Views/AppNavigationView.swift`
 - Data: `Core/Persistence.swift`, `Models/CoreData/SucroDataModel.xcdatamodeld`, `Services/DataService.swift`
 - Math: `Utilities/GlucoseCalculator.swift`
-- Alerts: `Services/AlertService.swift`, `Services/NotificationService.swift`, `Services/RealReminderService.swift`
-- Devices: `Services/DeviceMonitorService.swift`, `Views/Secondary/DevicesView.swift`
+- Alerts: `Services/AlertService.swift`, `Services/NotificationService.swift`, `Services/ReminderService.swift`, `Models/Domain/GlucoseThresholds.swift`
+- Devices: `Views/Secondary/DevicesView.swift`
 - Health: `Core/HealthKitManager.swift`
 - Settings: `Services/SettingsStore.swift`
