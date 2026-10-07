@@ -129,7 +129,7 @@ class ReportsViewModel: BaseViewModel {
         let carbs = dataService.fetchCarbEntries(context: viewContext, in: range)
 
         guard !readings.isEmpty || !insulin.isEmpty || !carbs.isEmpty else {
-            statusMessage = "No data available for this period yet."
+            statusMessage = "Nothing logged for this period yet."
             showStatusAlert = true
             return
         }

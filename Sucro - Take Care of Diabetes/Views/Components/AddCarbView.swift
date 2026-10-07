@@ -38,7 +38,7 @@ struct AddCarbView: View {
                 }
                 
                 Section(header: Text("Food Items (Optional)")) {
-                    TextField("Describe food items...", text: $foodItems, axis: .vertical)
+                    TextField("What did you eat?", text: $foodItems, axis: .vertical)
                         .lineLimit(3...6)
                 }
                 

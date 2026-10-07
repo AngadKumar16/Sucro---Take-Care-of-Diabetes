@@ -110,7 +110,7 @@ struct EventDetailView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Are you sure you want to delete this event? This cannot be undone.")
+                Text("This can't be undone.")
             }
         }
     }

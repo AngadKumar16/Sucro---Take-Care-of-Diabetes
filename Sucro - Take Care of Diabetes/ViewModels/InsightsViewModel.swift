@@ -174,10 +174,10 @@ class InsightsViewModel: BaseViewModel {
             if firstAvg > 0 {
                 let change = ((secondAvg - firstAvg) / firstAvg) * 100
                 if abs(change) >= 2 {
-                    let direction = change < 0 ? "decreased" : "increased"
+                    let direction = change < 0 ? "down" : "up"
                     insights.append(GeneratedInsight(
-                        title: "Trend Analysis",
-                        description: "Your average glucose has \(direction) by \(String(format: "%.0f", abs(change)))% over this period",
+                        title: "Average Glucose",
+                        description: "Your average is \(direction) \(String(format: "%.0f", abs(change)))% compared with the start of this period.",
                         type: change < 0 ? .positive : .warning
                     ))
                 }
@@ -187,7 +187,7 @@ class InsightsViewModel: BaseViewModel {
         // 2. Pattern detection — strongest carb→glucose correlation.
         if let top = correlations.first, top.effect > 30 {
             insights.append(GeneratedInsight(
-                title: "Pattern Detection",
+                title: "After Meals",
                 description: top.description,
                 type: .warning
             ))
@@ -198,14 +198,14 @@ class InsightsViewModel: BaseViewModel {
         if glucoseStats.average > 0 {
             if tir < 70 {
                 insights.append(GeneratedInsight(
-                    title: "Recommendation",
-                    description: "Time in range is \(String(format: "%.0f", tir))%. Aim for 70%+ by reviewing meals before glucose spikes.",
+                    title: "Time in Range",
+                    description: "You were in range \(String(format: "%.0f", tir))% of the time. Most people aim for 70% or more. Look at what you ate before your highs.",
                     type: .info
                 ))
             } else {
                 insights.append(GeneratedInsight(
-                    title: "Great Work",
-                    description: "Time in range is \(String(format: "%.0f", tir))% — you're meeting the recommended target.",
+                    title: "On Target",
+                    description: "You were in range \(String(format: "%.0f", tir))% of the time, which meets the usual 70% goal.",
                     type: .positive
                 ))
             }
@@ -214,7 +214,7 @@ class InsightsViewModel: BaseViewModel {
         if insights.isEmpty {
             insights.append(GeneratedInsight(
                 title: "Not Enough Data",
-                description: "Log glucose, meals, and insulin for a few days to unlock personalized insights.",
+                description: "Log glucose, meals, and insulin for a few days and your insights will show up here.",
                 type: .info
             ))
         }
@@ -275,7 +275,7 @@ class InsightsViewModel: BaseViewModel {
                     factor: "Carbohydrates",
                     value: carbEntry.grams,
                     effect: spikeMagnitude,
-                    description: "\(Int(carbEntry.grams))g carbs led to \(SettingsStore.shared.formattedGlucose(spikeMagnitude)) spike"
+                    description: "Glucose rose \(SettingsStore.shared.formattedGlucose(spikeMagnitude)) within an hour of eating \(Int(carbEntry.grams))g of carbs."
                 ))
             }
         }

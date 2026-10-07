@@ -44,7 +44,7 @@ struct AddSiteChangeView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    Text("Recommended rotation: every \(selectedLocation.rotationDays) days")
+                    Text("Change every \(selectedLocation.rotationDays) days")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

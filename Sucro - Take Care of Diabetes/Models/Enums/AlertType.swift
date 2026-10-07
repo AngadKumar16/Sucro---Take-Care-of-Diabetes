@@ -38,13 +38,13 @@ enum AlertType {
     var message: String {
         switch self {
         case .lowGlucose(let value):
-            return "\(SettingsStore.shared.formattedGlucose(value)) - Treat immediately"
+            return "\(SettingsStore.shared.formattedGlucose(value)). Eat fast-acting carbs now."
         case .highGlucose(let value):
-            return "\(SettingsStore.shared.formattedGlucose(value)) - Check for ketones"
+            return "\(SettingsStore.shared.formattedGlucose(value)). Check for ketones."
         case .deviceOffline:
-            return "CGM sensor needs replacement"
+            return "No data from your CGM. Check the sensor."
         case .siteChangeOverdue(let days):
-            return "\(days) days since last change"
+            return "Last changed \(days) days ago"
         }
     }
     

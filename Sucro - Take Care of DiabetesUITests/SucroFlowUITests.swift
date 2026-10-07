@@ -166,14 +166,14 @@ final class SucroFlowUITests: XCTestCase {
     func testInsightsLoadsAndTimeRangeSwitches() {
         openSecondaryTab("Insights")
 
-        XCTAssertTrue(app.staticTexts["AI-Powered Insights"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["What Stands Out"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Weekly Patterns"].exists)
 
         // The time-range segmented control should switch without crashing.
         let month = app.buttons["1 Month"]
         if month.waitForExistence(timeout: 3) {
             month.tap()
-            XCTAssertTrue(app.staticTexts["AI-Powered Insights"].exists)
+            XCTAssertTrue(app.staticTexts["What Stands Out"].exists)
         }
     }
 }

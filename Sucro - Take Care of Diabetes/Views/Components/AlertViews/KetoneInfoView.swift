@@ -26,7 +26,7 @@ struct KetoneInfoView: View {
                         icon: "exclamationmark.triangle.fill",
                         color: .orange,
                         title: "High Glucose & Rising",
-                        message: "Your glucose is above 180 mg/dL and trending upward. Consider checking ketones."
+                        message: "Your glucose is above 180 mg/dL and still going up. Check your ketones."
                     )
                     
                     VStack(alignment: .leading, spacing: 12) {
@@ -43,7 +43,7 @@ struct KetoneInfoView: View {
                         )
                         KetoneGuidanceRow(
                             condition: "Feeling nauseous or ill",
-                            action: "Check ketones regardless of glucose"
+                            action: "Check ketones, even if glucose looks normal"
                         )
                     }
                     .padding()
@@ -54,10 +54,10 @@ struct KetoneInfoView: View {
                         Text("Ketone Levels")
                             .font(.headline)
                         
-                        KetoneLevelIndicator(level: .negative, description: "Negative: Continue normal monitoring")
-                        KetoneLevelIndicator(level: .trace, description: "Trace: Drink water, monitor closely")
-                        KetoneLevelIndicator(level: .moderate, description: "Moderate: Contact healthcare provider")
-                        KetoneLevelIndicator(level: .large, description: "Large: Seek immediate medical care")
+                        KetoneLevelIndicator(level: .negative, description: "Negative: Keep monitoring as usual")
+                        KetoneLevelIndicator(level: .trace, description: "Trace: Drink water and recheck often")
+                        KetoneLevelIndicator(level: .moderate, description: "Moderate: Call your care team")
+                        KetoneLevelIndicator(level: .large, description: "Large: Get medical care right away")
                     }
                     .padding()
                 }

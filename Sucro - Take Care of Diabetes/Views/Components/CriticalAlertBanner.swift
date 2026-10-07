@@ -84,7 +84,7 @@ struct CriticalAlertBanner: View {
         case .highGlucose:
             return "Check Ketones"
         case .deviceOffline:
-            return "Replace Sensor"
+            return "Troubleshoot"
         case .siteChangeOverdue:
             return "Change Site"
         }

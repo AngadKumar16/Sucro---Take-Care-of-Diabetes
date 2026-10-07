@@ -39,15 +39,15 @@ struct HelpView: View {
         var content: String {
             switch self {
             case .gettingStarted:
-                return "Welcome to Sucro. The Home tab shows your latest glucose, insulin on board, and quick actions. Use the Log tab to record readings, meals, insulin, and activity. The Monitor tab charts your glucose over time."
+                return "Home shows your latest glucose, how much insulin is still active, and shortcuts for common entries. Log is where you record readings, meals, insulin, and activity. Monitor charts your glucose over time."
             case .logging:
-                return "Tap Log Meal, Quick Bolus, or Change Site on Home for fast entry, or open the Log tab for full forms. Long-press Log Meal for one-tap meal presets. Everything you log is also saved to Apple Health."
+                return "The Log Meal, Quick Bolus, and Change Site buttons on Home are the fastest way to log. For more detail, use the Log tab. Press and hold Log Meal to pick a saved meal. Sucro also saves what you log to Apple Health."
             case .cgm:
-                return "Open the Devices screen to manage connected devices and toggle Auto-sync, Background Monitoring, and Low Battery Alerts. If a device drops, use the troubleshooting steps to reconnect."
+                return "Connect and disconnect devices from the Devices screen. That's also where you turn Auto-sync, Background Monitoring, and Low Battery Alerts on or off. If a device stops sending data, follow the troubleshooting steps to reconnect it."
             case .insights:
-                return "The Insights screen analyzes your data: average glucose trend, meal-to-glucose patterns, and time-in-range. Time in Range is the percentage of readings between your target low and high (set in Settings)."
+                return "Insights shows whether your average glucose is going up or down, which meals are followed by big rises, and your time in range. Time in range is the share of readings between the target low and high you set in Settings."
             case .emergency:
-                return "For severe low blood sugar, treat with 15g of fast-acting carbs and recheck in 15 minutes. If unconscious, a caregiver should administer glucagon and call emergency services. Your Medical ID is in Help > Emergency Medical ID."
+                return "For a low, eat 15g of fast-acting carbs and check again after 15 minutes. If someone is unconscious, a caregiver should give glucagon and call emergency services. You can open your Medical ID from Help > Emergency Medical ID."
             }
         }
     }
@@ -82,35 +82,35 @@ struct HelpView: View {
                     }
                 }
 
-                // Video Tutorials
-                Section("Video Tutorials") {
+                // Popular Topics
+                Section("Popular Topics") {
                     NavigationLink {
                         FAQDetailView(question: "Quick Logging in 30 Seconds", answer: HelpSection.logging.content)
                     } label: {
-                        TutorialRow(title: "Quick Logging in 30 Seconds", duration: "0:30")
+                        TutorialRow(title: "Quick Logging in 30 Seconds", duration: "1 min read")
                     }
                     NavigationLink {
                         FAQDetailView(question: "Setting Up Your CGM", answer: HelpSection.cgm.content)
                     } label: {
-                        TutorialRow(title: "Setting Up Your CGM", duration: "2:15")
+                        TutorialRow(title: "Setting Up Your CGM", duration: "1 min read")
                     }
                     NavigationLink {
                         FAQDetailView(question: "Understanding Time in Range", answer: HelpSection.insights.content)
                     } label: {
-                        TutorialRow(title: "Understanding Time in Range", duration: "1:45")
+                        TutorialRow(title: "Understanding Time in Range", duration: "1 min read")
                     }
                 }
                 
                 // FAQ
                 Section("Frequently Asked Questions") {
                     NavigationLink("How do I export data?") {
-                        FAQDetailView(question: "How do I export data?", answer: "Go to Reports > Export and select your date range. You can export as PDF for your clinician.")
+                        FAQDetailView(question: "How do I export data?", answer: "Open Reports, pick a time period, and tap Export as PDF. Share with Doctor sends the same PDF. To get your raw readings as a spreadsheet, use Export Data in Settings.")
                     }
                     NavigationLink("What does Time in Range mean?") {
-                        FAQDetailView(question: "What does Time in Range mean?", answer: "Time in Range is the percentage of time your glucose stays between 70-180 mg/dL. Higher is better.")
+                        FAQDetailView(question: "What does Time in Range mean?", answer: "It's the percentage of your readings that fall inside your target range. The default range is 70 to 180 mg/dL, and you can change it in Settings. Most people aim for 70% or more.")
                     }
                     NavigationLink("How often should I change my site?") {
-                        FAQDetailView(question: "How often should I change my site?", answer: "Most infusion sites should be changed every 3 days. The app will remind you based on your settings.")
+                        FAQDetailView(question: "How often should I change my site?", answer: "Most infusion sites need changing every 2 to 3 days. When you log a site change, Sucro reminds you when the next one is due.")
                     }
                 }
                 
@@ -169,9 +169,9 @@ struct EmergencyMedicalIDView: View {
                 }
 
                 Section("In an Emergency") {
-                    Label("If unconscious, call emergency services", systemImage: "phone.fill")
+                    Label("If this person is unconscious, call emergency services", systemImage: "phone.fill")
                         .foregroundColor(.red)
-                    Text("For severe low blood sugar, administer glucagon if available and seek immediate medical help.")
+                    Text("For a severe low, give glucagon if you have it and get medical help right away.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -193,7 +193,7 @@ struct TutorialRow: View {
     
     var body: some View {
         HStack {
-            Image(systemName: "play.circle.fill")
+            Image(systemName: "book.fill")
                 .font(.title2)
                 .foregroundColor(.blue)
             

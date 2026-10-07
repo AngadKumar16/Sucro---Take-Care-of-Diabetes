@@ -19,13 +19,13 @@ enum ExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noDataAvailable:
-            return "No data available to export"
+            return "There's nothing to export yet."
         case .pdfGenerationFailed:
-            return "Failed to generate PDF"
+            return "Couldn't create the PDF."
         case .imageConversionFailed:
-            return "Failed to convert image"
+            return "Couldn't create the image."
         case .fileWriteFailed:
-            return "Failed to write file to disk"
+            return "Couldn't save the file."
         }
     }
 }

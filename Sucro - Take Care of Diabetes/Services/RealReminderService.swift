@@ -62,7 +62,7 @@ class RealReminderService: NSObject, ObservableObject {
                 title: "Check Glucose",
                 time: checkTime,
                 type: .deviceCheck,  // Using existing type
-                notes: "Check your glucose - insulin may still be active"
+                notes: "Insulin from your last dose may still be working. Check your glucose."
             )
             reminders.append(reminder)
             scheduleNotification(for: reminder)
@@ -146,7 +146,7 @@ class RealReminderService: NSObject, ObservableObject {
                         title: "Missed Glucose Reading",
                         time: Date().addingTimeInterval(60),
                         type: .deviceCheck,  // Using existing type
-                        notes: "No glucose data for 20+ minutes. Check sensor connection."
+                        notes: "No readings in over 20 minutes. Check that your sensor is connected."
                     )
                     completion(reminder)
                     return

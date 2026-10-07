@@ -40,7 +40,7 @@ struct ReportsView: View {
                         }
 
                         if !viewModel.hasData {
-                            Text("No data logged for this period yet.")
+                            Text("Nothing logged for this period yet.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 4)
@@ -53,7 +53,7 @@ struct ReportsView: View {
 
                     // Export Options
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Export Reports")
+                        Text("Export")
                             .font(.headline)
 
                         VStack(spacing: 8) {

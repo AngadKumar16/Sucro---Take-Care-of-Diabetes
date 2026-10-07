@@ -104,7 +104,7 @@ struct QuickActionButton: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Log a preset meal instantly")
+            Text("Pick a saved meal to log it.")
         }
     }
 }

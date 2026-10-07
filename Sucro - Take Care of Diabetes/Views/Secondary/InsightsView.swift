@@ -28,11 +28,11 @@ struct InsightsView: View {
 
                     // AI Insights Section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("AI-Powered Insights")
+                        Text("What Stands Out")
                             .font(.headline)
 
                         if viewModel.generatedInsights.isEmpty {
-                            Text("Log data to unlock insights.")
+                            Text("Log a few days of data to see insights here.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         } else {

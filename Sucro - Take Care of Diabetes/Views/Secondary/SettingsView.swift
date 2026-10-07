@@ -218,7 +218,7 @@ struct SettingsView: View {
 
         guard !readings.isEmpty else {
             isExporting = false
-            statusMessage = "No glucose data available to export yet."
+            statusMessage = "No glucose readings to export yet."
             showStatusAlert = true
             return
         }
@@ -256,8 +256,8 @@ struct SettingsView: View {
     private func clearAllData() {
         let success = dataService.clearAllData(context: viewContext)
         statusMessage = success
-            ? "All data has been cleared."
-            : "Something went wrong while clearing data."
+            ? "All your data has been deleted."
+            : "Couldn't delete your data. Please try again."
         showStatusAlert = true
     }
 }

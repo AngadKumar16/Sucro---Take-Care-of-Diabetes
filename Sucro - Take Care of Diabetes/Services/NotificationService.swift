@@ -97,7 +97,7 @@ class NotificationService: NSObject {
         content.title = isLow ? "LOW GLUCOSE" : "HIGH GLUCOSE"
         let formatted = SettingsStore.shared.formattedGlucose(value)
         content.body = isLow ?
-            "Glucose is \(formatted). Treat with 15g fast carbs." :
+            "Glucose is \(formatted). Eat 15g of fast-acting carbs." :
             "Glucose is \(formatted). Check for ketones."
         
         // Use appropriate sound based on iOS version
@@ -132,7 +132,7 @@ class NotificationService: NSObject {
         guard notificationsEnabled else { return }
         let content = UNMutableNotificationContent()
         content.title = "Device Offline"
-        content.body = "\(deviceName) has not synced recently. Check connection."
+        content.body = "\(deviceName) hasn't synced in a while. Check that it's connected."
         content.sound = .default
         
         let identifier = "device-offline-\(UUID().uuidString)"

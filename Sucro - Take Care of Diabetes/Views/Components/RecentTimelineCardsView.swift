@@ -155,7 +155,7 @@ struct TimelineCard: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Are you sure you want to delete this event?")
+            Text("This can't be undone.")
         }
     }
     

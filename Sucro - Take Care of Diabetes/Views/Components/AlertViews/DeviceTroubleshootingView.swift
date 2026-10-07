@@ -20,11 +20,11 @@ struct DeviceTroubleshootingView: View {
     @State private var currentStep = 0
     
     let steps = [
-        "Check Bluetooth is enabled in Settings",
-        "Ensure transmitter is within 20 feet",
-        "Restart the Sucro app",
-        "Check for app updates in App Store",
-        "Contact support if issues persist"
+        "Make sure Bluetooth is on in Settings",
+        "Keep your phone within 20 feet of the transmitter",
+        "Close Sucro and open it again",
+        "Update Sucro from the App Store",
+        "Still stuck? Contact support"
     ]
     
     var body: some View {

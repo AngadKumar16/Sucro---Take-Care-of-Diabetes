@@ -69,7 +69,7 @@ struct MonitorView: View {
                                 .fill(Color.gray.opacity(0.3))
                                 .frame(height: 200)
                                 .overlay(
-                                    Text("Chart available on iOS 16+")
+                                    Text("Charts need iOS 16 or later.")
                                         .foregroundColor(.secondary)
                                 )
                         }

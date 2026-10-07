@@ -287,11 +287,11 @@ class HomeViewModel: BaseViewModel {
         guard let latest = latestGlucoseReading else { return }
         
         if latest.value > 180 && latest.trend == GlucoseTrend.rising.rawValue {
-            smartSuggestion = "Consider checking for ketones - glucose trending up"
+            smartSuggestion = "Glucose is high and still rising. Check ketones."
         } else if let lastChange = lastSiteChange {
             let daysSince = Calendar.current.dateComponents([.day], from: lastChange.timestamp ?? Date(), to: Date()).day ?? 0
             if daysSince >= 2 {
-                smartSuggestion = "Consider changing the site - \(daysSince) days since last change"
+                smartSuggestion = "Your site is \(daysSince) days old. Plan to change it soon."
             }
         }
     }

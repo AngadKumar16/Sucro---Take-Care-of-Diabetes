@@ -141,7 +141,7 @@ struct ReminderCard: View {
             Button("2 hours") { onSnooze(120) }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("How long would you like to snooze this reminder?")
+            Text("Snooze for how long?")
         }
     }
     
@@ -212,7 +212,7 @@ private let reminderTimeFormatter: DateFormatter = {
                 Reminder(title: "Check CGM sensor", time: Date().addingTimeInterval(7200), type: .deviceCheck),
                 Reminder(title: "Take medication", time: Date().addingTimeInterval(10800), type: .medication)
             ],
-            suggestion: "Consider changing the site - 2 days since last change",
+            suggestion: "Your site is 2 days old. Plan to change it soon.",
             onSnooze: { _, _ in },
             onComplete: { _ in }
         )
