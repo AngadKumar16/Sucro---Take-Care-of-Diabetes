@@ -96,7 +96,10 @@ struct SettingsView: View {
         } header: {
             Text("Glucose")
         } footer: {
-            Text("Readings between Low and High count as in range. You get an alert below Low and above Urgent High.")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Readings between Low and High count as in range. You get an alert below Low and above Urgent High.")
+                GlossaryLink(termID: "target-range", title: "About glucose ranges")
+            }
         }
     }
 

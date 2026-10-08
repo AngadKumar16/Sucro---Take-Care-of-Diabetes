@@ -39,17 +39,21 @@ final class SucroFlowUITests: XCTestCase {
         let tab = app.tabBars.buttons[name]
         XCTAssertTrue(tab.waitForExistence(timeout: 5), "\(name) tab should exist")
         tab.tap()
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5), "\(name) should open")
     }
 
     /// Scrolls the current screen until the element can be tapped.
     private func scrollTo(_ element: XCUIElement) {
-        for _ in 0..<5 where !element.isHittable { app.swipeUp() }
+        for _ in 0..<8 {
+            if element.waitForExistence(timeout: 1), element.isHittable { return }
+            app.swipeUp()
+        }
     }
 
     // MARK: - Tests
 
     func testTodayScreenLoads() {
-        for tab in ["Today", "Log", "Trends", "Reports", "Settings"] {
+        for tab in ["Today", "Log", "Trends", "Learn", "Settings"] {
             XCTAssertTrue(app.tabBars.buttons[tab].waitForExistence(timeout: 5), "\(tab) tab should exist")
         }
         XCTAssertTrue(app.navigationBars["Today"].exists)
@@ -117,13 +121,17 @@ final class SucroFlowUITests: XCTestCase {
     }
 
     func testReportsPeriodSwitchAndExport() {
-        openTab("Reports")
+        openTab("Trends")
+        let share = app.buttons["shareReport"]
+        XCTAssertTrue(share.waitForExistence(timeout: 5), "Trends should offer Share Report")
+        share.tap()
 
         XCTAssertTrue(app.staticTexts["Summary Statistics"].waitForExistence(timeout: 5))
 
         // Switch the reporting period via the segmented control.
-        let month = app.buttons["Month"]
-        if month.waitForExistence(timeout: 3) { month.tap() }
+        // Trends has its own Month segment under the sheet; use the report's.
+        let month = app.buttons.matching(identifier: "Month").allElementsBoundByIndex.last { $0.isHittable }
+        month?.tap()
 
         // Tapping an export action should respond (no-data alert on fresh install).
         let pdfButton = app.buttons["Share PDF Report"]

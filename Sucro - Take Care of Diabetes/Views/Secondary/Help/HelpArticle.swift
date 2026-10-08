@@ -15,7 +15,7 @@ struct HelpArticle: Hashable, Identifiable {
     static let faq: [HelpArticle] = [
         HelpArticle(
             title: "How do I export data?",
-            body: "Open the Reports tab, pick a period, and tap Share PDF Report to send it by Mail, Messages or AirDrop. To get your glucose readings as a spreadsheet, use Export Glucose in Settings."
+            body: "Open Trends, tap the share button, pick a period, and tap Share PDF Report to send it by Mail, Messages or AirDrop. To get your glucose readings as a spreadsheet, use Export Glucose in Settings."
         ),
         HelpArticle(
             title: "What does Time in Range mean?",

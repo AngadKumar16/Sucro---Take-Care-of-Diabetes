@@ -8,9 +8,9 @@ Based on reading the source. **The app was not built or run for this audit** —
 - iOS 26, SwiftUI + Core Data (`SucroDataModel`), Swift 5, Xcode 16 synchronized folders (new files in the source tree are added to the target automatically).
 - ~9.1k lines across 76 Swift files. Last commit 2026-06-20.
 - Architecture: `Views/` → `ViewModels/` (ObservableObject) → `Services/` singletons (`DataService`, `NotificationService`, ...) → Core Data.
-- Navigation: 5 tabs (Today, Log, Trends, Reports, Settings), `sidebarAdaptable` on iPad. Devices, Help and Safety Information are pushed from Settings. (The old 3 tabs + "More" sheet with a nested TabView was removed in the 2026-10-07 HIG pass.)
+- Navigation: 5 tabs (Today, Log, Trends, Learn, Settings), `sidebarAdaptable` on iPad. Reports opens from the Share Report button on Trends. Devices, Help and Safety Information are pushed from Settings.
 - Rebrand done today: home-screen name is **DiabetesCare** (`INFOPLIST_KEY_CFBundleDisplayName`), and the Health/Bluetooth permission strings say DiabetesCare. Target, scheme, folders, bundle ID (`com.AngadKumar16.Sucro---Take-Care-of-Diabetes`) and repo name still say Sucro.
-- `Resources/MedicalTerms.json` copied in from the old DiabetesCare prototype: 216 glossary terms (`name`, `description`, `broadCategory`, `narrowCategory`, `isPremium`, `contentURL`). **Not wired to any view yet.** All `contentURL`s are fake (`yourserver.com`).
+- `Resources/Glossary.json`: 134 curated glossary terms (`id`, `name`, `aliases`, `category`, `summary`, `details`, `related`, `inApp`) behind the Learn tab. Replaced the prototype's `MedicalTerms.json` (216 terms, about half off-topic, fake URLs, unused `isPremium`). Content is general information, written in plain language, and should get a clinician review before release.
 
 ## What works
 
@@ -35,7 +35,6 @@ Based on reading the source. **The app was not built or run for this audit** —
 3. **Devices toggles** `autoSyncEnabled`, `backgroundMonitoringEnabled`, `lowBatteryAlertsEnabled` are saved but never read anywhere.
 4. **Apple Health import.** `HealthKitManager.fetchGlucoseReadings` exists but is never called — the app only writes to Health, never reads. (This is the cheapest real path to CGM data: Dexcom/Libre apps write to Health.)
 5. **"Battery" on Home** is the *phone's* battery (`UIDevice`), not the CGM/pump.
-6. **Glossary** (`MedicalTerms.json`) has no UI.
 7. `BodyMapView` taps just `print`. `NoteInputView` preview prints (real usage is fine).
 
 ### Bugs / logic problems
@@ -82,7 +81,7 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - [x] Today: fixed event markers (were all drawn at one x), target band, empty states, context menus instead of custom swipe, site due date, Log Meal presets as a system menu.
 - [x] System text styles everywhere (Dynamic Type), grouped backgrounds that work in dark mode, Settings/Reports/Devices as Form/List, Appearance System/Light/Dark (migrates old dark mode switch).
 - [x] Devices is an honest stub (Apple Health status + "no direct connection yet"); fake catalog, battery and dead toggles removed.
-- Not done: Today/Log/Trends still have no iPad-specific layout beyond the sidebar; glossary still unwired.
+- Not done: Today/Log/Trends still have no iPad-specific layout beyond the sidebar.
 
 ### Phase 2 — Real data in
 - [ ] Read glucose from Apple Health (`HKObserverQuery` + anchored query, background delivery), dedupe against Health samples the app itself wrote. Set `trend` from rate of change.
@@ -90,7 +89,7 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - [x] Only init `CBCentralManager` when the user opts into a device flow, or remove BLE until there is a real integration. *(`DeviceMonitorService` was deleted after Phase 1: nothing used it, and its only effects were the fake phone-battery/network status and the launch-time Bluetooth prompt. A real integration starts fresh. The Bluetooth usage string in the build settings can go too if BLE is dropped for good.)* (Direct Dexcom/Libre BLE is proprietary; Dexcom has a web API — investigate later.)
 
 ### Phase 3 — Features
-- [ ] Glossary/Learn screen from `MedicalTerms.json` (search, category filter). Drop or fix `contentURL`s; decide what `isPremium` means.
+- [x] Glossary/Learn tab *(2026-10-07: search by name/alias/definition, Start Here, 9 topics, A–Z with section index, saved terms, related links, share. Inline links from Trends stat tiles, Settings footers and the ketone sheet. Reports moved into a Trends sheet to make room. Still to do: clinician review of the wording; localization.)*
 - [ ] Full backup/restore (all entities, JSON) to Files/iCloud Drive.
 - [ ] Body map: make taps select a site; rotation history.
 
@@ -106,6 +105,7 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - Math: `Utilities/GlucoseCalculator.swift`
 - Alerts: `Services/AlertService.swift`, `Services/NotificationService.swift`, `Services/ReminderService.swift`, `Models/Domain/GlucoseThresholds.swift`
 - Devices: `Views/Secondary/DevicesView.swift`
+- Glossary: `Models/Glossary/Glossary.swift` (load + search), `Resources/Glossary.json`, `Views/Learn/`
 - Forms: `Views/Components/EntryForm.swift`, `Views/Components/EntryFields.swift`, `Views/Components/EditViews/EntryEditorView.swift`
 - Health: `Core/HealthKitManager.swift`
 - Settings: `Services/SettingsStore.swift`

@@ -20,7 +20,7 @@ final class NavigationFlowUITests: XCTestCase {
     }
 
     func testEveryTabOpensItsScreen() {
-        for tab in ["Today", "Log", "Trends", "Reports", "Settings"] {
+        for tab in ["Today", "Log", "Trends", "Learn", "Settings"] {
             app.tabBars.buttons[tab].tap()
             XCTAssertTrue(app.navigationBars[tab].waitForExistence(timeout: 5), "\(tab) tab should show its screen")
         }
@@ -47,6 +47,30 @@ final class NavigationFlowUITests: XCTestCase {
 
         hero.tap()
         XCTAssertTrue(app.navigationBars["Trends"].waitForExistence(timeout: 5), "Tapping the reading should open Trends")
+    }
+
+    func testGlossarySearchOpensATermAndSavesIt() {
+        app.tabBars.buttons["Learn"].tap()
+        XCTAssertTrue(app.navigationBars["Learn"].waitForExistence(timeout: 5))
+
+        let search = app.searchFields.firstMatch
+        if !search.waitForExistence(timeout: 2) { app.swipeDown() }
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("IOB")
+
+        let result = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Insulin on Board'")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 5), "Searching an abbreviation should find the term")
+        result.tap()
+
+        let inApp = app.staticTexts["In DiabetesCare"]
+        XCTAssertTrue(inApp.waitForExistence(timeout: 5), "The term page should open")
+
+        let save = app.buttons["saveTerm"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        save.tap()
+        XCTAssertEqual(save.label, "Unsave")
+        save.tap()   // leave nothing saved for later runs
     }
 
     func testHelpArticleOpensAndGoesBack() {

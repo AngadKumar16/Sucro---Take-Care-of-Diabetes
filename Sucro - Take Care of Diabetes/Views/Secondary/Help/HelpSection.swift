@@ -25,7 +25,7 @@ enum HelpSection: String, CaseIterable {
     var content: String {
         switch self {
         case .gettingStarted:
-            return "Today shows your latest glucose, how much insulin is still active, and shortcuts for common entries. Log lists everything you've recorded, day by day, and the + button adds readings, meals, insulin and activity. Trends charts your glucose over time, and Reports makes a PDF for your care team."
+            return "Today shows your latest glucose, how much insulin is still active, and shortcuts for common entries. Log lists everything you've recorded, day by day, and the + button adds readings, meals, insulin and activity. Trends charts your glucose over time, and its Share Report button makes a PDF for your care team. Learn explains diabetes terms in plain language."
         case .logging:
             return "The Log Meal, Quick Bolus, and Change Site buttons on Today are the fastest way to log. Touch and hold Log Meal to pick a saved meal. Every form has a Time field, so you can log something you forgot earlier. In the Log tab, tap an entry to edit it or swipe left to delete it. DiabetesCare also saves what you log to Apple Health."
         case .cgm:

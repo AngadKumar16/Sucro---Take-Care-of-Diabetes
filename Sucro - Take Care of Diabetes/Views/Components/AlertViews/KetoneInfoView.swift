@@ -61,9 +61,25 @@ struct KetoneInfoView: View {
                         KetoneLevelIndicator(level: .large, description: "Large: Get medical care right away")
                     }
                     .padding()
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Learn More")
+                            .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
+                        ForEach(["ketones", "dka", "sick-day-rules"].compactMap(Glossary.shared.term)) { term in
+                            NavigationLink(value: GlossaryDestination.term(term)) {
+                                Label(term.name, systemImage: "book")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 6)
+                                    .contentShape(.rect)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
                 }
                 .padding()
             }
+            .glossaryDestinations()
             .navigationTitle("Ketone Guidance")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

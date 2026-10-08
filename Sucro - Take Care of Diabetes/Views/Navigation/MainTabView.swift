@@ -37,13 +37,13 @@ struct MainTabView: View {
                 NavigationStack {
                     TrendsView()
                         .environment(insightsViewModel)
+                        .environment(reportsViewModel)
                 }
             }
 
-            Tab("Reports", systemImage: "doc.text", value: .reports) {
+            Tab("Learn", systemImage: "book", value: .learn) {
                 NavigationStack {
-                    ReportsView()
-                        .environment(reportsViewModel)
+                    LearnView()
                 }
             }
 

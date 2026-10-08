@@ -16,6 +16,8 @@ struct TrendsView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var range: TimeRange = .day
+    @State private var showingReport = false
+    @State private var explainedTerm: GlossaryTerm?
 
     var body: some View {
         ScrollView {
@@ -57,6 +59,25 @@ struct TrendsView: View {
             insights.timeRange = range
         }
         .refreshable { refresh() }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Share Report", systemImage: "square.and.arrow.up") {
+                    showingReport = true
+                }
+                .accessibilityIdentifier("shareReport")
+            }
+        }
+        .sheet(isPresented: $showingReport) {
+            NavigationStack {
+                ReportsView()
+                    .doneButton()
+            }
+        }
+        .sheet(item: $explainedTerm, content: GlossaryTermSheet.init)
+    }
+
+    private func explain(_ termID: String) {
+        explainedTerm = Glossary.shared.term(termID)
     }
 
     private func refresh() {
@@ -67,13 +88,19 @@ struct TrendsView: View {
 
     private var statTiles: some View {
         HStack(spacing: 12) {
-            StatTile(title: "Average", value: settings.glucoseValueString(monitor.averageGlucose), unit: settings.glucoseUnit)
-            StatTile(title: "In Range", value: monitor.timeInRange.formatted(.number.precision(.fractionLength(0))), unit: "%")
+            StatTile(title: "Average", value: settings.glucoseValueString(monitor.averageGlucose), unit: settings.glucoseUnit) {
+                explain("average-glucose")
+            }
+            StatTile(title: "In Range", value: monitor.timeInRange.formatted(.number.precision(.fractionLength(0))), unit: "%") {
+                explain("time-in-range")
+            }
             StatTile(
                 title: "Low – High",
                 value: "\(settings.glucoseValueString(monitor.glucoseRange.min))–\(settings.glucoseValueString(monitor.glucoseRange.max))",
                 unit: settings.glucoseUnit
-            )
+            ) {
+                explain("target-range")
+            }
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -141,12 +168,32 @@ struct StatTile: View {
     let title: String
     let value: String
     let unit: String?
+    /// When set, the tile is a button that explains the number.
+    var onExplain: (() -> Void)?
 
     var body: some View {
+        if let onExplain {
+            Button(action: onExplain) {
+                tile
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Explains this number")
+        } else {
+            tile
+        }
+    }
+
+    private var tile: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                Text(title)
+                if onExplain != nil {
+                    Image(systemName: "info.circle")
+                        .accessibilityHidden(true)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
             Text(value)
                 .font(.title3.bold())
                 .monospacedDigit()
@@ -160,6 +207,7 @@ struct StatTile: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .card(padding: 12)
+        .contentShape(.rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
     }
 }

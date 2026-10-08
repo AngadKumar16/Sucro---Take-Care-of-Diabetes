@@ -1,0 +1,1941 @@
+[
+  {
+    "id": "diabetes",
+    "name": "Diabetes",
+    "category": "basics",
+    "summary": "A condition where blood glucose runs too high because the body can't make or use insulin well.",
+    "details": "Glucose comes from food and is the body's main fuel. Insulin moves it from the blood into cells. In diabetes, there isn't enough insulin, or the body doesn't respond to it properly, so glucose builds up in the blood. Over years, high glucose can damage blood vessels and nerves, which is why keeping it in range matters.",
+    "related": [
+      "type-1-diabetes",
+      "type-2-diabetes",
+      "insulin",
+      "blood-glucose"
+    ]
+  },
+  {
+    "id": "type-1-diabetes",
+    "name": "Type 1 Diabetes",
+    "aliases": [
+      "T1D",
+      "Type 1"
+    ],
+    "category": "basics",
+    "summary": "An autoimmune condition where the immune system destroys the cells that make insulin.",
+    "details": "People with type 1 diabetes make little or no insulin, so they need insulin every day, by injection or pump. It often starts in childhood or young adulthood but can begin at any age. It isn't caused by diet or lifestyle.",
+    "related": [
+      "beta-cells",
+      "insulin",
+      "lada",
+      "dka"
+    ]
+  },
+  {
+    "id": "type-2-diabetes",
+    "name": "Type 2 Diabetes",
+    "aliases": [
+      "T2D",
+      "Type 2"
+    ],
+    "category": "basics",
+    "summary": "The most common type, where the body becomes resistant to insulin and makes less of it over time.",
+    "details": "Type 2 diabetes is linked to genetics, age, weight and activity. It's often managed with lifestyle changes and medicines such as metformin, and some people need insulin as it progresses.",
+    "related": [
+      "insulin-resistance",
+      "metformin",
+      "prediabetes"
+    ]
+  },
+  {
+    "id": "gestational-diabetes",
+    "name": "Gestational Diabetes",
+    "category": "basics",
+    "summary": "Diabetes that starts during pregnancy.",
+    "details": "It usually goes away after the baby is born, but it raises the chance of type 2 diabetes later, so regular checks afterwards are recommended.",
+    "related": [
+      "type-2-diabetes",
+      "ogtt"
+    ]
+  },
+  {
+    "id": "prediabetes",
+    "name": "Prediabetes",
+    "aliases": [
+      "Pre-diabetes"
+    ],
+    "category": "basics",
+    "summary": "Glucose levels that are higher than normal but not high enough to be called diabetes.",
+    "details": "Prediabetes is common and often has no symptoms. Being more active, eating well and losing weight if needed can lower the chance of it becoming type 2 diabetes.",
+    "related": [
+      "type-2-diabetes",
+      "a1c",
+      "fasting-glucose"
+    ]
+  },
+  {
+    "id": "lada",
+    "name": "LADA",
+    "aliases": [
+      "Type 1.5"
+    ],
+    "category": "basics",
+    "summary": "Latent autoimmune diabetes in adults: a slow-developing form of autoimmune diabetes.",
+    "details": "LADA is sometimes first mistaken for type 2 diabetes because it starts in adulthood and progresses slowly. Over time most people with LADA need insulin.",
+    "related": [
+      "type-1-diabetes",
+      "type-2-diabetes"
+    ]
+  },
+  {
+    "id": "insulin",
+    "name": "Insulin",
+    "category": "basics",
+    "summary": "A hormone made by the pancreas that lets glucose move from the blood into the body's cells.",
+    "details": "Without enough insulin, glucose stays in the blood and levels rise. People who don't make enough insulin take it as medicine, either with injections or a pump.",
+    "related": [
+      "beta-cells",
+      "basal-insulin",
+      "bolus-insulin",
+      "insulin-resistance"
+    ]
+  },
+  {
+    "id": "blood-glucose",
+    "name": "Blood Glucose",
+    "aliases": [
+      "Blood sugar",
+      "BG",
+      "Glucose"
+    ],
+    "category": "basics",
+    "summary": "The amount of sugar (glucose) in your blood at a given moment.",
+    "details": "Glucose rises after eating and falls with insulin and activity. It's measured in mg/dL or mmol/L. Stress, illness, hormones and sleep can all move it too.",
+    "related": [
+      "mg-dl-mmol-l",
+      "target-range",
+      "hypoglycemia",
+      "hyperglycemia"
+    ],
+    "inApp": "Your latest reading is the big number on Today."
+  },
+  {
+    "id": "pancreas",
+    "name": "Pancreas",
+    "category": "basics",
+    "summary": "An organ behind the stomach that makes insulin, glucagon and digestive enzymes.",
+    "details": "Insulin and glucagon are made in small clusters of cells in the pancreas called islets.",
+    "related": [
+      "beta-cells",
+      "insulin",
+      "glucagon"
+    ]
+  },
+  {
+    "id": "beta-cells",
+    "name": "Beta Cells",
+    "category": "basics",
+    "summary": "The cells in the pancreas that make insulin.",
+    "details": "In type 1 diabetes the immune system destroys beta cells. In type 2 diabetes they gradually make less insulin than the body needs.",
+    "related": [
+      "pancreas",
+      "type-1-diabetes",
+      "islet-transplant"
+    ]
+  },
+  {
+    "id": "insulin-resistance",
+    "name": "Insulin Resistance",
+    "category": "basics",
+    "summary": "When the body's cells don't respond well to insulin, so more is needed to lower glucose.",
+    "details": "Insulin resistance is central to type 2 diabetes. Activity, sleep and weight loss can improve it. It can also rise temporarily with illness, stress or some medicines.",
+    "related": [
+      "type-2-diabetes",
+      "insulin-sensitivity-factor"
+    ]
+  },
+  {
+    "id": "glucagon-hormone",
+    "name": "Glucagon (Hormone)",
+    "category": "basics",
+    "summary": "A hormone that tells the liver to release stored glucose, raising blood glucose.",
+    "details": "Glucagon works in the opposite direction to insulin. A medicine form of glucagon is used to treat severe lows.",
+    "related": [
+      "glucagon",
+      "pancreas"
+    ]
+  },
+  {
+    "id": "hormones-glucose",
+    "name": "Counter-regulatory Hormones",
+    "aliases": [
+      "Stress hormones"
+    ],
+    "category": "basics",
+    "summary": "Hormones such as adrenaline and cortisol that raise blood glucose.",
+    "details": "They help during stress, illness and exercise, and explain why glucose can rise when you're sick, anxious or after intense exercise.",
+    "related": [
+      "sick-day-rules",
+      "dawn-phenomenon"
+    ]
+  },
+  {
+    "id": "mg-dl-mmol-l",
+    "name": "mg/dL and mmol/L",
+    "aliases": [
+      "Units",
+      "mmol",
+      "mg/dL"
+    ],
+    "category": "glucose",
+    "summary": "The two units used to measure glucose. 18 mg/dL is about 1 mmol/L.",
+    "details": "The US mostly uses mg/dL, while many other countries use mmol/L. To convert, divide mg/dL by 18 to get mmol/L, or multiply mmol/L by 18. For example, 180 mg/dL is about 10 mmol/L.",
+    "related": [
+      "blood-glucose"
+    ],
+    "inApp": "Pick your unit in Settings › Glucose. DiabetesCare converts everything for you."
+  },
+  {
+    "id": "target-range",
+    "name": "Target Range",
+    "aliases": [
+      "Glucose range",
+      "Range"
+    ],
+    "category": "glucose",
+    "summary": "The glucose range you and your care team aim to stay within, often 70–180 mg/dL (3.9–10 mmol/L).",
+    "details": "Targets vary by person, age and situation, such as pregnancy. Ask your care team what range is right for you.",
+    "related": [
+      "time-in-range",
+      "hypoglycemia",
+      "hyperglycemia"
+    ],
+    "inApp": "Set your Low and High lines in Settings › Glucose. The green band on charts is this range."
+  },
+  {
+    "id": "time-in-range",
+    "name": "Time in Range",
+    "aliases": [
+      "TIR"
+    ],
+    "category": "glucose",
+    "summary": "The share of time your glucose spends inside your target range.",
+    "details": "A common goal for many adults is more than 70% of the time between 70 and 180 mg/dL, with less than 4% below 70 mg/dL and less than 1% below 54 mg/dL. Each 5% more time in range is meaningful. It's most accurate with CGM data, since fingersticks only show moments.",
+    "related": [
+      "target-range",
+      "cgm",
+      "a1c",
+      "time-below-range"
+    ],
+    "inApp": "Trends shows your time in range for the period you pick."
+  },
+  {
+    "id": "time-below-range",
+    "name": "Time Below Range",
+    "aliases": [
+      "TBR"
+    ],
+    "category": "glucose",
+    "summary": "The share of time glucose is below your target range.",
+    "details": "Keeping time below range low is a priority because lows can be dangerous. A common goal is under 4% below 70 mg/dL and under 1% below 54 mg/dL.",
+    "related": [
+      "time-in-range",
+      "hypoglycemia"
+    ]
+  },
+  {
+    "id": "a1c",
+    "name": "A1C",
+    "aliases": [
+      "HbA1c",
+      "Hemoglobin A1c",
+      "Glycated hemoglobin"
+    ],
+    "category": "glucose",
+    "summary": "A blood test that shows your average glucose over roughly the past 2–3 months.",
+    "details": "A1C measures how much glucose has attached to red blood cells. Many adults aim for below 7%, but goals are personal. A1C doesn't show highs and lows, which is why time in range is also useful.",
+    "related": [
+      "gmi",
+      "time-in-range",
+      "average-glucose"
+    ]
+  },
+  {
+    "id": "gmi",
+    "name": "Glucose Management Indicator",
+    "aliases": [
+      "GMI",
+      "Estimated A1C",
+      "eA1c"
+    ],
+    "category": "glucose",
+    "summary": "An estimate of A1C calculated from at least 14 days of CGM data.",
+    "details": "GMI and a lab A1C can differ by a few tenths or more, and that's normal. GMI is a guide, not a replacement for lab tests.",
+    "related": [
+      "a1c",
+      "cgm"
+    ]
+  },
+  {
+    "id": "average-glucose",
+    "name": "Average Glucose",
+    "category": "glucose",
+    "summary": "The mean of your glucose readings over a period.",
+    "details": "Two people with the same average can have very different days, so look at it with time in range and variability.",
+    "related": [
+      "glucose-variability",
+      "a1c"
+    ],
+    "inApp": "Shown at the top of Trends and in Reports."
+  },
+  {
+    "id": "glucose-variability",
+    "name": "Glucose Variability",
+    "aliases": [
+      "Variability"
+    ],
+    "category": "glucose",
+    "summary": "How much your glucose swings up and down.",
+    "details": "It's often measured as the coefficient of variation (CV): standard deviation divided by the average. A CV of 36% or less is often used as a sign of steadier glucose.",
+    "related": [
+      "coefficient-of-variation",
+      "average-glucose"
+    ]
+  },
+  {
+    "id": "coefficient-of-variation",
+    "name": "Coefficient of Variation",
+    "aliases": [
+      "CV",
+      "%CV"
+    ],
+    "category": "glucose",
+    "summary": "A percentage that describes how much glucose varies around its average.",
+    "details": "CV is the standard deviation divided by the mean, times 100. Lower is steadier. 36% or less is a common target.",
+    "related": [
+      "glucose-variability"
+    ]
+  },
+  {
+    "id": "fasting-glucose",
+    "name": "Fasting Glucose",
+    "aliases": [
+      "Fasting blood sugar",
+      "FBG"
+    ],
+    "category": "glucose",
+    "summary": "Glucose measured after at least 8 hours without food, usually first thing in the morning.",
+    "details": "It reflects how well glucose is controlled overnight, which mostly depends on background insulin.",
+    "related": [
+      "basal-insulin",
+      "dawn-phenomenon"
+    ],
+    "inApp": "Choose \"Fasting\" as the context when you log a morning reading."
+  },
+  {
+    "id": "postprandial",
+    "name": "After-Meal Glucose",
+    "aliases": [
+      "Postprandial",
+      "Post-meal"
+    ],
+    "category": "glucose",
+    "summary": "Glucose measured after eating, usually 1–2 hours after the start of a meal.",
+    "details": "It shows how a meal and its insulin worked together. Pre-bolusing, carb counting and food choices all affect it.",
+    "related": [
+      "pre-bolus",
+      "carb-counting",
+      "glycemic-index"
+    ]
+  },
+  {
+    "id": "fingerstick",
+    "name": "Fingerstick Test",
+    "aliases": [
+      "SMBG",
+      "Finger prick",
+      "Blood glucose check"
+    ],
+    "category": "glucose",
+    "summary": "Checking glucose with a drop of blood from your finger and a meter.",
+    "details": "Fingersticks are used when you don't have a CGM, to confirm a CGM reading that doesn't match how you feel, and sometimes to calibrate a CGM.",
+    "related": [
+      "glucose-meter",
+      "lancet",
+      "cgm"
+    ],
+    "inApp": "Log fingerstick readings with + › Add Glucose in the Log tab."
+  },
+  {
+    "id": "glucose-meter",
+    "name": "Glucose Meter",
+    "aliases": [
+      "Glucometer",
+      "BGM",
+      "Meter"
+    ],
+    "category": "glucose",
+    "summary": "A small device that reads the glucose in a drop of blood on a test strip.",
+    "details": "Keep strips in their container and check they haven't expired, since old or exposed strips can give wrong readings.",
+    "related": [
+      "fingerstick",
+      "lancet"
+    ]
+  },
+  {
+    "id": "cgm",
+    "name": "Continuous Glucose Monitor",
+    "aliases": [
+      "CGM",
+      "Sensor",
+      "Dexcom",
+      "Libre"
+    ],
+    "category": "glucose",
+    "summary": "A wearable sensor that measures glucose every few minutes, day and night.",
+    "details": "A CGM reads glucose in the fluid under the skin, so it runs a few minutes behind a fingerstick, especially when glucose is changing fast. It shows trends and can alert you to highs and lows.",
+    "related": [
+      "trend-arrows",
+      "sensor-warmup",
+      "cgm-lag",
+      "time-in-range"
+    ]
+  },
+  {
+    "id": "trend-arrows",
+    "name": "Trend Arrows",
+    "aliases": [
+      "Trend",
+      "Rate of change"
+    ],
+    "category": "glucose",
+    "summary": "Arrows that show which way glucose is heading and how fast.",
+    "details": "A flat arrow means steady. A single arrow up or down usually means 1–2 mg/dL per minute, and a double arrow means faster than that. Arrows help you act before a high or low happens.",
+    "related": [
+      "cgm"
+    ],
+    "inApp": "When readings are close together, Today shows an arrow next to your glucose."
+  },
+  {
+    "id": "cgm-lag",
+    "name": "CGM Lag",
+    "aliases": [
+      "Sensor lag"
+    ],
+    "category": "glucose",
+    "summary": "The delay between a change in blood glucose and when a CGM shows it.",
+    "details": "Because a CGM measures fluid under the skin, it can trail blood glucose by about 5–15 minutes. During fast changes, a fingerstick may read quite differently.",
+    "related": [
+      "cgm",
+      "fingerstick"
+    ]
+  },
+  {
+    "id": "sensor-warmup",
+    "name": "Sensor Warm-up",
+    "category": "glucose",
+    "summary": "The period after inserting a new CGM sensor before it gives readings.",
+    "details": "Readings can be less accurate in the first day of a new sensor. If a reading doesn't match symptoms, check with a fingerstick.",
+    "related": [
+      "cgm",
+      "cgm-calibration"
+    ]
+  },
+  {
+    "id": "cgm-calibration",
+    "name": "CGM Calibration",
+    "category": "glucose",
+    "summary": "Entering a fingerstick reading so a CGM can adjust its accuracy.",
+    "details": "Many current CGMs don't need calibration. If yours does, calibrate when glucose is steady rather than rising or falling fast.",
+    "related": [
+      "cgm",
+      "fingerstick"
+    ]
+  },
+  {
+    "id": "compression-low",
+    "name": "Compression Low",
+    "aliases": [
+      "Pressure-induced sensor attenuation"
+    ],
+    "category": "glucose",
+    "summary": "A false low CGM reading caused by lying on the sensor.",
+    "details": "Pressure reduces fluid flow around the sensor, often during sleep. If you get a sudden low alert overnight, a fingerstick can confirm it.",
+    "related": [
+      "cgm",
+      "fingerstick"
+    ]
+  },
+  {
+    "id": "dawn-phenomenon",
+    "name": "Dawn Phenomenon",
+    "category": "glucose",
+    "summary": "A rise in glucose in the early morning, caused by hormones released before waking.",
+    "details": "Many people see glucose climb between about 3 and 8 a.m. even without eating. Changes to background insulin can help; talk to your care team.",
+    "related": [
+      "fasting-glucose",
+      "basal-insulin",
+      "somogyi-effect"
+    ]
+  },
+  {
+    "id": "somogyi-effect",
+    "name": "Somogyi Effect",
+    "aliases": [
+      "Rebound high"
+    ],
+    "category": "glucose",
+    "summary": "An older theory that a low overnight causes a rebound high in the morning.",
+    "details": "CGM studies suggest true rebound highs are uncommon, and morning highs are more often from the dawn phenomenon or not enough background insulin. A CGM or a 3 a.m. check can show what's happening.",
+    "related": [
+      "dawn-phenomenon",
+      "hypoglycemia"
+    ]
+  },
+  {
+    "id": "ambulatory-glucose-profile",
+    "name": "Ambulatory Glucose Profile",
+    "aliases": [
+      "AGP"
+    ],
+    "category": "glucose",
+    "summary": "A standard one-page CGM report that overlays many days to show your typical day.",
+    "details": "It shows median glucose by time of day, with shaded bands for how much it varies. Care teams often use it in appointments.",
+    "related": [
+      "cgm",
+      "time-in-range"
+    ]
+  },
+  {
+    "id": "logbook",
+    "name": "Logbook",
+    "aliases": [
+      "Diary",
+      "Log"
+    ],
+    "category": "glucose",
+    "summary": "A record of glucose readings, food, insulin and activity.",
+    "details": "Patterns are easier to spot when everything is in one place, especially before an appointment.",
+    "inApp": "The Log tab is your logbook. Reports turns it into a PDF."
+  },
+  {
+    "id": "hypoglycemia",
+    "name": "Hypoglycemia",
+    "aliases": [
+      "Low",
+      "Hypo",
+      "Low blood sugar"
+    ],
+    "category": "lowsHighs",
+    "summary": "Low blood glucose, usually below 70 mg/dL (3.9 mmol/L).",
+    "details": "Symptoms can include shaking, sweating, hunger, a fast heartbeat, confusion and irritability. Level 1 is below 70 mg/dL, level 2 is below 54 mg/dL (3.0 mmol/L), and level 3 is a severe low where you need someone's help. Treat lows straight away.",
+    "related": [
+      "rule-of-15",
+      "glucagon",
+      "hypo-unawareness",
+      "fast-acting-carbs"
+    ],
+    "inApp": "DiabetesCare alerts you when a reading crosses your Low line."
+  },
+  {
+    "id": "rule-of-15",
+    "name": "Rule of 15",
+    "aliases": [
+      "15-15 rule"
+    ],
+    "category": "lowsHighs",
+    "summary": "Treat a low with 15 g of fast-acting carbs, wait 15 minutes, then check again.",
+    "details": "If glucose is still low, repeat. Once it's back in range, have a snack or meal if your next meal is more than an hour away. Your care team may give you a different amount, for example for children.",
+    "related": [
+      "hypoglycemia",
+      "fast-acting-carbs"
+    ]
+  },
+  {
+    "id": "fast-acting-carbs",
+    "name": "Fast-Acting Carbs",
+    "aliases": [
+      "Quick sugar"
+    ],
+    "category": "lowsHighs",
+    "summary": "Sugars that raise glucose quickly, used to treat lows.",
+    "details": "Examples include glucose tablets or gel, regular juice or soda, and hard candies. Avoid foods with fat or protein, like chocolate, for treating a low, because they slow absorption.",
+    "related": [
+      "rule-of-15",
+      "glucose-tablets"
+    ]
+  },
+  {
+    "id": "glucose-tablets",
+    "name": "Glucose Tablets",
+    "aliases": [
+      "Glucose gel",
+      "Dextrose tablets"
+    ],
+    "category": "lowsHighs",
+    "summary": "Chewable tablets of pure glucose for treating lows.",
+    "details": "They work quickly and the dose is easy to measure, since each tablet has a set number of grams.",
+    "related": [
+      "fast-acting-carbs",
+      "rule-of-15"
+    ]
+  },
+  {
+    "id": "glucagon",
+    "name": "Glucagon (Emergency)",
+    "aliases": [
+      "Baqsimi",
+      "Gvoke",
+      "Rescue glucagon"
+    ],
+    "category": "lowsHighs",
+    "summary": "An emergency medicine for a severe low when someone can't safely eat or drink.",
+    "details": "It comes as an injection or a nasal spray. Family, friends and coworkers should know where it is and how to use it. After giving glucagon, call emergency services and turn the person on their side.",
+    "related": [
+      "hypoglycemia",
+      "glucagon-hormone",
+      "medical-id"
+    ]
+  },
+  {
+    "id": "hypo-unawareness",
+    "name": "Hypoglycemia Unawareness",
+    "aliases": [
+      "Impaired awareness of hypoglycemia"
+    ],
+    "category": "lowsHighs",
+    "summary": "Not feeling the usual warning signs of a low.",
+    "details": "It's more common after frequent lows or many years with diabetes. Avoiding lows for a few weeks can bring some warning signs back. A CGM with alerts can help.",
+    "related": [
+      "hypoglycemia",
+      "cgm"
+    ]
+  },
+  {
+    "id": "nocturnal-hypoglycemia",
+    "name": "Nighttime Lows",
+    "aliases": [
+      "Nocturnal hypoglycemia"
+    ],
+    "category": "lowsHighs",
+    "summary": "Low glucose while asleep.",
+    "details": "Signs can include nightmares, sweating, or waking with a headache. Exercise, alcohol and evening insulin can raise the risk. CGM alerts help catch them.",
+    "related": [
+      "hypoglycemia",
+      "exercise-hypoglycemia",
+      "alcohol"
+    ]
+  },
+  {
+    "id": "hyperglycemia",
+    "name": "Hyperglycemia",
+    "aliases": [
+      "High",
+      "Hyper",
+      "High blood sugar"
+    ],
+    "category": "lowsHighs",
+    "summary": "High blood glucose, usually above 180 mg/dL (10 mmol/L).",
+    "details": "Symptoms can include thirst, needing to pee often, tiredness and blurred vision. Short highs are common; long or very high levels need attention, especially if you have ketones.",
+    "related": [
+      "ketones",
+      "dka",
+      "correction-dose"
+    ],
+    "inApp": "DiabetesCare alerts you above your Urgent High line."
+  },
+  {
+    "id": "ketones",
+    "name": "Ketones",
+    "aliases": [
+      "Ketone bodies",
+      "BHB"
+    ],
+    "category": "lowsHighs",
+    "summary": "Acids the body makes when it burns fat because it doesn't have enough insulin.",
+    "details": "Ketones can build up when glucose is high, insulin is missing, or you're ill. You can test them with a blood ketone meter or urine strips. High ketones with high glucose can lead to DKA, which is an emergency.",
+    "related": [
+      "dka",
+      "ketone-meter",
+      "sick-day-rules"
+    ],
+    "inApp": "When glucose is high, the alert on Today links to ketone guidance."
+  },
+  {
+    "id": "ketone-meter",
+    "name": "Ketone Testing",
+    "aliases": [
+      "Blood ketone meter",
+      "Urine ketone strips"
+    ],
+    "category": "lowsHighs",
+    "summary": "Checking ketones with a blood meter or urine strips.",
+    "details": "Blood testing shows current levels; urine strips show levels from a few hours earlier. Ask your care team when to test and what numbers mean for you.",
+    "related": [
+      "ketones",
+      "dka"
+    ]
+  },
+  {
+    "id": "dka",
+    "name": "Diabetic Ketoacidosis",
+    "aliases": [
+      "DKA"
+    ],
+    "category": "lowsHighs",
+    "summary": "A life-threatening emergency caused by a severe lack of insulin and a build-up of ketones.",
+    "details": "Signs include nausea or vomiting, stomach pain, fruity-smelling breath, fast breathing, and extreme tiredness. It can come on within hours, especially if a pump stops delivering insulin. Get emergency care right away.",
+    "related": [
+      "ketones",
+      "sick-day-rules",
+      "pump-occlusion"
+    ]
+  },
+  {
+    "id": "hhs",
+    "name": "Hyperosmolar Hyperglycemic State",
+    "aliases": [
+      "HHS"
+    ],
+    "category": "lowsHighs",
+    "summary": "A dangerous condition with extremely high glucose and severe dehydration, mostly in type 2 diabetes.",
+    "details": "It develops over days, often during illness. Signs include extreme thirst, confusion and drowsiness. It needs emergency care.",
+    "related": [
+      "hyperglycemia",
+      "sick-day-rules"
+    ]
+  },
+  {
+    "id": "sick-day-rules",
+    "name": "Sick-Day Rules",
+    "aliases": [
+      "Sick day management"
+    ],
+    "category": "lowsHighs",
+    "summary": "A plan for managing diabetes when you're ill.",
+    "details": "Illness often raises glucose even if you eat less. Common advice is to keep taking insulin, check glucose and ketones more often, drink fluids, and know when to call your care team. Ask them to help you write your plan before you need it.",
+    "related": [
+      "ketones",
+      "dka",
+      "hormones-glucose"
+    ]
+  },
+  {
+    "id": "exercise-hypoglycemia",
+    "name": "Exercise and Lows",
+    "aliases": [
+      "Exercise-induced hypoglycemia"
+    ],
+    "category": "lowsHighs",
+    "summary": "Physical activity can lower glucose during, and for up to a day after, exercise.",
+    "details": "Checking before and after, carrying fast-acting carbs, and adjusting insulin or food can help. Intense exercise can sometimes raise glucose for a while instead.",
+    "related": [
+      "hypoglycemia",
+      "nocturnal-hypoglycemia",
+      "exercise"
+    ]
+  },
+  {
+    "id": "basal-insulin",
+    "name": "Basal Insulin",
+    "aliases": [
+      "Background insulin",
+      "Long-acting"
+    ],
+    "category": "insulin",
+    "summary": "Background insulin that keeps glucose steady between meals and overnight.",
+    "details": "It's given as a long-acting injection once or twice a day, or as a continuous trickle from a pump.",
+    "related": [
+      "bolus-insulin",
+      "long-acting-insulin",
+      "basal-rate"
+    ]
+  },
+  {
+    "id": "bolus-insulin",
+    "name": "Bolus Insulin",
+    "aliases": [
+      "Mealtime insulin",
+      "Bolus"
+    ],
+    "category": "insulin",
+    "summary": "A dose of rapid-acting insulin taken for food or to bring down a high.",
+    "details": "A meal bolus covers carbs; a correction bolus brings a high back to target. Many people combine both in one dose.",
+    "related": [
+      "basal-insulin",
+      "rapid-acting-insulin",
+      "correction-dose",
+      "insulin-to-carb-ratio"
+    ],
+    "inApp": "Record boluses with Quick Bolus on Today. It only logs the dose; it doesn't control a pump."
+  },
+  {
+    "id": "rapid-acting-insulin",
+    "name": "Rapid-Acting Insulin",
+    "aliases": [
+      "Humalog",
+      "NovoLog",
+      "Fiasp",
+      "Lyumjev",
+      "Lispro",
+      "Aspart"
+    ],
+    "category": "insulin",
+    "summary": "Insulin that starts working within about 15 minutes, used for meals and corrections.",
+    "details": "Examples include lispro (Humalog, Admelog), aspart (NovoLog, Fiasp) and glulisine (Apidra). It peaks around 1–2 hours and lasts about 3–5 hours.",
+    "related": [
+      "bolus-insulin",
+      "insulin-action-time",
+      "insulin-on-board"
+    ]
+  },
+  {
+    "id": "long-acting-insulin",
+    "name": "Long-Acting Insulin",
+    "aliases": [
+      "Lantus",
+      "Tresiba",
+      "Toujeo",
+      "Levemir",
+      "Glargine",
+      "Degludec"
+    ],
+    "category": "insulin",
+    "summary": "Insulin that works slowly over about a day or longer, used as background insulin.",
+    "details": "Examples include glargine (Lantus, Basaglar, Toujeo), detemir (Levemir) and degludec (Tresiba). It's usually taken at the same time each day.",
+    "related": [
+      "basal-insulin"
+    ]
+  },
+  {
+    "id": "intermediate-insulin",
+    "name": "Intermediate-Acting Insulin",
+    "aliases": [
+      "NPH",
+      "Humulin N",
+      "Novolin N"
+    ],
+    "category": "insulin",
+    "summary": "Insulin, such as NPH, that lasts about 12–18 hours with a noticeable peak.",
+    "details": "NPH is cloudy and needs gentle mixing before use. Because of its peak, timing of meals matters more.",
+    "related": [
+      "basal-insulin",
+      "premixed-insulin"
+    ]
+  },
+  {
+    "id": "premixed-insulin",
+    "name": "Premixed Insulin",
+    "aliases": [
+      "70/30",
+      "Mixed insulin"
+    ],
+    "category": "insulin",
+    "summary": "A fixed mix of intermediate and short- or rapid-acting insulin in one pen or vial.",
+    "details": "Examples include 70/30 mixes. It means fewer injections but less flexibility with meals.",
+    "related": [
+      "intermediate-insulin"
+    ]
+  },
+  {
+    "id": "insulin-on-board",
+    "name": "Insulin on Board",
+    "aliases": [
+      "IOB",
+      "Active insulin"
+    ],
+    "category": "insulin",
+    "summary": "Rapid-acting insulin from recent doses that's still working in your body.",
+    "details": "Knowing it helps avoid \"stacking\" doses too close together, which can cause lows. Pumps and apps estimate it from dose times and your insulin action time.",
+    "related": [
+      "insulin-action-time",
+      "insulin-stacking",
+      "rapid-acting-insulin"
+    ],
+    "inApp": "Today shows an estimate under your glucose. It's a rough guide, not a dosing tool."
+  },
+  {
+    "id": "insulin-action-time",
+    "name": "Insulin Action Time",
+    "aliases": [
+      "Duration of insulin action",
+      "DIA",
+      "Active insulin time"
+    ],
+    "category": "insulin",
+    "summary": "How long a dose of rapid-acting insulin keeps lowering glucose, often 3–5 hours.",
+    "details": "It varies by person and insulin type. Pumps and apps use it to estimate insulin on board. Your care team can help you set it.",
+    "related": [
+      "insulin-on-board",
+      "rapid-acting-insulin"
+    ],
+    "inApp": "Set it in Settings › Insulin. It only affects the insulin on board estimate."
+  },
+  {
+    "id": "insulin-stacking",
+    "name": "Insulin Stacking",
+    "aliases": [
+      "Stacking"
+    ],
+    "category": "insulin",
+    "summary": "Taking another dose while earlier insulin is still working, which can lead to a low.",
+    "details": "It often happens when correcting a high that hasn't come down yet. Checking insulin on board first helps.",
+    "related": [
+      "insulin-on-board",
+      "correction-dose"
+    ]
+  },
+  {
+    "id": "insulin-to-carb-ratio",
+    "name": "Insulin-to-Carb Ratio",
+    "aliases": [
+      "Carb ratio",
+      "ICR",
+      "I:C"
+    ],
+    "category": "insulin",
+    "summary": "How many grams of carbohydrate one unit of insulin covers.",
+    "details": "For example, a ratio of 1:10 means one unit covers 10 g of carbs. Ratios are personal and can differ by time of day. Your care team sets them.",
+    "related": [
+      "carb-counting",
+      "bolus-insulin"
+    ]
+  },
+  {
+    "id": "insulin-sensitivity-factor",
+    "name": "Correction Factor",
+    "aliases": [
+      "Insulin sensitivity factor",
+      "ISF",
+      "CF"
+    ],
+    "category": "insulin",
+    "summary": "How much one unit of rapid-acting insulin is expected to lower your glucose.",
+    "details": "For example, a factor of 50 means one unit lowers glucose by about 50 mg/dL. It's used to work out correction doses and is set with your care team.",
+    "related": [
+      "correction-dose",
+      "insulin-resistance"
+    ]
+  },
+  {
+    "id": "correction-dose",
+    "name": "Correction Dose",
+    "aliases": [
+      "Correction bolus",
+      "Correction"
+    ],
+    "category": "insulin",
+    "summary": "Extra rapid-acting insulin to bring a high back to target.",
+    "details": "It's based on your correction factor and current insulin on board. Ask your care team how to calculate yours.",
+    "related": [
+      "insulin-sensitivity-factor",
+      "insulin-on-board",
+      "insulin-stacking"
+    ]
+  },
+  {
+    "id": "pre-bolus",
+    "name": "Pre-bolus",
+    "category": "insulin",
+    "summary": "Taking mealtime insulin some minutes before eating so it starts working as food is absorbed.",
+    "details": "The right timing depends on your insulin, current glucose and the meal. Ask your care team before changing timing, especially if glucose is low or you're unsure what you'll eat.",
+    "related": [
+      "bolus-insulin",
+      "postprandial"
+    ]
+  },
+  {
+    "id": "injection-site-rotation",
+    "name": "Injection Site Rotation",
+    "aliases": [
+      "Site rotation"
+    ],
+    "category": "insulin",
+    "summary": "Moving where you inject or place a pump site each time.",
+    "details": "Using the same spot repeatedly can cause lumps under the skin that absorb insulin poorly. Rotating within and between areas like the abdomen, thighs, arms and buttocks helps.",
+    "related": [
+      "lipohypertrophy",
+      "infusion-site"
+    ],
+    "inApp": "Change Site on Today suggests the next site in the rotation."
+  },
+  {
+    "id": "lipohypertrophy",
+    "name": "Lipohypertrophy",
+    "aliases": [
+      "Lipo",
+      "Lumps"
+    ],
+    "category": "insulin",
+    "summary": "Lumpy, thickened tissue from repeated injections or pump sites in the same place.",
+    "details": "Insulin absorbs unpredictably from these areas, which can cause unexpected highs and lows. They usually improve if you avoid the area for a few months.",
+    "related": [
+      "injection-site-rotation"
+    ]
+  },
+  {
+    "id": "insulin-storage",
+    "name": "Insulin Storage",
+    "aliases": [
+      "Storing insulin"
+    ],
+    "category": "insulin",
+    "summary": "Keeping insulin at the right temperature so it keeps working.",
+    "details": "Unopened insulin is usually kept in the fridge; in-use pens or vials can often stay at room temperature for a set number of days. Don't freeze it or leave it in heat or direct sun. Check the leaflet for your insulin.",
+    "related": [
+      "insulin"
+    ]
+  },
+  {
+    "id": "insulin-pen",
+    "name": "Insulin Pen",
+    "aliases": [
+      "Pen"
+    ],
+    "category": "insulin",
+    "summary": "A pen-shaped device that holds insulin and delivers a dialed dose through a short needle.",
+    "details": "Use a new needle each time and do a priming (\"air\") shot before dosing as the instructions say.",
+    "related": [
+      "pen-needle",
+      "smart-pen"
+    ]
+  },
+  {
+    "id": "pen-needle",
+    "name": "Pen Needle",
+    "category": "insulin",
+    "summary": "The small disposable needle that screws onto an insulin pen.",
+    "details": "Short needles (4–6 mm) work for most people. Dispose of used needles in a sharps container.",
+    "related": [
+      "insulin-pen",
+      "sharps"
+    ]
+  },
+  {
+    "id": "sharps",
+    "name": "Sharps Disposal",
+    "category": "insulin",
+    "summary": "Safely throwing away needles and lancets.",
+    "details": "Use a sharps container or a strong plastic bottle with a lid, and check local rules for disposal.",
+    "related": [
+      "pen-needle",
+      "lancet"
+    ]
+  },
+  {
+    "id": "inhaled-insulin",
+    "name": "Inhaled Insulin",
+    "aliases": [
+      "Afrezza"
+    ],
+    "category": "insulin",
+    "summary": "Rapid-acting insulin breathed in through an inhaler before meals.",
+    "details": "It isn't suitable for people with some lung conditions or who smoke.",
+    "related": [
+      "rapid-acting-insulin"
+    ]
+  },
+  {
+    "id": "carbohydrates",
+    "name": "Carbohydrates",
+    "aliases": [
+      "Carbs",
+      "CHO"
+    ],
+    "category": "food",
+    "summary": "Starches, sugars and fiber in food. Most carbs turn into glucose and raise blood glucose.",
+    "details": "Carbs are in bread, rice, pasta, fruit, milk, starchy vegetables and sweets. Fiber is a carb too but doesn't raise glucose much.",
+    "related": [
+      "carb-counting",
+      "fiber",
+      "glycemic-index"
+    ],
+    "inApp": "Log carbs with Log Meal on Today, or + › Add Carbs in the Log tab."
+  },
+  {
+    "id": "carb-counting",
+    "name": "Carb Counting",
+    "aliases": [
+      "Counting carbs"
+    ],
+    "category": "food",
+    "summary": "Adding up the grams of carbohydrate in a meal, often to work out an insulin dose.",
+    "details": "Nutrition labels, apps and measuring cups help. With practice, estimates get closer. Carb counts are matched to insulin with your insulin-to-carb ratio.",
+    "related": [
+      "carbohydrates",
+      "insulin-to-carb-ratio",
+      "net-carbs"
+    ]
+  },
+  {
+    "id": "net-carbs",
+    "name": "Net Carbs",
+    "category": "food",
+    "summary": "Total carbs minus fiber, and sometimes minus sugar alcohols.",
+    "details": "\"Net carbs\" isn't a regulated term, and not everyone's glucose responds the same way. Many care teams suggest counting total carbs.",
+    "related": [
+      "carb-counting",
+      "fiber",
+      "sugar-alcohols"
+    ]
+  },
+  {
+    "id": "fiber",
+    "name": "Fiber",
+    "aliases": [
+      "Dietary fiber"
+    ],
+    "category": "food",
+    "summary": "The part of plant foods the body doesn't digest. It slows how fast glucose rises.",
+    "details": "Vegetables, beans, whole grains, nuts and fruit are good sources.",
+    "related": [
+      "carbohydrates",
+      "net-carbs"
+    ]
+  },
+  {
+    "id": "glycemic-index",
+    "name": "Glycemic Index",
+    "aliases": [
+      "GI"
+    ],
+    "category": "food",
+    "summary": "A ranking of how quickly a food raises glucose compared with pure glucose.",
+    "details": "Low-GI foods like lentils and oats raise glucose more slowly than high-GI foods like white bread. Portion size, fat, protein and fiber in the meal also matter.",
+    "related": [
+      "glycemic-load",
+      "carbohydrates"
+    ]
+  },
+  {
+    "id": "glycemic-load",
+    "name": "Glycemic Load",
+    "aliases": [
+      "GL"
+    ],
+    "category": "food",
+    "summary": "A measure that combines a food's glycemic index with the amount of carbs in a portion.",
+    "details": "It gives a more realistic picture than GI alone, since a small portion of a high-GI food may have little effect.",
+    "related": [
+      "glycemic-index"
+    ]
+  },
+  {
+    "id": "fat-protein-effect",
+    "name": "Fat and Protein Effect",
+    "aliases": [
+      "Pizza effect"
+    ],
+    "category": "food",
+    "summary": "High-fat or high-protein meals can raise glucose several hours later.",
+    "details": "Pizza and rich meals are common examples. Some people use an extended or split bolus; ask your care team.",
+    "related": [
+      "extended-bolus",
+      "postprandial"
+    ]
+  },
+  {
+    "id": "sugar-alcohols",
+    "name": "Sugar Alcohols",
+    "category": "food",
+    "summary": "Sweeteners such as sorbitol, xylitol and erythritol that have fewer calories and usually less effect on glucose than sugar.",
+    "details": "Large amounts can cause stomach upset. They can still raise glucose somewhat, so check your own response.",
+    "related": [
+      "net-carbs",
+      "artificial-sweeteners"
+    ]
+  },
+  {
+    "id": "artificial-sweeteners",
+    "name": "Non-Sugar Sweeteners",
+    "aliases": [
+      "Artificial sweeteners",
+      "Diet drinks"
+    ],
+    "category": "food",
+    "summary": "Sweeteners like sucralose, aspartame and stevia that don't raise glucose much.",
+    "details": "They can help cut sugar, though drinks like water are still the best everyday choice.",
+    "related": [
+      "sugar-alcohols"
+    ]
+  },
+  {
+    "id": "plate-method",
+    "name": "Plate Method",
+    "aliases": [
+      "Diabetes plate"
+    ],
+    "category": "food",
+    "summary": "A simple way to plan meals: half the plate non-starchy vegetables, a quarter protein, a quarter carbs.",
+    "details": "It's an easy way to balance meals without counting.",
+    "related": [
+      "carb-counting"
+    ]
+  },
+  {
+    "id": "alcohol",
+    "name": "Alcohol",
+    "category": "food",
+    "summary": "Alcohol can lower glucose for many hours, especially overnight.",
+    "details": "It stops the liver releasing glucose. Eat when you drink, check glucose before bed, and make sure people with you know the signs of a low, since they can look like being drunk.",
+    "related": [
+      "hypoglycemia",
+      "nocturnal-hypoglycemia"
+    ]
+  },
+  {
+    "id": "insulin-pump",
+    "name": "Insulin Pump",
+    "aliases": [
+      "Pump",
+      "Omnipod",
+      "t:slim",
+      "CSII"
+    ],
+    "category": "devices",
+    "summary": "A small device that delivers rapid-acting insulin continuously through a thin tube or a patch on the skin.",
+    "details": "Pumps give a programmed background (basal) rate and boluses for meals. Tubeless \"patch\" pumps stick directly to the skin.",
+    "related": [
+      "basal-rate",
+      "infusion-site",
+      "automated-insulin-delivery",
+      "pump-occlusion"
+    ]
+  },
+  {
+    "id": "basal-rate",
+    "name": "Basal Rate",
+    "category": "devices",
+    "summary": "The amount of background insulin a pump delivers each hour.",
+    "details": "Rates can change through the day. Your care team helps set them.",
+    "related": [
+      "basal-insulin",
+      "temporary-basal"
+    ]
+  },
+  {
+    "id": "temporary-basal",
+    "name": "Temporary Basal",
+    "aliases": [
+      "Temp basal"
+    ],
+    "category": "devices",
+    "summary": "A short-term change to a pump's basal rate, for example during exercise or illness.",
+    "details": "It's set as a percentage or new rate for a number of hours.",
+    "related": [
+      "basal-rate",
+      "exercise-hypoglycemia"
+    ]
+  },
+  {
+    "id": "extended-bolus",
+    "name": "Extended Bolus",
+    "aliases": [
+      "Square wave",
+      "Dual wave",
+      "Combo bolus"
+    ],
+    "category": "devices",
+    "summary": "A pump bolus delivered over a longer time instead of all at once.",
+    "details": "Some people use it for slow-digesting, high-fat meals. A combination bolus gives part now and part later.",
+    "related": [
+      "fat-protein-effect",
+      "bolus-insulin"
+    ]
+  },
+  {
+    "id": "infusion-site",
+    "name": "Infusion Site",
+    "aliases": [
+      "Pump site",
+      "Infusion set",
+      "Cannula"
+    ],
+    "category": "devices",
+    "summary": "Where a pump's cannula goes under the skin.",
+    "details": "Most sites are changed every 2–3 days. Old or irritated sites absorb insulin poorly, which can cause unexplained highs.",
+    "related": [
+      "injection-site-rotation",
+      "pump-occlusion",
+      "insulin-pump"
+    ],
+    "inApp": "Log site changes with Change Site on Today to get a reminder when the next one is due."
+  },
+  {
+    "id": "pump-occlusion",
+    "name": "Pump Occlusion",
+    "aliases": [
+      "Occlusion",
+      "Blockage"
+    ],
+    "category": "devices",
+    "summary": "A blockage that stops insulin getting from a pump into the body.",
+    "details": "Without insulin, glucose and ketones can rise within hours. If you have a high that won't come down, check your site and tubing, and consider changing the site or using a pen injection as your plan says.",
+    "related": [
+      "dka",
+      "infusion-site",
+      "ketones"
+    ]
+  },
+  {
+    "id": "automated-insulin-delivery",
+    "name": "Automated Insulin Delivery",
+    "aliases": [
+      "AID",
+      "Closed loop",
+      "Hybrid closed loop",
+      "Artificial pancreas",
+      "Looping"
+    ],
+    "category": "devices",
+    "summary": "A pump that adjusts insulin automatically using CGM readings.",
+    "details": "Also called a hybrid closed loop. It raises or lowers background insulin to keep glucose in range, but you still bolus for meals. Examples include Omnipod 5, Tandem Control-IQ and Medtronic 780G.",
+    "related": [
+      "insulin-pump",
+      "cgm"
+    ]
+  },
+  {
+    "id": "smart-pen",
+    "name": "Smart Insulin Pen",
+    "aliases": [
+      "Connected pen",
+      "InPen"
+    ],
+    "category": "devices",
+    "summary": "An insulin pen or pen cap that records when and how much you dosed.",
+    "details": "Some also suggest doses and show insulin on board in an app.",
+    "related": [
+      "insulin-pen",
+      "insulin-on-board"
+    ]
+  },
+  {
+    "id": "lancet",
+    "name": "Lancet",
+    "aliases": [
+      "Lancing device"
+    ],
+    "category": "devices",
+    "summary": "The small needle used to prick your finger for a glucose check.",
+    "details": "Using the side of the fingertip and a fresh lancet usually hurts less.",
+    "related": [
+      "fingerstick",
+      "sharps"
+    ]
+  },
+  {
+    "id": "apple-health",
+    "name": "Apple Health",
+    "aliases": [
+      "HealthKit",
+      "Health app"
+    ],
+    "category": "devices",
+    "summary": "Apple's app that collects health data from your devices and apps in one place.",
+    "details": "Many CGM and fitness apps can share data with Health, and you choose which apps can read or write each type of data.",
+    "inApp": "DiabetesCare saves what you log to Apple Health. Check it in Settings › Devices & Apple Health."
+  },
+  {
+    "id": "medical-id",
+    "name": "Medical ID",
+    "aliases": [
+      "Emergency ID",
+      "Medical alert"
+    ],
+    "category": "devices",
+    "summary": "Emergency health information that first responders can see, even when your phone is locked.",
+    "details": "On iPhone, set it up in the Health app. A bracelet or wallet card that says you have diabetes is a good backup.",
+    "related": [
+      "glucagon",
+      "hypoglycemia"
+    ],
+    "inApp": "DiabetesCare has a quick Medical ID card in Settings › Help."
+  },
+  {
+    "id": "telehealth",
+    "name": "Telehealth",
+    "aliases": [
+      "Telemedicine",
+      "Virtual visit"
+    ],
+    "category": "devices",
+    "summary": "Seeing your care team by phone or video instead of in person.",
+    "details": "Sharing CGM or logbook data beforehand makes these visits more useful.",
+    "inApp": "Share a PDF from Trends › Share Report before your appointment."
+  },
+  {
+    "id": "metformin",
+    "name": "Metformin",
+    "aliases": [
+      "Glucophage"
+    ],
+    "category": "medications",
+    "summary": "A common first medicine for type 2 diabetes that lowers the glucose the liver makes.",
+    "details": "It rarely causes lows on its own. Stomach upset is common at first and often eases; taking it with food can help.",
+    "related": [
+      "type-2-diabetes",
+      "insulin-resistance"
+    ]
+  },
+  {
+    "id": "glp1",
+    "name": "GLP-1 Receptor Agonists",
+    "aliases": [
+      "GLP-1",
+      "Ozempic",
+      "Semaglutide",
+      "Trulicity",
+      "Victoza"
+    ],
+    "category": "medications",
+    "summary": "Medicines that help the body release insulin after meals, slow digestion and reduce appetite.",
+    "details": "Examples include semaglutide (Ozempic, Rybelsus) and dulaglutide (Trulicity). Most are weekly or daily injections. Nausea is a common side effect at first.",
+    "related": [
+      "type-2-diabetes",
+      "incretins"
+    ]
+  },
+  {
+    "id": "dual-agonist",
+    "name": "GIP/GLP-1 Agonists",
+    "aliases": [
+      "Tirzepatide",
+      "Mounjaro"
+    ],
+    "category": "medications",
+    "summary": "Medicines that act on two gut hormone receptors to lower glucose and weight.",
+    "details": "Tirzepatide (Mounjaro) is an example, given as a weekly injection.",
+    "related": [
+      "glp1"
+    ]
+  },
+  {
+    "id": "incretins",
+    "name": "Incretins",
+    "category": "medications",
+    "summary": "Gut hormones released after eating that boost insulin and lower glucagon.",
+    "details": "GLP-1 is the best known. Several diabetes medicines work by copying or extending these hormones.",
+    "related": [
+      "glp1",
+      "dpp4"
+    ]
+  },
+  {
+    "id": "sglt2",
+    "name": "SGLT2 Inhibitors",
+    "aliases": [
+      "Jardiance",
+      "Farxiga",
+      "Invokana",
+      "Gliflozins"
+    ],
+    "category": "medications",
+    "summary": "Pills that help the kidneys remove extra glucose in urine.",
+    "details": "Examples include empagliflozin (Jardiance) and dapagliflozin (Farxiga). They also protect the heart and kidneys. They can rarely cause DKA even with normal-looking glucose, so know the signs.",
+    "related": [
+      "euglycemic-dka",
+      "type-2-diabetes"
+    ]
+  },
+  {
+    "id": "euglycemic-dka",
+    "name": "Euglycemic DKA",
+    "category": "medications",
+    "summary": "DKA that happens without very high glucose.",
+    "details": "It's rare and most often linked to SGLT2 inhibitors, low-carb diets or illness. Because glucose looks normal, check ketones if you feel unwell.",
+    "related": [
+      "dka",
+      "ketones",
+      "sglt2"
+    ]
+  },
+  {
+    "id": "dpp4",
+    "name": "DPP-4 Inhibitors",
+    "aliases": [
+      "Januvia",
+      "Sitagliptin",
+      "Gliptins"
+    ],
+    "category": "medications",
+    "summary": "Pills that boost the body's own incretin hormones to lower glucose after meals.",
+    "details": "Examples include sitagliptin (Januvia). They rarely cause lows on their own.",
+    "related": [
+      "incretins"
+    ]
+  },
+  {
+    "id": "sulfonylureas",
+    "name": "Sulfonylureas",
+    "aliases": [
+      "Glipizide",
+      "Gliclazide",
+      "Glimepiride"
+    ],
+    "category": "medications",
+    "summary": "Pills that make the pancreas release more insulin.",
+    "details": "Examples include gliclazide, glipizide and glimepiride. They can cause lows, especially if you skip meals.",
+    "related": [
+      "hypoglycemia",
+      "type-2-diabetes"
+    ]
+  },
+  {
+    "id": "statins",
+    "name": "Statins",
+    "category": "medications",
+    "summary": "Medicines that lower cholesterol and reduce the risk of heart attack and stroke.",
+    "details": "Many people with diabetes are advised to take one because diabetes raises heart risk.",
+    "related": [
+      "cholesterol",
+      "heart-disease"
+    ]
+  },
+  {
+    "id": "ace-arb",
+    "name": "ACE Inhibitors and ARBs",
+    "aliases": [
+      "ACE inhibitor",
+      "ARB",
+      "Lisinopril",
+      "Losartan"
+    ],
+    "category": "medications",
+    "summary": "Blood pressure medicines that also help protect the kidneys.",
+    "details": "Examples include lisinopril and losartan.",
+    "related": [
+      "blood-pressure",
+      "kidney-disease"
+    ]
+  },
+  {
+    "id": "retinopathy",
+    "name": "Diabetic Retinopathy",
+    "aliases": [
+      "Eye damage",
+      "Retinopathy"
+    ],
+    "category": "complications",
+    "summary": "Damage to the blood vessels at the back of the eye from long-term high glucose.",
+    "details": "It often has no symptoms early on, so regular eye exams matter. Treatment works best when started early.",
+    "related": [
+      "eye-exam",
+      "anti-vegf"
+    ]
+  },
+  {
+    "id": "eye-exam",
+    "name": "Dilated Eye Exam",
+    "aliases": [
+      "Retinal screening",
+      "Eye screening"
+    ],
+    "category": "complications",
+    "summary": "An eye check where drops widen the pupils so the back of the eye can be examined.",
+    "details": "Most people with diabetes are advised to have one every 1–2 years.",
+    "related": [
+      "retinopathy"
+    ]
+  },
+  {
+    "id": "anti-vegf",
+    "name": "Anti-VEGF Injections",
+    "category": "complications",
+    "summary": "Eye injections that treat swelling and abnormal blood vessels from retinopathy.",
+    "details": "They're given by an eye specialist, often as a series.",
+    "related": [
+      "retinopathy"
+    ]
+  },
+  {
+    "id": "neuropathy",
+    "name": "Diabetic Neuropathy",
+    "aliases": [
+      "Nerve damage",
+      "Neuropathy"
+    ],
+    "category": "complications",
+    "summary": "Nerve damage from high glucose, most often in the feet and legs.",
+    "details": "It can cause numbness, tingling, burning or pain. Numb feet can hide injuries, so daily foot checks are important.",
+    "related": [
+      "foot-care",
+      "foot-ulcer",
+      "autonomic-neuropathy"
+    ]
+  },
+  {
+    "id": "autonomic-neuropathy",
+    "name": "Autonomic Neuropathy",
+    "category": "complications",
+    "summary": "Nerve damage affecting automatic body functions such as digestion, heart rate and bladder.",
+    "details": "It can cause dizziness on standing, digestive problems and reduced awareness of lows.",
+    "related": [
+      "gastroparesis",
+      "hypo-unawareness"
+    ]
+  },
+  {
+    "id": "gastroparesis",
+    "name": "Gastroparesis",
+    "aliases": [
+      "Delayed stomach emptying"
+    ],
+    "category": "complications",
+    "summary": "Slow stomach emptying caused by nerve damage.",
+    "details": "It can cause nausea and fullness, and makes glucose after meals hard to predict. Smaller meals and adjusting insulin timing may help; talk to your care team.",
+    "related": [
+      "autonomic-neuropathy",
+      "pre-bolus"
+    ]
+  },
+  {
+    "id": "foot-care",
+    "name": "Foot Care",
+    "aliases": [
+      "Footwear"
+    ],
+    "category": "complications",
+    "summary": "Checking and caring for your feet every day to prevent injuries and infections.",
+    "details": "Look for cuts, blisters and color changes, keep feet clean and moisturized (not between toes), and wear well-fitting shoes. Get any wound checked early.",
+    "related": [
+      "neuropathy",
+      "foot-ulcer",
+      "foot-exam"
+    ]
+  },
+  {
+    "id": "foot-exam",
+    "name": "Foot Exam",
+    "aliases": [
+      "Monofilament test"
+    ],
+    "category": "complications",
+    "summary": "A check by your care team for feeling, circulation and skin problems in your feet.",
+    "details": "It's usually done at least once a year, more often if you have neuropathy.",
+    "related": [
+      "foot-care",
+      "neuropathy"
+    ]
+  },
+  {
+    "id": "foot-ulcer",
+    "name": "Foot Ulcer",
+    "aliases": [
+      "Diabetic foot ulcer"
+    ],
+    "category": "complications",
+    "summary": "An open sore on the foot that heals slowly.",
+    "details": "Nerve damage and poor circulation raise the risk. See a care professional quickly for any wound that isn't healing.",
+    "related": [
+      "foot-care",
+      "neuropathy"
+    ]
+  },
+  {
+    "id": "kidney-disease",
+    "name": "Diabetic Kidney Disease",
+    "aliases": [
+      "Nephropathy",
+      "CKD"
+    ],
+    "category": "complications",
+    "summary": "Kidney damage from long-term high glucose and blood pressure.",
+    "details": "Early stages have no symptoms, so yearly urine and blood tests are important. Glucose and blood pressure control, and some medicines, slow it down.",
+    "related": [
+      "uacr",
+      "egfr",
+      "ace-arb",
+      "sglt2"
+    ]
+  },
+  {
+    "id": "uacr",
+    "name": "Urine Albumin Test",
+    "aliases": [
+      "UACR",
+      "Microalbuminuria",
+      "Albuminuria"
+    ],
+    "category": "complications",
+    "summary": "A urine test that looks for small amounts of protein, an early sign of kidney damage.",
+    "details": "It's reported as the urine albumin-to-creatinine ratio (UACR) and is usually checked yearly.",
+    "related": [
+      "kidney-disease",
+      "egfr"
+    ]
+  },
+  {
+    "id": "egfr",
+    "name": "eGFR",
+    "aliases": [
+      "Kidney function",
+      "Creatinine"
+    ],
+    "category": "complications",
+    "summary": "A blood test estimate of how well your kidneys filter waste.",
+    "details": "Lower numbers mean less kidney function. It's checked with routine blood tests.",
+    "related": [
+      "kidney-disease",
+      "uacr"
+    ]
+  },
+  {
+    "id": "heart-disease",
+    "name": "Heart Disease",
+    "aliases": [
+      "Cardiovascular disease",
+      "CVD"
+    ],
+    "category": "complications",
+    "summary": "Diabetes raises the risk of heart attack and stroke.",
+    "details": "Managing blood pressure, cholesterol and glucose, not smoking, and staying active lower the risk.",
+    "related": [
+      "blood-pressure",
+      "cholesterol",
+      "statins"
+    ]
+  },
+  {
+    "id": "blood-pressure",
+    "name": "Blood Pressure",
+    "aliases": [
+      "Hypertension",
+      "BP"
+    ],
+    "category": "complications",
+    "summary": "The force of blood against your artery walls. High blood pressure adds to diabetes-related risks.",
+    "details": "Many people with diabetes aim for below 130/80, but your target may differ.",
+    "related": [
+      "heart-disease",
+      "kidney-disease",
+      "ace-arb"
+    ]
+  },
+  {
+    "id": "cholesterol",
+    "name": "Cholesterol",
+    "aliases": [
+      "Lipid panel",
+      "LDL",
+      "HDL",
+      "Triglycerides"
+    ],
+    "category": "complications",
+    "summary": "A fat in the blood. High LDL (\"bad\") cholesterol raises heart risk.",
+    "details": "A lipid panel blood test checks LDL, HDL and triglycerides.",
+    "related": [
+      "statins",
+      "heart-disease"
+    ]
+  },
+  {
+    "id": "gum-disease",
+    "name": "Gum Disease",
+    "aliases": [
+      "Periodontal disease"
+    ],
+    "category": "complications",
+    "summary": "Infection of the gums, which is more common with high glucose.",
+    "details": "Brushing, flossing and dental checkups every 6 months help. Gum infection can also make glucose harder to control."
+  },
+  {
+    "id": "fatty-liver",
+    "name": "Fatty Liver Disease",
+    "aliases": [
+      "MASLD",
+      "NAFLD",
+      "NASH",
+      "MASH"
+    ],
+    "category": "complications",
+    "summary": "A build-up of fat in the liver, common with type 2 diabetes.",
+    "details": "Now often called MASLD. Weight loss and activity can improve it. Some people need scans or blood tests to check for scarring.",
+    "related": [
+      "type-2-diabetes"
+    ]
+  },
+  {
+    "id": "sleep-apnea",
+    "name": "Sleep Apnea",
+    "aliases": [
+      "OSA",
+      "CPAP"
+    ],
+    "category": "complications",
+    "summary": "Breathing that stops and starts during sleep, common with type 2 diabetes.",
+    "details": "Loud snoring and daytime sleepiness are signs. Treating it, often with CPAP, can improve energy and glucose.",
+    "related": [
+      "sleep"
+    ]
+  },
+  {
+    "id": "ogtt",
+    "name": "Glucose Tolerance Test",
+    "aliases": [
+      "OGTT",
+      "Oral glucose tolerance test"
+    ],
+    "category": "complications",
+    "summary": "A test where you drink a sugary liquid and have glucose checked over the next 2 hours.",
+    "details": "It's used to diagnose gestational diabetes and sometimes type 2 diabetes.",
+    "related": [
+      "gestational-diabetes",
+      "prediabetes"
+    ]
+  },
+  {
+    "id": "annual-checks",
+    "name": "Yearly Checkups",
+    "aliases": [
+      "Annual review"
+    ],
+    "category": "complications",
+    "summary": "Regular tests that catch problems early: A1C, eyes, feet, kidneys, blood pressure and cholesterol.",
+    "details": "Keep a list of when each was last done and bring your logs to appointments.",
+    "related": [
+      "a1c",
+      "eye-exam",
+      "foot-exam",
+      "uacr",
+      "cholesterol"
+    ]
+  },
+  {
+    "id": "islet-transplant",
+    "name": "Islet Transplant",
+    "aliases": [
+      "Islet cell transplantation",
+      "Pancreas transplant"
+    ],
+    "category": "complications",
+    "summary": "A procedure that places insulin-making cells from a donor into the liver.",
+    "details": "It's offered to a small number of people with type 1 diabetes and severe, hard-to-control lows, and requires lifelong anti-rejection medicine.",
+    "related": [
+      "beta-cells",
+      "type-1-diabetes"
+    ]
+  },
+  {
+    "id": "exercise",
+    "name": "Exercise",
+    "aliases": [
+      "Activity",
+      "Workout"
+    ],
+    "category": "living",
+    "summary": "Activity lowers glucose and improves insulin sensitivity, sometimes for many hours afterwards.",
+    "details": "Aerobic exercise like walking tends to lower glucose; short, intense efforts can raise it at first. Checking before, during and after helps you learn your patterns.",
+    "related": [
+      "exercise-hypoglycemia",
+      "temporary-basal"
+    ],
+    "inApp": "Log workouts with + › Add Activity in the Log tab."
+  },
+  {
+    "id": "sleep",
+    "name": "Sleep and Glucose",
+    "category": "living",
+    "summary": "Short or poor sleep can raise glucose and insulin resistance the next day.",
+    "details": "A regular schedule and 7–9 hours for most adults helps.",
+    "related": [
+      "sleep-apnea",
+      "dawn-phenomenon"
+    ]
+  },
+  {
+    "id": "stress",
+    "name": "Stress and Glucose",
+    "category": "living",
+    "summary": "Stress hormones can raise glucose, and stress makes diabetes care harder.",
+    "details": "Noticing the link, and finding support, can help.",
+    "related": [
+      "diabetes-distress",
+      "hormones-glucose"
+    ]
+  },
+  {
+    "id": "diabetes-distress",
+    "name": "Diabetes Distress",
+    "aliases": [
+      "Distress"
+    ],
+    "category": "living",
+    "summary": "Feeling worn out, frustrated or overwhelmed by the daily work of managing diabetes.",
+    "details": "It's very common and different from depression, though the two can overlap. Talking to your care team, a counselor or peer support can help.",
+    "related": [
+      "burnout",
+      "depression"
+    ]
+  },
+  {
+    "id": "burnout",
+    "name": "Diabetes Burnout",
+    "category": "living",
+    "summary": "Losing motivation to manage diabetes after long periods of effort.",
+    "details": "Simplifying routines for a while and asking for help can make it easier to get back on track.",
+    "related": [
+      "diabetes-distress"
+    ]
+  },
+  {
+    "id": "depression",
+    "name": "Depression",
+    "category": "living",
+    "summary": "A low mood that lasts and affects daily life. It's more common in people with diabetes.",
+    "details": "It's treatable. If you feel low most days for two weeks or more, tell your care team.",
+    "related": [
+      "diabetes-distress"
+    ]
+  },
+  {
+    "id": "travel",
+    "name": "Travel",
+    "category": "living",
+    "summary": "Planning ahead for supplies, time zones and airport security.",
+    "details": "Pack twice the supplies you expect to need in your carry-on, bring a letter from your care team, and plan how to adjust long-acting insulin across time zones.",
+    "related": [
+      "insulin-storage",
+      "sick-day-rules"
+    ]
+  },
+  {
+    "id": "driving",
+    "name": "Driving",
+    "category": "living",
+    "summary": "Lows can affect driving as much as alcohol.",
+    "details": "Check glucose before driving and every couple of hours on long trips, keep fast-acting carbs in the car, and pull over to treat a low.",
+    "related": [
+      "hypoglycemia",
+      "rule-of-15"
+    ]
+  },
+  {
+    "id": "dsmes",
+    "name": "Diabetes Education",
+    "aliases": [
+      "DSMES",
+      "CDCES",
+      "Diabetes educator"
+    ],
+    "category": "living",
+    "summary": "Classes or one-on-one sessions that teach the skills of managing diabetes.",
+    "details": "Diabetes care and education specialists (CDCES) cover topics like carb counting, insulin and technology.",
+    "related": [
+      "carb-counting"
+    ]
+  },
+  {
+    "id": "care-team",
+    "name": "Care Team",
+    "aliases": [
+      "Endocrinologist",
+      "Diabetes team"
+    ],
+    "category": "living",
+    "summary": "The people who help you manage diabetes: doctor, nurse, educator, dietitian, eye and foot specialists.",
+    "details": "Bring your logs or a report to visits and write down questions beforehand.",
+    "related": [
+      "dsmes",
+      "telehealth"
+    ]
+  }
+]

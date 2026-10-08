@@ -8,6 +8,6 @@ enum MainTab: Hashable {
     case today
     case log
     case trends
-    case reports
+    case learn
     case settings
 }

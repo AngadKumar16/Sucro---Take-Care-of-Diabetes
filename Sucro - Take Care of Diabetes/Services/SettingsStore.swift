@@ -33,6 +33,7 @@ final class SettingsStore {
         static let legacyDarkModeEnabled = "settings.darkModeEnabled"
         static let appearance = "settings.appearance"
         static let lastDeliveryMethod = "settings.lastDeliveryMethod"
+        static let savedGlossaryTerms = "settings.savedGlossaryTerms"
         static let autoBackupEnabled = "settings.autoBackupEnabled"
         static let lastBackupDate = "settings.lastBackupDate"
     }
@@ -107,6 +108,24 @@ final class SettingsStore {
         didSet { defaults.set(lastDeliveryMethod.rawValue, forKey: Key.lastDeliveryMethod) }
     }
 
+    // MARK: - Glossary
+    /// Ids of glossary terms the user saved, most recent first.
+    var savedGlossaryTermIDs: [String] {
+        didSet { defaults.set(savedGlossaryTermIDs, forKey: Key.savedGlossaryTerms) }
+    }
+
+    func isSaved(_ term: GlossaryTerm) -> Bool {
+        savedGlossaryTermIDs.contains(term.id)
+    }
+
+    func toggleSaved(_ term: GlossaryTerm) {
+        if let index = savedGlossaryTermIDs.firstIndex(of: term.id) {
+            savedGlossaryTermIDs.remove(at: index)
+        } else {
+            savedGlossaryTermIDs.insert(term.id, at: 0)
+        }
+    }
+
     // MARK: - Init
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -138,6 +157,7 @@ final class SettingsStore {
         self.notificationsEnabled = defaults.bool(forKey: Key.notificationsEnabled)
         self.appearance = Self.loadAppearance(from: defaults)
         self.autoBackupEnabled = defaults.bool(forKey: Key.autoBackupEnabled)
+        self.savedGlossaryTermIDs = defaults.stringArray(forKey: Key.savedGlossaryTerms) ?? []
         self.lastDeliveryMethod = DeliveryMethod(stored: defaults.string(forKey: Key.lastDeliveryMethod)) ?? .pen
         self.lastBackupDate = defaults.object(forKey: Key.lastBackupDate) as? Date
 

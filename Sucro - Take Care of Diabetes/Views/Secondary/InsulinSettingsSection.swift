@@ -21,7 +21,10 @@ struct InsulinSettingsSection: View {
         } header: {
             Text("Insulin")
         } footer: {
-            Text("How long your rapid-acting insulin keeps working. Used only for the insulin on board estimate on Today. Ask your care team if you're not sure.")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("How long your rapid-acting insulin keeps working. Used only for the insulin on board estimate on Today. Ask your care team if you're not sure.")
+                GlossaryLink(termID: "insulin-action-time", title: "About insulin action time")
+            }
         }
     }
 }
