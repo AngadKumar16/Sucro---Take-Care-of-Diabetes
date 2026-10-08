@@ -59,7 +59,7 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete Everything", role: .destructive) { clearAllData() }
         } message: {
-            Text("This permanently deletes all glucose readings, insulin, carbs, activity, and site changes on this phone. This can't be undone. Anything saved to Apple Health stays there.")
+            Text("This permanently deletes all glucose readings, insulin, carbs, activity, and site changes on this phone. This can't be undone. Anything saved to Apple Health stays there, and glucose from Apple Health for the last 30 days is read in again.")
         }
         .alert(statusTitle, isPresented: $showStatusAlert) {
             Button("OK", role: .cancel) {}
@@ -236,6 +236,8 @@ struct SettingsView: View {
         if success {
             AlertService.shared.reset()
             ReminderService.shared.reset()
+            HealthGlucoseImporter.shared.resetAnchor()
+            Task { await HealthGlucoseImporter.shared.sync() }
             NotificationService.shared.cancelAll()
             showStatus("Data Deleted", "All your data on this phone has been deleted.")
         } else {

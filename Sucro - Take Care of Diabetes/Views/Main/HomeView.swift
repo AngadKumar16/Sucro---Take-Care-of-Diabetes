@@ -12,6 +12,8 @@ import Charts
 struct HomeView: View {
     @Environment(HomeViewModel.self) private var viewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(HealthGlucoseImporter.self) private var healthImporter
+    @Environment(\.managedObjectContext) private var viewContext
 
     /// Switches to the Log tab.
     let onShowAllActivity: () -> Void
@@ -90,10 +92,15 @@ struct HomeView: View {
         .navigationTitle("Today")
         .onAppear(perform: viewModel.fetchLatestData)
         .refreshable {
+            await healthImporter.sync()
             viewModel.fetchLatestData()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { viewModel.fetchLatestData() }
+        }
+        // Entries also change from Log, the edit sheets and Health imports.
+        .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextObjectsDidChange, object: viewContext)) { _ in
+            viewModel.fetchLatestData()
         }
         .task {
             await viewModel.refreshWhileVisible()
@@ -208,4 +215,5 @@ private struct SummaryTile: View {
     }
     .environment(HomeViewModel(context: context))
     .environment(SettingsStore())
+    .environment(HealthGlucoseImporter())
 }

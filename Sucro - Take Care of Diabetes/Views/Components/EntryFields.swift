@@ -13,10 +13,16 @@ struct TimeAndNotesSections: View {
     @Binding var timestamp: Date
     @Binding var notes: String
     var timeLabel = "Time"
+    /// Shows the time without letting it change.
+    var isTimeEditable = true
 
     var body: some View {
         Section {
-            DatePicker(timeLabel, selection: $timestamp, in: ...Date.now)
+            if isTimeEditable {
+                DatePicker(timeLabel, selection: $timestamp, in: ...Date.now)
+            } else {
+                LabeledContent(timeLabel, value: timestamp.formatted(date: .abbreviated, time: .shortened))
+            }
         }
         Section("Notes") {
             TextField("Optional", text: $notes, axis: .vertical)
@@ -32,23 +38,32 @@ struct GlucoseFields: View {
     @Binding var timestamp: Date
     @Binding var notes: String
     var focus: FocusState<Bool>.Binding
+    /// Set for readings imported from Apple Health: the value and time belong
+    /// to the app that recorded them, so they're shown but not editable.
+    var importedFromHealth = false
 
     var body: some View {
         Section {
-            NumberField(title: "Glucose", prompt: "Enter value", text: $valueText, unit: settings.glucoseUnit,
-                        allowsDecimals: settings.glucoseUnit == "mmol/L")
-                .focused(focus)
+            if importedFromHealth {
+                LabeledContent("Glucose", value: "\(valueText) \(settings.glucoseUnit)")
+            } else {
+                NumberField(title: "Glucose", prompt: "Enter value", text: $valueText, unit: settings.glucoseUnit,
+                            allowsDecimals: settings.glucoseUnit == "mmol/L")
+                    .focused(focus)
+            }
             Picker("When", selection: $context) {
                 ForEach(GlucoseContext.allCases, id: \.self) { context in
                     Text(context.rawValue).tag(context)
                 }
             }
         } footer: {
-            if let message = glucoseMessage(valueText, settings: settings) {
+            if importedFromHealth {
+                Text("From Apple Health. To change the value, edit it in the app that recorded it.")
+            } else if let message = glucoseMessage(valueText, settings: settings) {
                 Text(message).foregroundStyle(.red)
             }
         }
-        TimeAndNotesSections(timestamp: $timestamp, notes: $notes)
+        TimeAndNotesSections(timestamp: $timestamp, notes: $notes, isTimeEditable: !importedFromHealth)
     }
 }
 

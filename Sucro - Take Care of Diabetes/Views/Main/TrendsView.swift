@@ -14,6 +14,8 @@ struct TrendsView: View {
     @Environment(MonitorViewModel.self) private var monitor
     @Environment(InsightsViewModel.self) private var insights
     @Environment(SettingsStore.self) private var settings
+    @Environment(HealthGlucoseImporter.self) private var healthImporter
+    @Environment(\.managedObjectContext) private var viewContext
 
     @State private var range: TimeRange = .day
     @State private var showingReport = false
@@ -58,7 +60,13 @@ struct TrendsView: View {
             monitor.timeRange = range
             insights.timeRange = range
         }
-        .refreshable { refresh() }
+        .refreshable {
+            await healthImporter.sync()
+            refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextObjectsDidChange, object: viewContext)) { _ in
+            refresh()
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Share Report", systemImage: "square.and.arrow.up") {
@@ -366,4 +374,5 @@ struct InsightCard: View {
     .environment(MonitorViewModel(context: context))
     .environment(InsightsViewModel(context: context))
     .environment(SettingsStore())
+    .environment(HealthGlucoseImporter())
 }

@@ -28,7 +28,8 @@ struct EditGlucoseView: View {
             onSave: save,
             onCancel: operation.cancel
         ) {
-            GlucoseFields(valueText: $valueText, context: $context, timestamp: $timestamp, notes: $notes, focus: $valueFocused)
+            GlucoseFields(valueText: $valueText, context: $context, timestamp: $timestamp, notes: $notes, focus: $valueFocused,
+                          importedFromHealth: entry.isFromHealth)
         }
         .onAppear(perform: load)
     }
@@ -46,11 +47,13 @@ struct EditGlucoseView: View {
         guard let mgdl = parsedGlucose(valueText, settings: settings) else { return false }
         // Leave the stored value alone unless the number shown was changed,
         // so a mmol/L round trip doesn't nudge it.
-        if valueText != settings.glucoseValueString(entry.value) {
+        if !entry.isFromHealth, valueText != settings.glucoseValueString(entry.value) {
             entry.value = mgdl
         }
         entry.context = context.rawValue
-        entry.timestamp = timestamp
+        if !entry.isFromHealth {
+            entry.timestamp = timestamp
+        }
         entry.notes = notes.isEmpty ? nil : notes
         return operation.save()
     }

@@ -29,7 +29,7 @@ enum HelpSection: String, CaseIterable {
         case .logging:
             return "The Log Meal, Quick Bolus, and Change Site buttons on Today are the fastest way to log. Touch and hold Log Meal to pick a saved meal. Every form has a Time field, so you can log something you forgot earlier. In the Log tab, tap an entry to edit it or swipe left to delete it. DiabetesCare also saves what you log to Apple Health."
         case .cgm:
-            return "DiabetesCare can't connect to a CGM or pump directly yet, so log readings and doses yourself. What you log is saved to Apple Health. To check that, open Settings › Devices & Apple Health."
+            return "DiabetesCare reads glucose from Apple Health, so readings from a CGM app that shares with Health (such as Dexcom or Libre) show up on their own, even in the background. Turn on Apple Health sharing in your CGM app, then check Settings › Devices & Apple Health. DiabetesCare can't connect to a CGM or pump over Bluetooth, and doses still need logging yourself. What you log is saved to Apple Health too."
         case .insights:
             return "Insights shows whether your average glucose is going up or down, which meals are followed by big rises, and your time in range. Time in range is the share of readings between the target low and high you set in Settings."
         case .emergency:

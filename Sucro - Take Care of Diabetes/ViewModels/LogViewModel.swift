@@ -16,6 +16,10 @@ class LogViewModel: BaseViewModel {
     var insulinEntries: [InsulinEntry] = []
     var activityEntries: [ActivityEntry] = []
     var selectedDate: Date = Date()
+    /// Bumped on every fetch. A refetch usually returns the same managed
+    /// objects, which Observation treats as "no change", so views read this
+    /// to redraw rows whose fields (notes, values) changed underneath.
+    private(set) var revision = 0
     var showAddGlucose = false
     var showAddCarbs = false
     var showAddInsulin = false
@@ -36,6 +40,7 @@ class LogViewModel: BaseViewModel {
         fetchCarbEntries(from: startOfDay, to: endOfDay)
         fetchInsulinEntries(from: startOfDay, to: endOfDay)
         fetchActivityEntries(from: startOfDay, to: endOfDay)
+        revision += 1
     }
     
     private func fetchGlucoseReadings(from start: Date, to end: Date) {

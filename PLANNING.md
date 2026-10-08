@@ -83,9 +83,17 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - [x] Devices is an honest stub (Apple Health status + "no direct connection yet"); fake catalog, battery and dead toggles removed.
 - Not done: Today/Log/Trends still have no iPad-specific layout beyond the sidebar.
 
-### Phase 2 — Real data in
-- [ ] Read glucose from Apple Health (`HKObserverQuery` + anchored query, background delivery), dedupe against Health samples the app itself wrote. Set `trend` from rate of change.
-- [ ] Rework Devices around what's real: "Apple Health source: connected / last reading X min ago". *(Fake catalog and unused toggles removed 2026-10-07; screen now shows write status only.)*
+### Feature sweep (done 2026-10-08)
+Every feature driven in the simulator through UI tests (`FeatureFlowUITests`, `HealthImportUITests`, launched with `-resetData` for an empty store). Bugs found and fixed:
+- **Stale screens after edits elsewhere.** Refetching returns the same managed objects, which Observation treats as unchanged, so a note added on Today didn't appear in Log, and a reading edited in Log still showed its old value on Today. Log, Today and Trends now refetch on `NSManagedObjectContextObjectsDidChange`. Log rows redraw through a `revision` counter, the Today hero observes its reading (`@ObservedObject`), the Today chart takes plain `GlucoseSample` values, and the site card is `CurrentSiteRow` observing its `SiteChange`.
+- **Active insulin hidden with no glucose reading.** A dose logged before any reading didn't show "x U active (estimate)". The empty hero now shows it (`InsulinOnBoardLabel`).
+- **Health observer dead on first launch** (see Phase 2).
+Covered: add/edit/delete carbs, insulin, activity, glucose; Log filters and day navigation; Quick Bolus; site change; details → add note; low/high banners and their actions (carbs form, ketone advice); post-dose glucose check → mark done; mmol/L display; daily backup; Devices; Health import. Earlier suites cover safety notice, thresholds, large-bolus confirm, Learn, Help, appearance, Clear All, export and Reports.
+
+### Phase 2 — Real data in (done 2026-10-07)
+- [x] Read glucose from Apple Health (`HKObserverQuery` + anchored query, background delivery), dedupe against Health samples the app itself wrote. Set `trend` from rate of change. *(`HealthGlucoseImporter` registers the observer at launch and enables `.immediate` background delivery (entitlement added). The anchored query skips samples from `HKSource.default()`, so mirrored manual readings never come back. The first sync reads the last 30 days. Imported readings keep the Health UUID as `id` with `source = "health"` (no model change), so re-deliveries are skipped and deletions in Health carry over. Writes are batch insert/delete on a background context, merged into the view context. Trend is computed per sample over the stored + new trace (`HealthGlucoseImport.trends`). Alerts are re-evaluated after each import. Clear All Data resets the anchor and re-reads the 30 days. In the Log, Health readings without a note are kept out of All (shown under Glucose) so a CGM's ~288 readings a day don't bury meals and doses. The value and time of an imported reading are read-only; context and notes can still be edited.)*
+- [x] Rework Devices around what's real: "Apple Health source: connected / last reading X min ago". *(Devices › Glucose from Apple Health: status (Waiting / Receiving / No Recent Readings, refreshed every minute), last reading, time, source app, Check Now / pull to refresh, Connect Apple Health if the permission sheet was never shown, setup footer. "What You Log" keeps the write status. The Bluetooth usage string was removed. Help and the no-readings troubleshooting copy were updated.)*
+- Verified end to end 2026-10-08: `HealthImportUITests` adds a Blood Glucose sample in the Health app on the simulator and checks it shows up in Log (tagged Apple Health) and as "Receiving" in Devices. This found a bug: the observer query started before the user answered the permission sheet died for good, so nothing came in until relaunch. `HealthGlucoseImporter.refresh()` now re-creates the observer after the permission sheet and every time the app comes to the foreground, and syncs.
 - [x] Only init `CBCentralManager` when the user opts into a device flow, or remove BLE until there is a real integration. *(`DeviceMonitorService` was deleted after Phase 1: nothing used it, and its only effects were the fake phone-battery/network status and the launch-time Bluetooth prompt. A real integration starts fresh. The Bluetooth usage string in the build settings can go too if BLE is dropped for good.)* (Direct Dexcom/Libre BLE is proprietary; Dexcom has a web API — investigate later.)
 
 ### Phase 3 — Features
@@ -107,5 +115,5 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - Devices: `Views/Secondary/DevicesView.swift`
 - Glossary: `Models/Glossary/Glossary.swift` (load + search), `Resources/Glossary.json`, `Views/Learn/`
 - Forms: `Views/Components/EntryForm.swift`, `Views/Components/EntryFields.swift`, `Views/Components/EditViews/EntryEditorView.swift`
-- Health: `Core/HealthKitManager.swift`
+- Health: `Core/HealthKitManager.swift` (writes, permissions), `Services/HealthGlucoseImporter.swift` (observer + anchored query), `Services/HealthGlucoseStore.swift` (Core Data batch writes), `Services/HealthGlucoseImport.swift` (pure dedupe/trend)
 - Settings: `Services/SettingsStore.swift`

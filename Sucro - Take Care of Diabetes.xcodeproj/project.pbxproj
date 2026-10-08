@@ -402,7 +402,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "DiabetesCare needs Bluetooth to connect to your CGM device for glucose monitoring.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "DiabetesCare reads your glucose, insulin, and carb data from Apple Health to keep your log in sync.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DiabetesCare saves the glucose, insulin, carbs, and activity you log to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -439,7 +438,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "DiabetesCare needs Bluetooth to connect to your CGM device for glucose monitoring.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "DiabetesCare reads your glucose, insulin, and carb data from Apple Health to keep your log in sync.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "DiabetesCare saves the glucose, insulin, carbs, and activity you log to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

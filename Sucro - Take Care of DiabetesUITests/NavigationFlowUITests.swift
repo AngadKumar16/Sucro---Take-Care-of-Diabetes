@@ -90,4 +90,16 @@ final class NavigationFlowUITests: XCTestCase {
         app.navigationBars.firstMatch.buttons.firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Help & Tutorials"].waitForExistence(timeout: 5))
     }
+
+    func testDevicesShowsAppleHealthGlucoseStatus() {
+        app.tabBars.buttons["Settings"].tap()
+        let devices = app.buttons["Devices & Apple Health"]
+        for _ in 0..<4 where !devices.isHittable { app.swipeUp() }
+        XCTAssertTrue(devices.waitForExistence(timeout: 5))
+        devices.tap()
+
+        XCTAssertTrue(app.navigationBars["Devices"].waitForExistence(timeout: 5))
+        let header = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'Glucose from Apple Health'")).firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 5), "Devices should show where glucose comes from")
+    }
 }

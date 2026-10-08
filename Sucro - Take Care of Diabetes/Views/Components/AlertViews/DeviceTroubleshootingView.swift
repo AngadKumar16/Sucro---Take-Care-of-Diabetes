@@ -23,6 +23,7 @@ struct DeviceTroubleshootingView: View {
     let steps = [
         "Check your CGM app is showing current readings",
         "Make sure Bluetooth is on and your phone is near the sensor",
+        "Check your CGM app still shares glucose with Apple Health",
         "If you log readings yourself, add your latest one in the Log tab",
         "Close DiabetesCare and open it again",
         "Still stuck? Contact support"

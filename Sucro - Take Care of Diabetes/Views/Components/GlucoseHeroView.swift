@@ -15,9 +15,7 @@ struct GlucoseHeroView: View {
     let onLogGlucose: () -> Void
 
     var body: some View {
-        if glucoseReading == nil {
-            emptyState
-        } else {
+        if let glucoseReading {
             Button(action: onTap) {
                 // Re-render each minute so "5 min ago" and the stale styling stay
                 // current without new data.
@@ -32,6 +30,8 @@ struct GlucoseHeroView: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Opens Trends")
+        } else {
+            emptyState
         }
     }
 
@@ -49,6 +49,10 @@ struct GlucoseHeroView: View {
                 .multilineTextAlignment(.center)
             Button("Log Glucose", systemImage: "plus", action: onLogGlucose)
                 .buttonStyle(.borderedProminent)
+            // A dose can be logged before any reading; still show what's active.
+            if insulinOnBoard > 0 {
+                InsulinOnBoardLabel(units: insulinOnBoard)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)

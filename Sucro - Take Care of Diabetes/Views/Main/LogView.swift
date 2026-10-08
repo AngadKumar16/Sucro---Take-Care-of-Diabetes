@@ -11,6 +11,7 @@ import CoreData
 struct LogView: View {
     @Environment(LogViewModel.self) private var viewModel
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.managedObjectContext) private var viewContext
     @State private var filter: Filter = .all
     @State private var pendingDelete: LogRow?
 
@@ -47,6 +48,10 @@ struct LogView: View {
                         Label(emptyTitle, systemImage: "list.bullet.clipboard")
                     } description: {
                         Text("Tap \(Image(systemName: "plus")) to add an entry.")
+                    } actions: {
+                        if hiddenHealthCount > 0 {
+                            Button("Show \(hiddenHealthCount) Apple Health Readings") { filter = .glucose }
+                        }
                     }
                 }
                 .listRowBackground(Color.clear)
@@ -93,6 +98,11 @@ struct LogView: View {
         .onChange(of: viewModel.selectedDate) { _, date in
             viewModel.fetchEntriesForDate(date)
         }
+        // Entries change from other screens too (notes and edits on Today,
+        // Health imports), so refetch whenever the store's context changes.
+        .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextObjectsDidChange, object: viewContext)) { _ in
+            viewModel.fetchEntriesForDate(viewModel.selectedDate)
+        }
         .confirmationDialog(
             "Delete \(pendingDelete?.title ?? "Entry")?",
             isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
@@ -131,16 +141,21 @@ struct LogView: View {
 
     /// Everything logged on the selected day, newest first.
     private var rows: [LogRow] {
+        _ = viewModel.revision
         var rows: [LogRow] = []
         if filter == .all || filter == .glucose {
-            rows += viewModel.glucoseReadings.map { reading in
+            // A CGM sends hundreds of readings a day; in All they'd bury
+            // meals and doses, so only Health readings with a note show there.
+            let readings = filter == .all ? viewModel.glucoseReadings.filter { !hidesInAll($0) } : viewModel.glucoseReadings
+            rows += readings.map { reading in
                 LogRow(
                     object: reading,
                     timestamp: reading.timestamp,
                     icon: "drop.fill",
                     color: settings.zone(for: reading.value).color,
                     title: settings.formattedGlucose(reading.value),
-                    detail: reading.context,
+                    detail: [reading.isFromHealth ? "Apple Health" : nil, reading.context]
+                        .compactMap { $0 }.joined(separator: " · "),
                     notes: reading.notes
                 )
             }
@@ -191,7 +206,20 @@ struct LogView: View {
 
     private var summary: String {
         let count = rows.count
-        return "\(count) \(count == 1 ? "entry" : "entries")"
+        let entries = "\(count) \(count == 1 ? "entry" : "entries")"
+        guard filter == .all else { return entries }
+        let hidden = hiddenHealthCount
+        guard hidden > 0 else { return entries }
+        return "\(entries). \(hidden) Apple Health \(hidden == 1 ? "reading is" : "readings are") under Glucose."
+    }
+
+    /// Health readings left out of All on this day.
+    private var hiddenHealthCount: Int {
+        filter == .all ? viewModel.glucoseReadings.count(where: hidesInAll) : 0
+    }
+
+    private func hidesInAll(_ reading: GlucoseReading) -> Bool {
+        reading.isFromHealth && (reading.notes ?? "").isEmpty
     }
 }
 
@@ -278,4 +306,5 @@ private struct DayPicker: View {
     }
     .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
     .environment(SettingsStore())
+    .environment(HealthGlucoseImporter())
 }

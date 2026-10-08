@@ -8,11 +8,12 @@
 import Foundation
 import HealthKit
 
-/// Writes logged data to Apple Health. Nothing in the UI observes it.
+/// Writes logged data to Apple Health and owns the app's health store.
+/// Reading glucose back is `HealthGlucoseImporter`'s job.
 final class HealthKitManager {
     static let shared = HealthKitManager()
 
-    private let healthStore = HKHealthStore()
+    let healthStore = HKHealthStore()
 
     private(set) var isAuthorized = false
 
@@ -22,38 +23,41 @@ final class HealthKitManager {
     }
 
     // MARK: - Authorization
+    private let typesToRead: Set<HKObjectType> = [
+        HKQuantityType(.bloodGlucose),
+        HKQuantityType(.insulinDelivery),
+        HKQuantityType(.dietaryCarbohydrates),
+        HKObjectType.workoutType(),
+    ]
+
+    private let typesToWrite: Set<HKSampleType> = [
+        HKQuantityType(.bloodGlucose),
+        HKQuantityType(.insulinDelivery),
+        HKQuantityType(.dietaryCarbohydrates),
+        HKObjectType.workoutType(),
+        HKQuantityType(.activeEnergyBurned),
+    ]
+
+    /// Shows the Health permission sheet if the user hasn't seen it for these
+    /// types yet; otherwise returns straight away.
     func requestAuthorization() async {
         guard isHealthDataAvailable else { return }
-        guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose),
-              let insulinType = HKObjectType.quantityType(forIdentifier: .insulinDelivery),
-              let carbType = HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates) else {
-            print("Failed to get HealthKit quantity types")
-            return
-        }
-        
-        let typesToRead: Set<HKSampleType> = [
-            glucoseType,
-            insulinType,
-            carbType,
-            HKObjectType.workoutType()
-        ]
-        
-        let typesToWrite: Set<HKSampleType> = [
-            glucoseType,
-            insulinType,
-            carbType,
-            HKObjectType.workoutType(),
-            HKQuantityType(.activeEnergyBurned)
-        ]
-        
         do {
             try await healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead)
-            isAuthorized = true
+            checkAuthorizationStatus()
         } catch {
             print("HealthKit authorization failed: \(error.localizedDescription)")
         }
     }
-    
+
+    /// True if the Health permission sheet hasn't been shown for some of the
+    /// types yet. Health never says whether *reading* was allowed.
+    func needsAuthorizationRequest() async -> Bool {
+        guard isHealthDataAvailable else { return false }
+        let status = try? await healthStore.statusForAuthorizationRequest(toShare: typesToWrite, read: typesToRead)
+        return status == .shouldRequest
+    }
+
     func checkAuthorizationStatus() {
         guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose) else { return }
         
@@ -82,27 +86,6 @@ final class HealthKitManager {
                 print("Failed to save glucose to HealthKit: \(error.localizedDescription)")
             }
         }
-    }
-    
-    func fetchGlucoseReadings(from startDate: Date, to endDate: Date, completion: @escaping ([HKQuantitySample]) -> Void) {
-        guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose) else {
-            completion([])
-            return
-        }
-        
-        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
-        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        
-        let query = HKSampleQuery(sampleType: glucoseType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { query, samples, error in
-            if let error = error {
-                print("Failed to fetch glucose from HealthKit: \(error.localizedDescription)")
-                completion([])
-            } else {
-                completion(samples as? [HKQuantitySample] ?? [])
-            }
-        }
-        
-        healthStore.execute(query)
     }
     
     // MARK: - Insulin

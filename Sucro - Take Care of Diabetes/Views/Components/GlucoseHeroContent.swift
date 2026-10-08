@@ -10,7 +10,8 @@ struct GlucoseHeroContent: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
-    let reading: GlucoseReading?
+    /// Observed so an edit to this reading (from Log, say) redraws it.
+    @ObservedObject var reading: GlucoseReading
     let insulinOnBoard: Double
     let now: Date
 
@@ -22,28 +23,28 @@ struct GlucoseHeroContent: View {
     @ScaledMetric(relativeTo: .title) private var arrowSize = 32
 
     private var isStale: Bool {
-        guard let timestamp = reading?.timestamp else { return true }
+        guard let timestamp = reading.timestamp else { return true }
         return now.timeIntervalSince(timestamp) > Self.staleAfter
     }
 
-    private var zone: GlucoseZone? {
-        reading.map { settings.zone(for: $0.value) }
+    private var zone: GlucoseZone {
+        settings.zone(for: reading.value)
     }
 
     /// A trend only means something for a recent reading.
     private var trend: GlucoseTrend? {
-        isStale ? nil : GlucoseTrend(stored: reading?.trend)
+        isStale ? nil : GlucoseTrend(stored: reading.trend)
     }
 
     private var valueColor: Color {
-        if isStale { .secondary } else { zone?.color ?? .secondary }
+        isStale ? .secondary : zone.color
     }
 
     var body: some View {
         VStack(spacing: 12) {
             VStack(spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(reading.map { settings.glucoseValueString($0.value) } ?? "--")
+                    Text(settings.glucoseValueString(reading.value))
                         .font(.system(size: valueSize, weight: .bold, design: .rounded))
                         .foregroundStyle(valueColor)
 
@@ -53,15 +54,13 @@ struct GlucoseHeroContent: View {
                             .foregroundStyle(valueColor)
                     }
 
-                    if reading != nil {
-                        Text(settings.glucoseUnit)
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(settings.glucoseUnit)
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
                 }
 
                 // Color alone shouldn't carry the meaning.
-                if differentiateWithoutColor, !isStale, let zone {
+                if differentiateWithoutColor, !isStale {
                     Text(zone.name)
                         .font(.headline)
                 }
@@ -69,28 +68,19 @@ struct GlucoseHeroContent: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(readingDescription)
 
-            if let timestamp = reading?.timestamp {
+            if let timestamp = reading.timestamp {
                 Text(timestampText(timestamp))
                     .font(.subheadline)
                     .foregroundStyle(isStale ? .orange : .secondary)
             }
 
-            Label {
-                Text("\(insulinOnBoard, format: .number.precision(.fractionLength(1))) U active (estimate)")
-            } icon: {
-                Image(systemName: "syringe")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Estimated insulin on board: \(insulinOnBoard, format: .number.precision(.fractionLength(1))) units")
+            InsulinOnBoardLabel(units: insulinOnBoard)
         }
     }
 
     private var readingDescription: String {
-        guard let reading else { return "No glucose readings yet" }
         var parts = [settings.formattedGlucose(reading.value)]
-        if !isStale, let zone { parts.append(zone.name) }
+        if !isStale { parts.append(zone.name) }
         if let trend { parts.append(trend.description) }
         return parts.joined(separator: ", ")
     }

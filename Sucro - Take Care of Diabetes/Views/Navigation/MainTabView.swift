@@ -73,4 +73,5 @@ struct MainTabView: View {
         .environment(\.managedObjectContext, context)
         .environment(MonitorViewModel(context: context))
         .environment(SettingsStore())
+        .environment(HealthGlucoseImporter())
 }

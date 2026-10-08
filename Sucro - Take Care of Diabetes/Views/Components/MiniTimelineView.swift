@@ -13,7 +13,7 @@ import Charts
 /// the time they happened. Tapping it opens Trends.
 struct MiniTimelineView: View {
     @Environment(SettingsStore.self) private var settings
-    let glucoseReadings: [GlucoseReading]
+    let glucoseReadings: [GlucoseSample]
     let events: [TimelineEvent]
     /// How far back the chart reaches, in seconds.
     let window: TimeInterval
@@ -57,7 +57,7 @@ struct MiniTimelineView: View {
     private func chart(now: Date) -> some View {
         let start = now.addingTimeInterval(-window)
         let visibleEvents = events.filter { $0.timestamp >= start }
-        let highest = glucoseReadings.map(\.value).max() ?? 0
+        let highest = glucoseReadings.map(\.mgdl).max() ?? 0
         let yTop = settings.displayGlucose(max(300, highest + 20))
         // Room under the glucose line for the event markers.
         let yBottom = settings.displayGlucose(10)
@@ -87,20 +87,20 @@ struct MiniTimelineView: View {
                 }
             }
 
-            ForEach(glucoseReadings, id: \.objectID) { reading in
+            ForEach(glucoseReadings, id: \.date) { reading in
                 LineMark(
-                    x: .value("Time", reading.timestamp ?? now),
-                    y: .value("Glucose", settings.displayGlucose(reading.value))
+                    x: .value("Time", reading.date),
+                    y: .value("Glucose", settings.displayGlucose(reading.mgdl))
                 )
                 .foregroundStyle(.blue)
                 .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
                 .interpolationMethod(.monotone)
 
                 PointMark(
-                    x: .value("Time", reading.timestamp ?? now),
-                    y: .value("Glucose", settings.displayGlucose(reading.value))
+                    x: .value("Time", reading.date),
+                    y: .value("Glucose", settings.displayGlucose(reading.mgdl))
                 )
-                .foregroundStyle(settings.zone(for: reading.value).color)
+                .foregroundStyle(settings.zone(for: reading.mgdl).color)
                 .symbolSize(30)
             }
         }
@@ -130,31 +130,21 @@ struct MiniTimelineView: View {
         guard let latest = glucoseReadings.last else {
             return "Glucose chart, last \(hours) hours. No readings."
         }
-        let values = glucoseReadings.map(\.value)
-        return "Glucose chart, last \(hours) hours. \(glucoseReadings.count) readings, from \(settings.formattedGlucose(values.min() ?? 0)) to \(settings.formattedGlucose(values.max() ?? 0)). Latest \(settings.formattedGlucose(latest.value))."
+        let values = glucoseReadings.map(\.mgdl)
+        return "Glucose chart, last \(hours) hours. \(glucoseReadings.count) readings, from \(settings.formattedGlucose(values.min() ?? 0)) to \(settings.formattedGlucose(values.max() ?? 0)). Latest \(settings.formattedGlucose(latest.mgdl))."
     }
 }
 
-func sampleGlucoseReading(value: Double, offset: Double, context: NSManagedObjectContext) -> GlucoseReading {
-    let reading = GlucoseReading(context: context)
-    reading.value = value
-    reading.unit = "mg/dL"
-    reading.timestamp = Date().addingTimeInterval(offset * 3600)
-    reading.trend = "stable"
-    return reading
-}
-
 #Preview {
-    let context = PersistenceController.preview.container.viewContext
     MiniTimelineView(
         glucoseReadings: [
-            sampleGlucoseReading(value: 95, offset: -5.5, context: context),
-            sampleGlucoseReading(value: 120, offset: -5, context: context),
-            sampleGlucoseReading(value: 190, offset: -4, context: context),
-            sampleGlucoseReading(value: 110, offset: -3, context: context),
-            sampleGlucoseReading(value: 65, offset: -2, context: context),
-            sampleGlucoseReading(value: 98, offset: -1, context: context),
-            sampleGlucoseReading(value: 104, offset: 0, context: context)
+            GlucoseSample(date: Date().addingTimeInterval(-5.5 * 3600), mgdl: 95),
+            GlucoseSample(date: Date().addingTimeInterval(-5 * 3600), mgdl: 120),
+            GlucoseSample(date: Date().addingTimeInterval(-4 * 3600), mgdl: 190),
+            GlucoseSample(date: Date().addingTimeInterval(-3 * 3600), mgdl: 110),
+            GlucoseSample(date: Date().addingTimeInterval(-2 * 3600), mgdl: 65),
+            GlucoseSample(date: Date().addingTimeInterval(-1 * 3600), mgdl: 98),
+            GlucoseSample(date: Date().addingTimeInterval(0 * 3600), mgdl: 104)
         ],
         events: [
             TimelineEvent(type: .meal, timestamp: Date().addingTimeInterval(-4.2 * 3600), glucoseValue: 140, title: "Lunch", subtitle: "Sandwich and apple"),

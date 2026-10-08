@@ -13,8 +13,9 @@ import CoreData
 class HomeViewModel: BaseViewModel {
     // MARK: - Published Properties
     var latestGlucoseReading: GlucoseReading?
-    /// Readings in the Home chart's window, oldest first.
-    var recentReadings: [GlucoseReading] = []
+    /// Readings in the Home chart's window, oldest first. Plain values, so
+    /// an edited reading changes the array and the chart redraws.
+    var recentReadings: [GlucoseSample] = []
     var todayReadingCount = 0
     /// How far back the Home chart reaches.
     static let chartWindow: TimeInterval = 6 * 3600
@@ -164,7 +165,7 @@ class HomeViewModel: BaseViewModel {
         recentReadings = dataService.fetchGlucoseReadings(
             context: viewContext,
             in: DateInterval(start: now.addingTimeInterval(-Self.chartWindow), end: now)
-        )
+        ).compactMap(\.sample)
         todayReadingCount = dataService.fetchGlucoseReadings(
             context: viewContext,
             in: DateInterval(start: Calendar.current.startOfDay(for: now), end: now)
