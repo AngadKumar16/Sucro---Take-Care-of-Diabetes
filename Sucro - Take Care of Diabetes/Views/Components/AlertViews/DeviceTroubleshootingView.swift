@@ -17,13 +17,14 @@ import SwiftUI
 
 struct DeviceTroubleshootingView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var currentStep = 0
     
     let steps = [
-        "Make sure Bluetooth is on in Settings",
-        "Keep your phone within 20 feet of the transmitter",
-        "Close Sucro and open it again",
-        "Update Sucro from the App Store",
+        "Check your CGM app is showing current readings",
+        "Make sure Bluetooth is on and your phone is near the sensor",
+        "If you log readings yourself, add your latest one in the Log tab",
+        "Close DiabetesCare and open it again",
         "Still stuck? Contact support"
     ]
     
@@ -31,11 +32,13 @@ struct DeviceTroubleshootingView: View {
         NavigationStack {
             VStack(spacing: 20) {
                 Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.blue)
+                    .font(.largeTitle)
+                    .imageScale(.large)
+                    .foregroundStyle(.tint)
+                    .accessibilityHidden(true)
                     .symbolEffect(.pulse)
                 
-                Text("Connection Troubleshooting")
+                Text("No Recent Readings")
                     .font(.title2)
                     .bold()
                 
@@ -76,19 +79,20 @@ struct DeviceTroubleshootingView: View {
                 
                 Spacer()
                 
-                Button("Contact Support") {
-                    if let url = URL(string: "mailto:support@sucro.app") {
-                        UIApplication.shared.open(url)
+                Button("Contact Support", systemImage: "envelope") {
+                    if let url = AppInfo.supportEmailURL {
+                        openURL(url)
                     }
                 }
+                .buttonStyle(.bordered)
                 .padding()
             }
             .padding()
             .navigationTitle("Troubleshooting")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
         }

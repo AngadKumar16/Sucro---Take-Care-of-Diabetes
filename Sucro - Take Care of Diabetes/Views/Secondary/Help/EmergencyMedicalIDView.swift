@@ -18,15 +18,14 @@ struct EmergencyMedicalIDView: View {
         NavigationStack {
             List {
                 Section("Medical Information") {
-                    LabeledContent("Name", value: settings.userName)
+                    LabeledContent("Name", value: settings.userName.isEmpty ? "Not set" : settings.userName)
                     LabeledContent("Condition", value: settings.diabetesType)
-                    LabeledContent("Blood Type", value: "—")
                 }
 
                 Section("Latest Glucose") {
                     if let latest = dataService.fetchLatestGlucoseReading(context: viewContext) {
                         LabeledContent("Value", value: settings.formattedGlucose(latest.value))
-                        LabeledContent("Logged", value: latest.timestamp?.formatted() ?? "—")
+                        LabeledContent("Logged", value: latest.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? "—")
                     } else {
                         Text("No readings recorded")
                             .foregroundStyle(.secondary)
@@ -42,6 +41,13 @@ struct EmergencyMedicalIDView: View {
                 }
             }
             .navigationTitle("Medical ID")
+            .safeAreaInset(edge: .bottom) {
+                Text("Set your name in Settings › Profile. For a Medical ID that shows on the Lock Screen, use the Health app.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

@@ -12,142 +12,83 @@ import Charts
 struct HomeView: View {
     @Environment(HomeViewModel.self) private var viewModel
     @Environment(\.scenePhase) private var scenePhase
-    @State private var showingMonitor = false
 
-    // Dedicated VM for the carb-entry form presented from Home. AddCarbView
-    // requires a LogViewModel in the environment; Home only has a HomeViewModel.
-    @State private var carbLogViewModel = LogViewModel(
+    /// Switches to the Log tab.
+    let onShowAllActivity: () -> Void
+    /// Switches to the Trends tab.
+    let onShowTrends: () -> Void
+
+    // The glucose and carb forms need a LogViewModel; Home only has a
+    // HomeViewModel, so it keeps one for them.
+    @State private var logViewModel = LogViewModel(
         context: PersistenceController.shared.container.viewContext
     )
-    
+
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 20) {
-                // Critical Alert Banner
+            VStack(spacing: 16) {
                 if let criticalAlert = viewModel.criticalAlert {
                     CriticalAlertBanner(
                         alert: criticalAlert,
-                        onDismiss: {
-                            viewModel.dismissCriticalAlert()
-                        },
-                        onAction: {
-                            viewModel.handleCriticalAlertAction()
-                        }
+                        onDismiss: viewModel.dismissCriticalAlert,
+                        onAction: viewModel.handleCriticalAlertAction
                     )
                 }
-                
-                // Hero Section with Glucose
+
                 GlucoseHeroView(
                     glucoseReading: viewModel.latestGlucoseReading,
                     insulinOnBoard: viewModel.insulinOnBoard,
-                    onTap: { showingMonitor = true }
+                    onTap: onShowTrends,
+                    onLogGlucose: viewModel.logGlucose
                 )
-                
-                // Mini CGM Timeline
+
+                QuickActionButtonsView(
+                    onLogMeal: viewModel.logMeal,
+                    onQuickBolus: viewModel.quickBolus,
+                    onChangeSite: viewModel.changeSite,
+                    onLogPreset: viewModel.logMeal(preset:)
+                )
+
+                TodaySummaryView(
+                    insulinUnits: viewModel.todayInsulinTotal,
+                    carbGrams: viewModel.todayCarbTotal,
+                    readingCount: viewModel.todayReadingCount
+                )
+
                 MiniTimelineView(
                     glucoseReadings: viewModel.recentReadings,
                     events: viewModel.timelineEvents,
-                    onExpand: { showingMonitor = true },
-                    onEventTap: { event in
-                        viewModel.showEventDetails(event)
-                    }
+                    window: HomeViewModel.chartWindow,
+                    onExpand: onShowTrends
                 )
-                
-                // Quick Action Buttons
-                QuickActionButtonsView(
-                    onLogMeal: {
-                        viewModel.logMeal()
-                    },
-                    onQuickBolus: {
-                        viewModel.quickBolus()
-                    },
-                    onChangeSite: {
-                        viewModel.changeSite()
-                    },
-                    onLogPreset: { preset in
-                        viewModel.logMeal(preset: preset)
-                    }
-                )
-                
-                // Recent Timeline Cards
+
                 RecentTimelineCardsView(
                     events: viewModel.timelineEvents,
-                    onEventTap: { event in
-                        viewModel.showEventDetails(event)
-                    },
-                    onEventEdit: { event in
-                        viewModel.editEvent(event)
-                    },
-                    onEventDelete: { event in
-                        viewModel.deleteEvent(event)
-                    },
-                    onAddNote: { event in
-                        viewModel.showAddNote(for: event)
-                    }
+                    onShowAll: onShowAllActivity,
+                    onEventTap: viewModel.showEventDetails,
+                    onEventEdit: viewModel.editEvent,
+                    onEventDelete: viewModel.deleteEvent,
+                    onAddNote: viewModel.showAddNote(for:)
                 )
-                
-                // Site Snapshot
-                SiteSnapshotView(
-                    lastSiteChange: viewModel.lastSiteChange,
-                    onChangeSite: {
-                        viewModel.changeSite()
-                    }
-                )
-                
-                // Reminders & Suggestions
+
                 RemindersView(
                     reminders: viewModel.upcomingReminders,
                     suggestion: viewModel.smartSuggestion,
-                    onSnooze: { reminder, minutes in
-                        viewModel.snoozeReminder(reminder, minutes: minutes)
-                    },
-                    onComplete: { reminder in
-                        viewModel.completeReminder(reminder)
-                    }
+                    onSnooze: viewModel.snoozeReminder,
+                    onComplete: viewModel.completeReminder
                 )
-                
-                // Today's Summary
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Today's Summary")
-                        .font(.headline)
-                    
-                    HStack(spacing: 20) {
-                        VStack {
-                            Text("\(Int(viewModel.todayInsulinTotal))")
-                                .font(.title2)
-                                .bold()
-                            Text("Insulin Units")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Divider()
-                            .frame(height: 40)
-                        
-                        VStack {
-                            Text("\(Int(viewModel.todayCarbTotal))g")
-                                .font(.title2)
-                                .bold()
-                            Text("Carbs")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(.rect(cornerRadius: 12))
-                
-                Spacer(minLength: 20)
+
+                SiteSnapshotView(
+                    lastSiteChange: viewModel.lastSiteChange,
+                    onChangeSite: viewModel.changeSite
+                )
             }
-            .padding(.vertical, 8)
+            .padding(.horizontal)
+            .padding(.bottom)
         }
-        .navigationTitle("Sucro")
-        .navigationBarTitleDisplayMode(.large)
-        .onAppear {
-            viewModel.fetchLatestData()
-        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("Today")
+        .onAppear(perform: viewModel.fetchLatestData)
         .refreshable {
             viewModel.fetchLatestData()
         }
@@ -158,11 +99,13 @@ struct HomeView: View {
             await viewModel.refreshWhileVisible()
         }
         // MARK: - Sheets
-        .sheet(isPresented: Bindable(viewModel).showAddCarbSheet, onDismiss: {
-            viewModel.fetchLatestData()
-        }) {
+        .sheet(isPresented: Bindable(viewModel).showAddGlucoseSheet, onDismiss: viewModel.fetchLatestData) {
+            AddGlucoseView()
+                .environment(logViewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddCarbSheet, onDismiss: viewModel.fetchLatestData) {
             AddCarbView()
-                .environment(carbLogViewModel)
+                .environment(logViewModel)
         }
         .sheet(isPresented: Bindable(viewModel).showQuickBolusSheet) {
             QuickBolusView()
@@ -175,12 +118,8 @@ struct HomeView: View {
         .sheet(item: Bindable(viewModel).detailEvent) { event in
             EventDetailView(
                 event: event,
-                onEdit: {
-                    viewModel.editEvent(event)
-                },
-                onDelete: {
-                    viewModel.deleteEvent(event)
-                },
+                onEdit: { viewModel.editEvent(event) },
+                onDelete: { viewModel.deleteEvent(event) },
                 onAddNote: {
                     viewModel.detailEvent = nil
                     viewModel.showAddNote(for: event)
@@ -188,24 +127,10 @@ struct HomeView: View {
             )
         }
         .sheet(isPresented: Bindable(viewModel).showNoteInput) {
-            NoteInputView(
-                eventTitle: viewModel.noteEventTitle,
-                onSave: { note in
-                    viewModel.saveNote(note)
-                }
-            )
+            NoteInputView(eventTitle: viewModel.noteEventTitle, onSave: viewModel.saveNote)
         }
-        // MARK: - Edit Sheet
         .sheet(item: Bindable(viewModel).editOperation) { operation in
-            DraftingView(operation: operation) { draft in
-                if let carbEntry = draft as? CarbEntry {
-                    EditCarbView(entry: carbEntry)
-                } else if let insulinEntry = draft as? InsulinEntry {
-                    EditInsulinView(entry: insulinEntry)
-                } else if let siteChange = draft as? SiteChange {
-                    EditSiteChangeView(entry: siteChange)
-                }
-            }
+            EntryEditorView(operation: operation)
         }
         // MARK: - Alert Sheets
         .sheet(isPresented: Bindable(viewModel).showKetoneInfoSheet) {
@@ -214,19 +139,73 @@ struct HomeView: View {
         .sheet(isPresented: Bindable(viewModel).showTroubleshootingSheet) {
             DeviceTroubleshootingView()
         }
-        .fullScreenCover(isPresented: $showingMonitor) {
-            NavigationStack {
-                MonitorView()
-                    .doneButton()
-            }
+    }
+}
+
+/// Today's totals: insulin, carbs and how many readings were logged.
+struct TodaySummaryView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let insulinUnits: Double
+    let carbGrams: Double
+    let readingCount: Int
+
+    var body: some View {
+        // Side by side normally; stacked at accessibility text sizes so
+        // the numbers never wrap mid-word.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 0))
+        layout {
+            SummaryTile(
+                value: insulinUnits.formatted(.number.precision(.fractionLength(0...1))),
+                unit: "U",
+                label: "Insulin"
+            )
+            Divider()
+            SummaryTile(
+                value: carbGrams.formatted(.number.precision(.fractionLength(0))),
+                unit: "g",
+                label: "Carbs"
+            )
+            Divider()
+            SummaryTile(value: "\(readingCount)", unit: nil, label: readingCount == 1 ? "Reading" : "Readings")
         }
+        .card(padding: 12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Today: \(insulinUnits.formatted(.number.precision(.fractionLength(0...1)))) units of insulin, \(Int(carbGrams)) grams of carbs, \(readingCount) glucose readings")
+    }
+}
+
+private struct SummaryTile: View {
+    let value: String
+    let unit: String?
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.title2.bold())
+                    .monospacedDigit()
+                if let unit {
+                    Text(unit)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
 #Preview {
     let context = PersistenceController.preview.container.viewContext
-    HomeView()
-        .environment(HomeViewModel(context: context))
-        .environment(MonitorViewModel(context: context))
-        .environment(SettingsStore())
+    NavigationStack {
+        HomeView(onShowAllActivity: {}, onShowTrends: {})
+    }
+    .environment(HomeViewModel(context: context))
+    .environment(SettingsStore())
 }

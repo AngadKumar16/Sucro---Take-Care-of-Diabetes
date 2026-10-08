@@ -17,8 +17,8 @@ struct HelpView: View {
             Section("Quick Help") {
                 Button(action: showEmergencyID) {
                     Label("Emergency Medical ID", systemImage: "cross.case.fill")
-                        .foregroundStyle(.red)
                 }
+                .tint(.red)
 
                 Button("Contact Support", systemImage: "message.fill", action: contactSupport)
 
@@ -36,15 +36,6 @@ struct HelpView: View {
                 }
             }
 
-            // Popular Topics
-            Section("Popular Topics") {
-                ForEach(HelpArticle.popular) { article in
-                    NavigationLink(value: HelpDestination.article(article)) {
-                        TutorialRow(title: article.title, duration: "1 min read")
-                    }
-                }
-            }
-            
             // FAQ
             Section("Frequently Asked Questions") {
                 ForEach(HelpArticle.faq) { article in
@@ -52,20 +43,12 @@ struct HelpView: View {
                 }
             }
             
-            // About
             Section {
-                LabeledContent("Version", value: "1.0.0")
+                LabeledContent("Version", value: AppInfo.version)
             }
         }
         .navigationTitle("Help & Tutorials")
-        .navigationDestination(for: HelpDestination.self) { destination in
-            switch destination {
-            case .article(let article):
-                FAQDetailView(article: article)
-            case .safety:
-                SafetyInfoView()
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showEmergencyCard) {
             EmergencyMedicalIDView()
         }
@@ -76,11 +59,7 @@ struct HelpView: View {
     }
 
     private func contactSupport() {
-        let subject = "Sucro Support Request"
-        let body = "Describe your issue here.\n\n---\nApp Version: 1.0.0"
-        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let url = URL(string: "mailto:support@sucroapp.com?subject=\(encodedSubject)&body=\(encodedBody)") {
+        if let url = AppInfo.supportEmailURL {
             openURL(url)
         }
     }
@@ -89,6 +68,7 @@ struct HelpView: View {
 #Preview {
     NavigationStack {
         HelpView()
+            .helpDestinations()
     }
     .environment(SettingsStore())
 }

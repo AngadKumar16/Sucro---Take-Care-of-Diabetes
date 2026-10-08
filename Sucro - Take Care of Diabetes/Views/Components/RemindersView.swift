@@ -12,22 +12,29 @@ struct RemindersView: View {
     let suggestion: String?
     let onSnooze: (Reminder, Int) -> Void
     let onComplete: (Reminder) -> Void
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Today's Plan")
-                .font(.headline)
-                .foregroundStyle(.primary)
-            
-            // Smart Suggestion
-            if let suggestion = suggestion {
+        VStack(alignment: .leading, spacing: 8) {
+            CardHeader("Today's Plan")
+
+            if let suggestion {
                 SuggestionCard(suggestion: suggestion)
             }
-            
-            // Upcoming Reminders
-            if !reminders.isEmpty {
-                LazyVStack(spacing: 8) {
-                    ForEach(reminders.prefix(3)) { reminder in
+
+            if reminders.isEmpty {
+                if suggestion == nil {
+                    Label("All caught up. No reminders coming up.", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.multicolor)
+                        .card()
+                }
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(reminders.prefix(3).enumerated()), id: \.element.id) { index, reminder in
+                        if index > 0 {
+                            Divider().padding(.leading, 60)
+                        }
                         ReminderCard(
                             reminder: reminder,
                             onSnooze: { minutes in onSnooze(reminder, minutes) },
@@ -35,43 +42,27 @@ struct RemindersView: View {
                         )
                     }
                 }
-            } else {
-                EmptyRemindersView()
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
             }
         }
-        .padding(.horizontal, 16)
     }
 }
 
 struct SuggestionCard: View {
     let suggestion: String
-    
+
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "lightbulb.fill")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.yellow)
-                .frame(width: 32, height: 32)
-                .background(Color.yellow.opacity(0.2))
-                .clipShape(Circle())
-            
+        Label {
             Text(suggestion)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.leading)
-            
-            Spacer()
+                .font(.subheadline.weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: "lightbulb.fill")
+                .foregroundStyle(.yellow)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.yellow.opacity(0.1))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                }
-        )
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.yellow.opacity(0.15), in: .rect(cornerRadius: 16))
     }
 }
 
@@ -86,22 +77,23 @@ struct ReminderCard: View {
         HStack(spacing: 12) {
             // Reminder Icon
             Image(systemName: reminder.type.icon)
-                .font(.system(size: 16, weight: .medium))
+                .font(.body.weight(.medium))
                 .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(reminder.type.tint)
-                .clipShape(Circle())
+                .frame(width: 36, height: 36)
+                .background(reminder.type.tint.gradient, in: .circle)
+                .accessibilityHidden(true)
             
             // Reminder Details
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 
                 Text(reminder.time, formatter: reminderTimeFormatter)
-                    .font(.system(size: 12))
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityElement(children: .combine)
             
             Spacer()
             
@@ -116,50 +108,19 @@ struct ReminderCard: View {
                     .buttonStyle(ReminderIconButtonStyle(tint: .green))
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 1)
-        )
-        .confirmationDialog("Snooze Reminder", isPresented: $showingSnoozeOptions) {
+        .padding(.leading, 12)
+        .padding(.trailing, 4)
+        .padding(.vertical, 4)
+        .confirmationDialog("Snooze \(reminder.title)", isPresented: $showingSnoozeOptions, titleVisibility: .visible) {
             Button("15 minutes") { onSnooze(15) }
             Button("1 hour") { onSnooze(60) }
             Button("2 hours") { onSnooze(120) }
             Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Snooze for how long?")
         }
     }
 
     private func showSnoozeOptions() {
         showingSnoozeOptions = true
-    }
-}
-
-struct EmptyRemindersView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.circle")
-                .font(.system(size: 32))
-                .foregroundStyle(.green)
-            
-            Text("All caught up!")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.primary)
-            
-            Text("No upcoming reminders")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
-        )
     }
 }
 

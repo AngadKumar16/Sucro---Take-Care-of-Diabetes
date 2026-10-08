@@ -23,7 +23,6 @@ struct CriticalAlertBanner: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(alert.title)
                         .font(.headline)
-                        .bold()
                         .foregroundStyle(alert.color)
 
                     Text(alert.message)
@@ -45,19 +44,16 @@ struct CriticalAlertBanner: View {
 
             Button(action: onAction) {
                 Label(alert.actionTitle, systemImage: alert.actionIcon)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(alert.color, in: RoundedRectangle(cornerRadius: 8))
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .tint(alert.color)
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
+                .fill(Color(.secondarySystemGroupedBackground))
                 .stroke(alert.color, lineWidth: 2)
         )
         .shadow(color: alert.color.opacity(0.3), radius: 8, x: 0, y: 4)

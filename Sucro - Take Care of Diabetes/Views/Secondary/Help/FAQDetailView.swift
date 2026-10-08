@@ -7,22 +7,17 @@ import SwiftUI
 
 struct FAQDetailView: View {
     let article: HelpArticle
-    
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(article.title)
-                    .font(.title2)
-                    .bold()
-                
-                Text(article.body)
-                    .font(.body)
-                
-                Spacer()
-            }
-            .padding()
+            Text(article.body)
+                .font(.body)
+                .lineSpacing(3)
+                .frame(maxWidth: 640, alignment: .leading)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .navigationTitle("FAQ")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(article.title)
+        .navigationBarTitleDisplayMode(.large)
     }
 }

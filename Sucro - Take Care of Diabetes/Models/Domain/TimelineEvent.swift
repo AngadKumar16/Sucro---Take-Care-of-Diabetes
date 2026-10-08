@@ -5,7 +5,7 @@
 //  Created by Angad Kumar on 3/11/26.
 //
 
-import Foundation
+import CoreData
 import SwiftUI
 
 struct TimelineEvent: Identifiable {
@@ -16,6 +16,10 @@ struct TimelineEvent: Identifiable {
     let glucoseValue: Double?
     let title: String
     let subtitle: String?
+    var notes: String? = nil
+    /// The Core Data entry behind the event, so edits and deletes hit
+    /// exactly that entry. `nil` only in previews.
+    var objectID: NSManagedObjectID? = nil
     
     var icon: String {
         switch type {
@@ -50,7 +54,3 @@ enum EventType {
     case siteChange
     case activity
 }
-
-// REMOVE THESE - They are already defined in Data/Models/Domain/Reminder.swift and Data/Models/Enums/ReminderType.swift
-// struct Reminder: Identifiable { ... }
-// enum ReminderType { ... }

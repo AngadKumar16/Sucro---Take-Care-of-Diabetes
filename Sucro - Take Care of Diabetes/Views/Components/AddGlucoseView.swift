@@ -11,81 +11,36 @@ import CoreData
 struct AddGlucoseView: View {
     @Environment(LogViewModel.self) private var viewModel
     @Environment(SettingsStore.self) private var settings
-    @Environment(\.dismiss) var dismiss
 
-    @State private var glucoseValue: String = ""
-    @State private var selectedUnit: String = "mg/dL"
-    @State private var selectedContext: String = "Fasting"
-    @State private var notes: String = ""
-    
-    private let contexts = ["Fasting", "Before Meal", "After Meal", "Bedtime", "Exercise", "Other"]
-    private let units = ["mg/dL", "mmol/L"]
-    
+    @State private var valueText = ""
+    @State private var context = GlucoseContext.likely(at: .now)
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @FocusState private var valueFocused: Bool
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Glucose Reading")) {
-                    HStack {
-                        TextField("Enter value", text: $glucoseValue)
-                            .keyboardType(.decimalPad)
-                        
-                        Picker("Unit", selection: $selectedUnit) {
-                            ForEach(units, id: \.self) { unit in
-                                Text(unit).tag(unit)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 100)
-                    }
-                    
-                    Picker("Context", selection: $selectedContext) {
-                        ForEach(contexts, id: \.self) { context in
-                            Text(context).tag(context)
-                        }
-                    }
-                }
-                
-                Section(header: Text("Notes (Optional)")) {
-                    TextField("Add notes...", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-            }
-            .navigationTitle("Add Glucose")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear { selectedUnit = settings.glucoseUnit }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveGlucoseReading()
-                    }
-                    .disabled(glucoseValue.isEmpty || Double(glucoseValue) == nil)
-                }
-            }
+        EntryForm(
+            title: "Add Glucose",
+            canSave: parsedGlucose(valueText, settings: settings) != nil,
+            hasChanges: !valueText.isEmpty || !notes.isEmpty,
+            onSave: save
+        ) {
+            GlucoseFields(valueText: $valueText, context: $context, timestamp: $timestamp, notes: $notes, focus: $valueFocused)
         }
+        .defaultFocus($valueFocused, true)
+        .onAppear { valueFocused = true }
     }
-    
-    private func saveGlucoseReading() {
-        guard let value = Double(glucoseValue) else { return }
-        
-        var convertedValue = value
-        if selectedUnit == "mmol/L" {
-            convertedValue = value * 18.018 // Convert to mg/dL
-        }
-        
+
+    private func save() -> Bool {
+        guard let mgdl = parsedGlucose(valueText, settings: settings) else { return false }
         viewModel.addGlucoseReading(
-            value: convertedValue,
+            value: mgdl,
             unit: "mg/dL",
-            context: selectedContext,
-            notes: notes.isEmpty ? nil : notes
+            context: context.rawValue,
+            notes: notes.isEmpty ? nil : notes,
+            timestamp: timestamp
         )
-        
-        dismiss()
+        return true
     }
 }
 

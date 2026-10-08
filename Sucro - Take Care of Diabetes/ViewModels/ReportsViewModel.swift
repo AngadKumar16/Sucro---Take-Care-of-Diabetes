@@ -12,23 +12,7 @@ import CoreData
 @MainActor
 @Observable
 class ReportsViewModel: BaseViewModel {
-    enum Period: String, CaseIterable {
-        case weekly = "Weekly"
-        case monthly = "Monthly"
-        case quarterly = "Quarterly"
-        case yearly = "Yearly"
-
-        var days: Int {
-            switch self {
-            case .weekly: return 7
-            case .monthly: return 30
-            case .quarterly: return 90
-            case .yearly: return 365
-            }
-        }
-    }
-
-    var period: Period = .weekly {
+    var period: TimeRange = .week {
         didSet { recalculate() }
     }
 
@@ -42,6 +26,7 @@ class ReportsViewModel: BaseViewModel {
     // Export feedback
     var exportURL: URL?
     var showShareSheet = false
+    var statusTitle = ""
     var statusMessage: String?
     var showStatusAlert = false
     var isExporting = false
@@ -115,7 +100,7 @@ class ReportsViewModel: BaseViewModel {
     /// Generates a PDF and sends it straight to the system print dialog.
     func printReport() {
         guard let url = generatePDF() else { return }
-        PrintHelper.printFile(at: url, jobName: "Sucro \(period.rawValue) Report")
+        PrintHelper.printFile(at: url, jobName: "DiabetesCare \(period.rawValue) Report")
     }
 
     /// Builds the PDF for the current period, or shows why it couldn't.
@@ -126,6 +111,7 @@ class ReportsViewModel: BaseViewModel {
         let carbs = dataService.fetchCarbEntries(context: viewContext, in: range)
 
         guard !readings.isEmpty || !insulin.isEmpty || !carbs.isEmpty else {
+            statusTitle = "Nothing to Export"
             statusMessage = "Nothing logged for this period yet."
             showStatusAlert = true
             return nil
@@ -142,6 +128,7 @@ class ReportsViewModel: BaseViewModel {
             )
             return url
         } catch {
+            statusTitle = "Couldn't Create Report"
             statusMessage = error.localizedDescription
             showStatusAlert = true
             return nil

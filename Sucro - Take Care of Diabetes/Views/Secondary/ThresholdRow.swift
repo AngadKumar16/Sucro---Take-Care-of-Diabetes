@@ -5,23 +5,29 @@
 
 import SwiftUI
 
-/// A glucose threshold shown in the user's unit and adjusted in 5 mg/dL
-/// steps. Bounds keep the four thresholds in order.
+/// A stepper for one glucose threshold, shown in the user's unit.
 struct ThresholdRow: View {
     @Environment(SettingsStore.self) private var settings
     let title: String
+    let color: Color
     @Binding var value: Double
     let bounds: ClosedRange<Double>
 
     var body: some View {
         Stepper(value: $value, in: bounds, step: SettingsStore.thresholdStep) {
-            LabeledContent(title) {
+            LabeledContent {
                 Text(settings.formattedGlucose(value))
                     .monospacedDigit()
+            } label: {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 10, height: 10)
+                        .accessibilityHidden(true)
+                    Text(title)
+                }
             }
-            .font(.subheadline)
         }
-        .padding(.vertical, 4)
         .accessibilityIdentifier("threshold.\(title)")
     }
 }

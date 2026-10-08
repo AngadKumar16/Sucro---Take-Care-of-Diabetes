@@ -2,205 +2,60 @@
 //  DevicesView.swift
 //  Sucro - Take Care of Diabetes
 //
-//  Created by Angad Kumar on 3/11/26.
+//  Where the app's data comes from and goes. There's no direct device
+//  connection yet, so this says so rather than showing a fake one.
 //
 
 import SwiftUI
 
 struct DevicesView: View {
-    @Environment(SettingsStore.self) private var settings
+    @Environment(\.openURL) private var openURL
+    @State private var healthConnected = false
 
-    struct Device: Identifiable {
-        var id: String { name }
-        let name: String
-        let type: String
-        let batteryLevel: Int
-    }
-
-    /// Full catalog of devices the app knows how to show.
-    private let catalog: [Device] = [
-        Device(name: "Dexcom G6", type: "CGM", batteryLevel: 85),
-        Device(name: "Omnipod 5", type: "Insulin Pump", batteryLevel: 62),
-        Device(name: "Libre 3", type: "CGM", batteryLevel: 90),
-        Device(name: "Tandem t:slim", type: "Insulin Pump", batteryLevel: 74)
-    ]
-
-    private var connectedDevices: [Device] {
-        catalog.filter { settings.connectedDeviceNames.contains($0.name) }
-    }
-
-    private var availableDevices: [Device] {
-        catalog.filter { !settings.connectedDeviceNames.contains($0.name) }
-    }
-
-    private func connect(_ device: Device) {
-        guard !settings.connectedDeviceNames.contains(device.name) else { return }
-        settings.connectedDeviceNames.append(device.name)
-    }
-
-    private func disconnect(_ device: Device) {
-        settings.connectedDeviceNames.removeAll { $0 == device.name }
-    }
+    private let health = HealthKitManager.shared
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Connected Devices
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Connected Devices")
-                        .font(.headline)
-                    
-                    if connectedDevices.isEmpty {
-                        Text("No devices connected")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    ForEach(connectedDevices) { device in
-                        DeviceCard(device: device) {
-                            disconnect(device)
+        List {
+            Section {
+                if health.isHealthDataAvailable {
+                    LabeledContent("Saving to Health", value: healthConnected ? "On" : "Off")
+                    Button("Open Health", systemImage: "heart.fill") {
+                        if let url = URL(string: "x-apple-health://") {
+                            openURL(url)
                         }
                     }
+                } else {
+                    Text("Apple Health isn't available on this device.")
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(.rect(cornerRadius: 12))
-                
-                // Available Devices
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Available Devices")
-                        .font(.headline)
-                    
-                    if availableDevices.isEmpty {
-                        Text("All known devices are connected")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    ForEach(availableDevices) { device in
-                        AvailableDeviceCard(device: device) {
-                            connect(device)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(.rect(cornerRadius: 12))
-                
-                // Device Settings
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Device Settings")
-                        .font(.headline)
-                    
-                    VStack(spacing: 8) {
-                        SettingsButton(title: "Auto-sync", icon: "arrow.triangle.2.circlepath", isOn: Bindable(settings).autoSyncEnabled)
-                        SettingsButton(title: "Background Monitoring", icon: "waveform.path.ecg", isOn: Bindable(settings).backgroundMonitoringEnabled)
-                        SettingsButton(title: "Low Battery Alerts", icon: "battery.25", isOn: Bindable(settings).lowBatteryAlertsEnabled)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(Color(.systemGray6))
-                .clipShape(.rect(cornerRadius: 12))
-                
-                Spacer()
+            } header: {
+                Text("Apple Health")
+            } footer: {
+                Text(healthConnected
+                     ? "Glucose, carbs, insulin and workouts you log here are also saved to Apple Health."
+                     : "To save what you log to Apple Health, open Settings › Apps › Health › Data Access & Devices › \(AppInfo.name) and turn the categories on.")
             }
-            .padding()
+
+            Section {
+                ContentUnavailableView {
+                    Label("No Direct Connection Yet", systemImage: "sensor")
+                } description: {
+                    Text("\(AppInfo.name) can't connect to a CGM or pump directly yet. Log readings and doses yourself for now.")
+                }
+            }
+            .listRowBackground(Color.clear)
         }
         .navigationTitle("Devices")
-    }
-}
-
-struct DeviceCard: View {
-    let device: DevicesView.Device
-    let onDisconnect: () -> Void
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(device.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-
-                Text(device.type)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                HStack {
-                    Image(systemName: "battery.100")
-                        .foregroundStyle(device.batteryLevel > 20 ? .green : .red)
-                    Text("\(device.batteryLevel)%")
-                        .font(.caption)
-                }
-
-                Button("Disconnect", role: .destructive, action: onDisconnect)
-                    .font(.caption)
-                    .buttonStyle(.borderless)
-            }
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            health.checkAuthorizationStatus()
+            healthConnected = health.isAuthorized
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .clipShape(.rect(cornerRadius: 8))
-    }
-}
-
-struct AvailableDeviceCard: View {
-    let device: DevicesView.Device
-    let onConnect: () -> Void
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(device.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(device.type)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            Button("Connect") {
-                onConnect()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .clipShape(.rect(cornerRadius: 8))
-    }
-}
-
-struct SettingsButton: View {
-    let title: String
-    let icon: String
-    @Binding var isOn: Bool
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundStyle(.blue)
-                .frame(width: 24)
-
-            Text(title)
-                .font(.subheadline)
-
-            Spacer()
-
-            Toggle("", isOn: $isOn)
-        }
-        .padding(.vertical, 8)
     }
 }
 
 #Preview {
-    DevicesView()
-        .environment(SettingsStore())
+    NavigationStack {
+        DevicesView()
+    }
 }

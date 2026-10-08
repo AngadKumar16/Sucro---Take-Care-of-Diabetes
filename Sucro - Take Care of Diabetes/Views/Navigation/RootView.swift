@@ -19,7 +19,7 @@ struct RootView: View {
         } else if !settings.hasAcceptedDisclaimer {
             DisclaimerView(onAccept: acceptDisclaimer)
         } else {
-            AppNavigationView()
+            MainTabView()
         }
     }
 

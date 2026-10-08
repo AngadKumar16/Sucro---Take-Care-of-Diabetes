@@ -13,7 +13,11 @@ import CoreData
 class HomeViewModel: BaseViewModel {
     // MARK: - Published Properties
     var latestGlucoseReading: GlucoseReading?
+    /// Readings in the Home chart's window, oldest first.
     var recentReadings: [GlucoseReading] = []
+    var todayReadingCount = 0
+    /// How far back the Home chart reaches.
+    static let chartWindow: TimeInterval = 6 * 3600
     var todayInsulinTotal: Double = 0.0
     var todayCarbTotal: Double = 0.0
     var insulinOnBoard: Double = 0.0
@@ -29,6 +33,7 @@ class HomeViewModel: BaseViewModel {
     private var dismissedAlertID: String?
     
     // MARK: - Navigation State
+    var showAddGlucoseSheet = false
     var showAddCarbSheet = false
     var showQuickBolusSheet = false
     var showAddSiteChangeSheet = false
@@ -58,6 +63,10 @@ class HomeViewModel: BaseViewModel {
     
     // MARK: - Navigation Actions
     
+    func logGlucose() {
+        showAddGlucoseSheet = true
+    }
+
     func logMeal() {
         showAddCarbSheet = true
     }
@@ -69,7 +78,7 @@ class HomeViewModel: BaseViewModel {
         let entry = CarbEntry(context: viewContext)
         entry.id = UUID()
         entry.grams = preset.carbs
-        entry.mealType = preset.name
+        entry.mealType = MealType(stored: preset.name)?.rawValue ?? preset.name
         entry.timestamp = timestamp
 
         save()
@@ -92,108 +101,41 @@ class HomeViewModel: BaseViewModel {
     
     // MARK: - Editing
     func editEvent(_ event: TimelineEvent) {
-        selectedEvent = event
         detailEvent = nil
-        
-        switch event.type {
-        case .meal:
-            guard let carbEntry = dataService.fetchEntry(
-                context: viewContext,
-                type: CarbEntry.self,
-                at: event.timestamp
-            ) else { return }
-            
-            editOperation = DraftOperation(
-                withExistingObject: carbEntry,
-                inParentContext: viewContext,
-                onSave: { [weak self] in
-                    self?.fetchTimelineEvents()
-                }
-            )
-            
-        case .bolus:
-            guard let insulinEntry = dataService.fetchEntry(
-                context: viewContext,
-                type: InsulinEntry.self,
-                at: event.timestamp
-            ) else { return }
-            
-            editOperation = DraftOperation(
-                withExistingObject: insulinEntry,
-                inParentContext: viewContext,
-                onSave: { [weak self] in
-                    self?.fetchTimelineEvents()
-                }
-            )
-            
-        case .siteChange:
-            guard let siteChange = dataService.fetchEntry(
-                context: viewContext,
-                type: SiteChange.self,
-                at: event.timestamp
-            ) else { return }
-            
-            editOperation = DraftOperation(
-                withExistingObject: siteChange,
-                inParentContext: viewContext,
-                onSave: { [weak self] in
-                    self?.fetchTimelineEvents()
-                }
-            )
-            
-        case .activity:
-            // Handle activity editing if needed
-            break
-        }
+        guard let objectID = event.objectID,
+              let object = try? viewContext.existingObject(with: objectID) else { return }
+        editOperation = DraftOperation(
+            withExistingObject: object,
+            inParentContext: viewContext,
+            onSave: { [weak self] in
+                self?.fetchLatestData()
+            }
+        )
     }
-    
+
     func deleteEvent(_ event: TimelineEvent) {
-        let success: Bool
-        switch event.type {
-        case .meal:
-            success = dataService.deleteEntry(context: viewContext, type: CarbEntry.self, at: event.timestamp)
-        case .bolus:
-            success = dataService.deleteEntry(context: viewContext, type: InsulinEntry.self, at: event.timestamp)
-        case .siteChange:
-            success = dataService.deleteEntry(context: viewContext, type: SiteChange.self, at: event.timestamp)
-        case .activity:
-            success = dataService.deleteEntry(context: viewContext, type: ActivityEntry.self, at: event.timestamp)
-        }
-        
-        if success {
+        guard let objectID = event.objectID else { return }
+        if dataService.delete(objectID, context: viewContext) {
             selectedEvent = nil
             detailEvent = nil
-            fetchTimelineEvents()
+            fetchLatestData()
         }
     }
-    
+
     func showAddNote(for event: TimelineEvent) {
         noteEventTitle = event.title
         selectedEvent = event
         showNoteInput = true
     }
-    
+
     func saveNote(_ note: String) {
-        guard let event = selectedEvent else { return }
-        
-        let success: Bool
-        switch event.type {
-        case .meal:
-            success = dataService.addNoteToEntry(context: viewContext, type: CarbEntry.self, at: event.timestamp, note: note)
-        case .bolus:
-            success = dataService.addNoteToEntry(context: viewContext, type: InsulinEntry.self, at: event.timestamp, note: note)
-        case .siteChange:
-            success = dataService.addNoteToEntry(context: viewContext, type: SiteChange.self, at: event.timestamp, note: note)
-        case .activity:
-            success = dataService.addNoteToEntry(context: viewContext, type: ActivityEntry.self, at: event.timestamp, note: note)
-        }
-        
-        if success {
+        guard let objectID = selectedEvent?.objectID else { return }
+        if dataService.appendNote(note, to: objectID, context: viewContext) {
             showNoteInput = false
             fetchTimelineEvents()
         }
     }
-    
+
     // MARK: - Reminder Actions
     func snoozeReminder(_ reminder: Reminder, minutes: Int = 15) {
         reminderService.snooze(reminder, minutes: minutes)
@@ -218,7 +160,15 @@ class HomeViewModel: BaseViewModel {
     
     func fetchLatestData() {
         latestGlucoseReading = dataService.fetchLatestGlucoseReading(context: viewContext)
-        recentReadings = dataService.fetchRecentGlucoseReadings(context: viewContext, limit: 10)
+        let now = Date()
+        recentReadings = dataService.fetchGlucoseReadings(
+            context: viewContext,
+            in: DateInterval(start: now.addingTimeInterval(-Self.chartWindow), end: now)
+        )
+        todayReadingCount = dataService.fetchGlucoseReadings(
+            context: viewContext,
+            in: DateInterval(start: Calendar.current.startOfDay(for: now), end: now)
+        ).count
         
         let totals = dataService.fetchTodayTotals(context: viewContext)
         todayInsulinTotal = totals.insulin
@@ -251,7 +201,7 @@ class HomeViewModel: BaseViewModel {
 
         // A day before the site is due. Once it's due, the banner takes over.
         if let lastChange = lastSiteChange, let changed = lastChange.timestamp {
-            let rotationDays = SiteLocation(rawValue: lastChange.location ?? "")?.rotationDays ?? 3
+            let rotationDays = SiteLocation(stored: lastChange.location)?.rotationDays ?? 3
             let daysSince = Calendar.current.dateComponents([.day], from: changed, to: Date()).day ?? 0
             if daysSince == rotationDays - 1 {
                 smartSuggestion = "Your site is \(daysSince) \(daysSince == 1 ? "day" : "days") old. Plan to change it tomorrow."

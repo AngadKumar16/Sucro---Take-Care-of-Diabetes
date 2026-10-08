@@ -19,6 +19,25 @@ enum SiteLocation: String, CaseIterable, Codable {
     case buttocksRight = "Buttocks Right"
     case other = "Other"
     
+    /// Reads a stored location, including the bare region names older edit
+    /// screens saved ("abdomen", "arm", ...), which map to that region.
+    init?(stored: String?) {
+        guard let key = stored?.trimmingCharacters(in: .whitespaces).lowercased(), !key.isEmpty else {
+            return nil
+        }
+        if let match = Self.allCases.first(where: { $0.rawValue.lowercased() == key }) {
+            self = match
+            return
+        }
+        switch key {
+        case "abdomen": self = .abdomenCenter
+        case "thigh": self = .thighLeft
+        case "arm": self = .armLeft
+        case "buttocks": self = .buttocksLeft
+        default: return nil
+        }
+    }
+
     var iconName: String {
         switch self {
         case .abdomenLeft, .abdomenRight, .abdomenCenter:

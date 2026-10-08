@@ -13,112 +13,87 @@ struct QuickActionButtonsView: View {
     let onChangeSite: () -> Void
     var onLogPreset: ((MealTemplate) -> Void)? = nil
 
+    @State private var loggedPreset = 0
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack(spacing: 16) {
-            // Log Meal Button — long-press for quick presets.
-            QuickActionButton(
-                title: "Log Meal",
-                icon: "camera.fill",
-                color: .blue,
-                action: onLogMeal,
-                presets: MealTemplate.standardPresets,
-                onPreset: onLogPreset
-            )
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
+            // Tap opens the carb form; touch and hold shows saved meals.
+            Menu {
+                Section("Log a Saved Meal") {
+                    ForEach(MealTemplate.standardPresets) { preset in
+                        Button("\(preset.name) (\(Int(preset.carbs))g carbs)") {
+                            onLogPreset?(preset)
+                            loggedPreset += 1
+                        }
+                    }
+                }
+            } label: {
+                QuickActionLabel(title: "Log Meal", icon: "fork.knife")
+            } primaryAction: {
+                onLogMeal()
+            }
+            .menuStyle(.button)
+            .buttonStyle(QuickActionButtonStyle(color: .orange))
+            .accessibilityLabel("Log Meal")
+            .accessibilityHint("Touch and hold for saved meals")
 
-            // Quick Bolus Button
-            QuickActionButton(
-                title: "Quick Bolus",
-                icon: "syringe.fill",
-                color: .green,
-                action: onQuickBolus
-            )
+            Button(action: onQuickBolus) {
+                QuickActionLabel(title: "Quick Bolus", icon: "syringe")
+            }
+            .buttonStyle(QuickActionButtonStyle(color: .green))
 
-            // Change Site Button
-            QuickActionButton(
-                title: "Change Site",
-                icon: "figure.walk",
-                color: .purple,
-                action: onChangeSite
-            )
+            Button(action: onChangeSite) {
+                QuickActionLabel(title: "Change Site", icon: "bandage")
+            }
+            .buttonStyle(QuickActionButtonStyle(color: .purple))
         }
-        .padding(.horizontal, 16)
+        .sensoryFeedback(.success, trigger: loggedPreset)
     }
 }
 
-struct QuickActionButton: View {
+private struct QuickActionLabel: View {
     let title: String
     let icon: String
-    let color: Color
-    let action: () -> Void
-    var presets: [MealTemplate] = []
-    var onPreset: ((MealTemplate) -> Void)? = nil
 
-    @State private var isPressed = false
-    @State private var showingPresets = false
-    @State private var presetHaptic = 0
-
-    private var supportsPresets: Bool { !presets.isEmpty && onPreset != nil }
-    
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(.white)
-                
-                Text(title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 80)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(color)
-                    .scaleEffect(isPressed ? 0.95 : 1.0)
-                    .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
-            )
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title2.weight(.medium))
+                .accessibilityHidden(true)
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        // simultaneousGesture fires reliably alongside the Button's tap; a plain
-        // .onLongPressGesture perform is swallowed by the Button.
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onChanged { _ in
-                    guard supportsPresets else { return }
-                    withAnimation(.easeInOut(duration: 0.1)) { isPressed = true }
-                }
-                .onEnded { _ in
-                    withAnimation(.easeInOut(duration: 0.1)) { isPressed = false }
-                    guard supportsPresets else { return }
-                    presetHaptic += 1
-                    showingPresets = true
-                }
-        )
-        .sensoryFeedback(.impact(weight: .medium), trigger: presetHaptic)
-        .alert("Quick Presets", isPresented: $showingPresets) {
-            ForEach(presets) { preset in
-                Button("\(preset.name) (\(Int(preset.carbs))g carbs)") {
-                    onPreset?(preset)
-                }
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Pick a saved meal to log it.")
-        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .padding(.vertical, 8)
+    }
+}
+
+/// A filled tile that dims and shrinks a little while pressed.
+struct QuickActionButtonStyle: ButtonStyle {
+    let color: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .background(color.gradient, in: .rect(cornerRadius: 16))
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1)
+            .animation(.snappy(duration: 0.15), value: configuration.isPressed)
+            .contentShape(.rect(cornerRadius: 16))
     }
 }
 
 #Preview {
-    VStack(spacing: 40) {
-        QuickActionButtonsView(
-            onLogMeal: {},
-            onQuickBolus: {},
-            onChangeSite: {}
-        )
-    }
-    .padding()
-    .background(Color(.systemGroupedBackground))
+    QuickActionButtonsView(onLogMeal: {}, onQuickBolus: {}, onChangeSite: {}, onLogPreset: { _ in })
+        .padding()
+        .background(Color(.systemGroupedBackground))
 }

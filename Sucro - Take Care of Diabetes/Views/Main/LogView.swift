@@ -11,68 +11,97 @@ import CoreData
 struct LogView: View {
     @Environment(LogViewModel.self) private var viewModel
     @Environment(SettingsStore.self) private var settings
-    @State private var selectedLogType: LogType = .glucose
-    
-    enum LogType: String, CaseIterable {
+    @State private var filter: Filter = .all
+    @State private var pendingDelete: LogRow?
+
+    enum Filter: String, CaseIterable {
+        case all = "All"
         case glucose = "Glucose"
         case carbs = "Carbs"
         case insulin = "Insulin"
         case activity = "Activity"
     }
-    
+
     var body: some View {
-        VStack {
-            // Date Picker
-            DatePicker("Date", selection: Bindable(viewModel).selectedDate, displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .padding()
-                .onChange(of: viewModel.selectedDate) { _, date in
-                    viewModel.fetchEntriesForDate(date)
-                }
-            
-            // Log Type Selector
-            Picker("Log Type", selection: $selectedLogType) {
-                ForEach(LogType.allCases, id: \.self) { type in
-                    Text(type.rawValue).tag(type)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            
-            // Content based on selection
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    switch selectedLogType {
-                    case .glucose:
-                        glucoseLogSection
-                    case .carbs:
-                        carbLogSection
-                    case .insulin:
-                        insulinLogSection
-                    case .activity:
-                        activityLogSection
+        List {
+            Section {
+                DayPicker(
+                    date: Bindable(viewModel).selectedDate,
+                    canGoForward: !viewModel.isShowingToday,
+                    onMove: viewModel.moveDay(by:)
+                )
+                Picker("Show", selection: $filter) {
+                    ForEach(Filter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
                     }
                 }
-                .padding()
+                .pickerStyle(.segmented)
+                .listRowSeparator(.hidden)
             }
-            
-            Spacer()
-            
-            // Add Button
-            Button(action: showAddForm) {
-                Text("Add \(selectedLogType.rawValue)")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .clipShape(.rect(cornerRadius: 12))
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+
+            if rows.isEmpty {
+                Section {
+                    ContentUnavailableView {
+                        Label(emptyTitle, systemImage: "list.bullet.clipboard")
+                    } description: {
+                        Text("Tap \(Image(systemName: "plus")) to add an entry.")
+                    }
+                }
+                .listRowBackground(Color.clear)
+            } else {
+                Section {
+                    ForEach(rows) { row in
+                        Button {
+                            viewModel.edit(row.object)
+                        } label: {
+                            LogRowView(row: row)
+                        }
+                        .foregroundStyle(.primary)
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                pendingDelete = row
+                            }
+                        }
+                        .contextMenu {
+                            Button("Edit", systemImage: "pencil") { viewModel.edit(row.object) }
+                            Button("Delete", systemImage: "trash", role: .destructive) { pendingDelete = row }
+                        }
+                        .accessibilityHint("Edits this entry")
+                        .accessibilityAction(named: "Delete") { pendingDelete = row }
+                    }
+                } footer: {
+                    Text(summary)
+                }
             }
-            .padding()
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Log")
-        .task {
-            viewModel.fetchEntriesForDate(viewModel.selectedDate)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu("Add Entry", systemImage: "plus") {
+                    Button("Add Glucose", systemImage: "drop") { viewModel.showAddGlucose = true }
+                    Button("Add Carbs", systemImage: "fork.knife") { viewModel.showAddCarbs = true }
+                    Button("Add Insulin", systemImage: "syringe") { viewModel.showAddInsulin = true }
+                    Button("Add Activity", systemImage: "figure.walk") { viewModel.showAddActivity = true }
+                }
+                .accessibilityIdentifier("addEntryMenu")
+            }
+        }
+        .onAppear { viewModel.fetchEntriesForDate(viewModel.selectedDate) }
+        .onChange(of: viewModel.selectedDate) { _, date in
+            viewModel.fetchEntriesForDate(date)
+        }
+        .confirmationDialog(
+            "Delete \(pendingDelete?.title ?? "Entry")?",
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { row in
+            Button("Delete", role: .destructive) { viewModel.deleteEntry(row.object) }
+        } message: { _ in
+            Text("This can't be undone.")
         }
         .sheet(isPresented: Bindable(viewModel).showAddGlucose) {
             AddGlucoseView()
@@ -90,180 +119,163 @@ struct LogView: View {
             AddActivityView()
                 .environment(viewModel)
         }
-    }
-    
-    private func showAddForm() {
-        switch selectedLogType {
-        case .glucose: viewModel.showAddGlucose = true
-        case .carbs: viewModel.showAddCarbs = true
-        case .insulin: viewModel.showAddInsulin = true
-        case .activity: viewModel.showAddActivity = true
+        .sheet(item: Bindable(viewModel).editOperation) { operation in
+            EntryEditorView(operation: operation)
         }
     }
 
-    private var glucoseLogSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Glucose Readings")
-                .font(.headline)
-            
-            if viewModel.glucoseReadings.isEmpty {
-                Text("No glucose readings for this date")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.glucoseReadings) { reading in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(settings.formattedGlucose(reading.value))
-                                .font(.body)
-                                .fontWeight(.medium)
-                            
-                            if let context = reading.context {
-                                Text(context)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if let timestamp = reading.timestamp {
-                            Text(timestamp, formatter: timeFormatter)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 8))
-                }
-            }
-        }
+    private var emptyTitle: String {
+        let kind = filter == .all ? "Entries" : filter.rawValue
+        return viewModel.isShowingToday ? "No \(kind) Today" : "No \(kind) This Day"
     }
-    
-    private var carbLogSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Carb Entries")
-                .font(.headline)
-            
-            if viewModel.carbEntries.isEmpty {
-                Text("No carb entries for this date")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.carbEntries) { entry in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("\(Int(entry.grams))g carbs")
-                                .font(.body)
-                                .fontWeight(.medium)
-                            
-                            if let mealType = entry.mealType {
-                                Text(mealType)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if let timestamp = entry.timestamp {
-                            Text(timestamp, formatter: timeFormatter)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 8))
-                }
+
+    /// Everything logged on the selected day, newest first.
+    private var rows: [LogRow] {
+        var rows: [LogRow] = []
+        if filter == .all || filter == .glucose {
+            rows += viewModel.glucoseReadings.map { reading in
+                LogRow(
+                    object: reading,
+                    timestamp: reading.timestamp,
+                    icon: "drop.fill",
+                    color: settings.zone(for: reading.value).color,
+                    title: settings.formattedGlucose(reading.value),
+                    detail: reading.context,
+                    notes: reading.notes
+                )
             }
         }
+        if filter == .all || filter == .carbs {
+            rows += viewModel.carbEntries.map { entry in
+                LogRow(
+                    object: entry,
+                    timestamp: entry.timestamp,
+                    icon: "fork.knife",
+                    color: .orange,
+                    title: "\(entry.grams.formatted(.number.precision(.fractionLength(0...1))))g carbs",
+                    detail: [MealType(stored: entry.mealType)?.rawValue ?? entry.mealType, entry.foodItems]
+                        .compactMap { $0 }.joined(separator: " · "),
+                    notes: entry.notes
+                )
+            }
+        }
+        if filter == .all || filter == .insulin {
+            rows += viewModel.insulinEntries.map { entry in
+                LogRow(
+                    object: entry,
+                    timestamp: entry.timestamp,
+                    icon: "syringe.fill",
+                    color: .green,
+                    title: "\(entry.units.formatted(.number.precision(.fractionLength(0...2)))) U",
+                    detail: [InsulinType(stored: entry.type)?.displayName, DeliveryMethod(stored: entry.deliveryMethod)?.rawValue]
+                        .compactMap { $0 }.joined(separator: " · "),
+                    notes: entry.notes
+                )
+            }
+        }
+        if filter == .all || filter == .activity {
+            rows += viewModel.activityEntries.map { entry in
+                LogRow(
+                    object: entry,
+                    timestamp: entry.timestamp,
+                    icon: "figure.walk",
+                    color: .blue,
+                    title: entry.type ?? "Activity",
+                    detail: [Optional("\(entry.duration) min"), entry.intensity].compactMap { $0 }.joined(separator: " · "),
+                    notes: entry.notes
+                )
+            }
+        }
+        return rows.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
     }
-    
-    private var insulinLogSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Insulin Entries")
-                .font(.headline)
-            
-            if viewModel.insulinEntries.isEmpty {
-                Text("No insulin entries for this date")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.insulinEntries) { entry in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("\(entry.units, specifier: "%.1f") units")
-                                .font(.body)
-                                .fontWeight(.medium)
-                            
-                            if let type = entry.type {
-                                Text(type)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if let timestamp = entry.timestamp {
-                            Text(timestamp, formatter: timeFormatter)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 8))
-                }
-            }
-        }
-    }
-    
-    private var activityLogSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Activity Entries")
-                .font(.headline)
-            
-            if viewModel.activityEntries.isEmpty {
-                Text("No activity entries for this date")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.activityEntries) { entry in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(entry.type ?? "Activity")
-                                .font(.body)
-                                .fontWeight(.medium)
-                            
-                            Text("\(entry.duration) min")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if let timestamp = entry.timestamp {
-                            Text(timestamp, formatter: timeFormatter)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 8))
-                }
-            }
-        }
+
+    private var summary: String {
+        let count = rows.count
+        return "\(count) \(count == 1 ? "entry" : "entries")"
     }
 }
 
-private let timeFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.timeStyle = .short
-    return formatter
-}()
+struct LogRow: Identifiable {
+    let object: NSManagedObject
+    let timestamp: Date?
+    let icon: String
+    let color: Color
+    let title: String
+    let detail: String?
+    let notes: String?
+
+    var id: NSManagedObjectID { object.objectID }
+}
+
+private struct LogRowView: View {
+    let row: LogRow
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: row.icon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(row.color.gradient, in: .circle)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(row.title)
+                    .font(.body.weight(.medium))
+                if let detail = row.detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if let notes = row.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer(minLength: 8)
+            if let timestamp = row.timestamp {
+                Text(timestamp, format: .dateTime.hour().minute())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Previous/next day buttons around a compact date picker.
+private struct DayPicker: View {
+    @Binding var date: Date
+    let canGoForward: Bool
+    let onMove: (Int) -> Void
+
+    var body: some View {
+        HStack {
+            Button("Previous Day", systemImage: "chevron.left") { onMove(-1) }
+                .labelStyle(.iconOnly)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+            Spacer()
+            DatePicker("Day", selection: $date, in: ...Date.now, displayedComponents: .date)
+                .labelsHidden()
+            Spacer()
+            Button("Next Day", systemImage: "chevron.right") { onMove(1) }
+                .labelStyle(.iconOnly)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(.rect)
+                .disabled(!canGoForward)
+        }
+        .buttonStyle(.borderless)
+        .font(.title3.weight(.semibold))
+    }
+}
 
 #Preview {
-    LogView()
-        .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
-        .environment(SettingsStore())
+    NavigationStack {
+        LogView()
+    }
+    .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
+    .environment(SettingsStore())
 }

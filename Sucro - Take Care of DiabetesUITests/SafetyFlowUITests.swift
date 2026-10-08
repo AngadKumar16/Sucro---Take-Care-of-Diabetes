@@ -17,13 +17,9 @@ final class SafetyFlowUITests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
     }
 
-    private func openSecondaryTab(_ name: String) {
-        let more = app.buttons["moreButton"]
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "More button should exist on Home")
-        more.tap()
-
-        let tab = app.buttons[name]
-        XCTAssertTrue(tab.waitForExistence(timeout: 5), "\(name) tab should appear in the More sheet")
+    private func openSettings() {
+        let tab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(tab.waitForExistence(timeout: 5), "Settings tab should exist")
         tab.tap()
     }
 
@@ -32,17 +28,18 @@ final class SafetyFlowUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Before You Start"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["moreButton"].exists, "The app shouldn't be usable before accepting")
+        XCTAssertFalse(app.tabBars.firstMatch.exists, "The app shouldn't be usable before accepting")
 
         app.buttons["I Understand"].tap()
-        XCTAssertTrue(app.buttons["moreButton"].waitForExistence(timeout: 5), "Home should appear after accepting")
+        XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 5), "Today should appear after accepting")
     }
 
     func testSafetyInformationIsReachableFromHelp() {
         app.launch()
-        openSecondaryTab("Help")
+        openSettings()
 
         let link = app.buttons["Safety Information"]
+        for _ in 0..<4 where !link.isHittable { app.swipeUp() }
         XCTAssertTrue(link.waitForExistence(timeout: 5))
         link.tap()
 
@@ -52,7 +49,7 @@ final class SafetyFlowUITests: XCTestCase {
 
     func testThresholdsAndInsulinActionTimeAreAdjustable() {
         app.launch()
-        openSecondaryTab("Settings")
+        openSettings()
 
         for title in ["Urgent Low", "Low", "High", "Urgent High"] {
             XCTAssertTrue(app.steppers["threshold.\(title)"].waitForExistence(timeout: 5), "\(title) stepper should exist")
@@ -79,9 +76,13 @@ final class SafetyFlowUITests: XCTestCase {
         XCTAssertTrue(quickBolus.waitForExistence(timeout: 5))
         quickBolus.tap()
 
-        let slider = app.sliders.firstMatch
-        XCTAssertTrue(slider.waitForExistence(timeout: 5))
-        slider.adjust(toNormalizedSliderPosition: 0.8)   // about 16 units
+        // Large preset (6 U), then ten steps of 0.5 U: 11 units.
+        let large = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Large'")).firstMatch
+        XCTAssertTrue(large.waitForExistence(timeout: 5))
+        large.tap()
+        let increment = app.buttons["bolusStepper-Increment"]
+        XCTAssertTrue(increment.waitForExistence(timeout: 5))
+        for _ in 0..<10 { increment.tap() }
 
         app.buttons["Log Bolus"].tap()
 
@@ -92,5 +93,10 @@ final class SafetyFlowUITests: XCTestCase {
         // Don't log anything.
         confirm.buttons["Cancel"].tap()
         app.buttons["Cancel"].tap()
+
+        // There's an unsaved dose, so Cancel checks before throwing it away.
+        let discard = app.buttons["Discard Changes"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 5), "Cancelling an unsaved dose should ask first")
+        discard.tap()
     }
 }

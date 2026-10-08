@@ -9,30 +9,58 @@ import SwiftUI
 
 struct RecentTimelineCardsView: View {
     let events: [TimelineEvent]
+    let onShowAll: () -> Void
     let onEventTap: (TimelineEvent) -> Void
     let onEventEdit: (TimelineEvent) -> Void
     let onEventDelete: (TimelineEvent) -> Void
     let onAddNote: (TimelineEvent) -> Void
-    
+
+    @State private var pendingDelete: TimelineEvent?
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .foregroundStyle(.primary)
-            
-            LazyVStack(spacing: 8) {
-                ForEach(events.prefix(5)) { event in
-                    TimelineCard(
-                        event: event,
-                        onTap: { onEventTap(event) },
-                        onEdit: { onEventEdit(event) },
-                        onDelete: { onEventDelete(event) },
-                        onAddNote: { onAddNote(event) }
-                    )
+        VStack(alignment: .leading, spacing: 8) {
+            CardHeader("Recent Activity") {
+                Button("See All", action: onShowAll)
+                    .font(.subheadline)
+            }
+
+            if events.isEmpty {
+                Text("Nothing logged in the last 12 hours.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .card()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(events.prefix(5).enumerated()), id: \.element.id) { index, event in
+                        if index > 0 {
+                            Divider().padding(.leading, 60)
+                        }
+                        TimelineCard(event: event) { onEventTap(event) }
+                            .contextMenu {
+                                Button("Add Note", systemImage: "note.text.badge.plus") { onAddNote(event) }
+                                Button("Edit", systemImage: "pencil") { onEventEdit(event) }
+                                Divider()
+                                Button("Delete", systemImage: "trash", role: .destructive) { pendingDelete = event }
+                            }
+                            .accessibilityAction(named: "Add Note") { onAddNote(event) }
+                            .accessibilityAction(named: "Edit") { onEventEdit(event) }
+                            .accessibilityAction(named: "Delete") { pendingDelete = event }
+                    }
                 }
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+                .clipShape(.rect(cornerRadius: 16))
             }
         }
-        .padding(.horizontal, 16)
+        .confirmationDialog(
+            "Delete \(pendingDelete?.title ?? "Entry")?",
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { event in
+            Button("Delete", role: .destructive) { onEventDelete(event) }
+        } message: { _ in
+            Text("This can't be undone.")
+        }
     }
 }
 
@@ -40,155 +68,74 @@ struct TimelineCard: View {
     @Environment(SettingsStore.self) private var settings
     let event: TimelineEvent
     let onTap: () -> Void
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-    let onAddNote: () -> Void
 
-    @State private var dragOffset: CGFloat = 0
-    @State private var showingDeleteAlert = false
-    
     var body: some View {
-        HStack(spacing: 12) {
-            // Event Icon
-            Image(systemName: event.icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white)
-                .frame(width: 32, height: 32)
-                .background(event.color)
-                .clipShape(Circle())
-            
-            // Event Details
-            VStack(alignment: .leading, spacing: 4) {
-                Text(event.title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.primary)
-                
-                if let subtitle = event.subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-                
-                Text(event.timestamp, formatter: relativeTimeFormatter)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            // Glucose Context
-            if let glucose = event.glucoseValue {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(settings.glucoseValueString(glucose))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(glucoseColor(glucose))
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: event.icon)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(event.color.gradient, in: .circle)
+                    .accessibilityHidden(true)
 
-                    Text(settings.glucoseUnit)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 1)
-        )
-        .offset(x: dragOffset)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragOffset = value.translation.width  // FIXED: .width not .x
-                }
-                .onEnded { value in
-                    withAnimation(.spring()) {
-                        if value.translation.width < -50 {  // FIXED: .width not .x
-                            // Swipe left - show delete option
-                            dragOffset = -80
-                        } else if value.translation.width > 50 {  // FIXED: .width not .x
-                            // Swipe right - add note
-                            onAddNote()
-                            dragOffset = 0
-                        } else {
-                            dragOffset = 0
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(event.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    HStack(spacing: 4) {
+                        if let subtitle = event.subtitle {
+                            Text(subtitle)
                         }
+                        Text("·")
+                            .accessibilityHidden(true)
+                        Text(event.timestamp, format: .relative(presentation: .named, unitsStyle: .abbreviated))
                     }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 }
-        )
-        // A tap gesture rather than a Button so it doesn't fight the swipe.
-        .onTapGesture {
-            if dragOffset == 0 {
-                onTap()
-            }
-        }
-        .accessibilityAddTraits(.isButton)
-        .overlay {
-            // Delete/Edit buttons (shown when swiped left)
-            HStack {
-                Spacer()
-                
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.blue)
-                        .clipShape(Circle())
+
+                Spacer(minLength: 8)
+
+                if let glucose = event.glucoseValue {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(settings.glucoseValueString(glucose))
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(settings.zone(for: glucose).color)
+                        Text(settings.glucoseUnit)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Glucose \(settings.formattedGlucose(glucose))")
                 }
-                .offset(x: dragOffset > -40 ? 0 : dragOffset + 40)
-                
-                Button(action: {
-                    showingDeleteAlert = true
-                }) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.red)
-                        .clipShape(Circle())
-                }
-                .offset(x: dragOffset > -80 ? 0 : dragOffset + 80)
             }
-            .opacity(dragOffset < -40 ? 1 : 0)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .contentShape(.rect)
         }
-        .alert("Delete Event", isPresented: $showingDeleteAlert) {
-            Button("Delete", role: .destructive) {
-                onDelete()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("This can't be undone.")
-        }
-    }
-    
-    private func glucoseColor(_ value: Double) -> Color {
-        settings.zone(for: value).color
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Shows details")
     }
 }
 
-private let relativeTimeFormatter: RelativeDateTimeFormatter = {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .abbreviated
-    return formatter
-}()
-
 #Preview {
-    VStack(spacing: 16) {
-        RecentTimelineCardsView(
-            events: [
-                TimelineEvent(type: .meal, timestamp: Date().addingTimeInterval(-1800), glucoseValue: 145, title: "Lunch", subtitle: "Sandwich and apple"),
-                TimelineEvent(type: .bolus, timestamp: Date().addingTimeInterval(-2100), glucoseValue: 150, title: "Quick Bolus", subtitle: "5.0 units"),
-                TimelineEvent(type: .activity, timestamp: Date().addingTimeInterval(-3600), glucoseValue: 110, title: "Walk", subtitle: "30 minutes"),
-                TimelineEvent(type: .siteChange, timestamp: Date().addingTimeInterval(-7200), glucoseValue: 95, title: "Site Change", subtitle: "Abdomen")
-            ],
-            onEventTap: { _ in },
-            onEventEdit: { _ in },
-            onEventDelete: { _ in },
-            onAddNote: { _ in }
-        )
-    }
+    RecentTimelineCardsView(
+        events: [
+            TimelineEvent(type: .meal, timestamp: Date().addingTimeInterval(-1800), glucoseValue: 145, title: "Lunch", subtitle: "45g carbs"),
+            TimelineEvent(type: .bolus, timestamp: Date().addingTimeInterval(-2100), glucoseValue: 150, title: "Bolus", subtitle: "5 units"),
+            TimelineEvent(type: .activity, timestamp: Date().addingTimeInterval(-3600), glucoseValue: 110, title: "Walk", subtitle: "30 min"),
+            TimelineEvent(type: .siteChange, timestamp: Date().addingTimeInterval(-7200), glucoseValue: 95, title: "Site Change", subtitle: "Abdomen Left")
+        ],
+        onShowAll: {},
+        onEventTap: { _ in },
+        onEventEdit: { _ in },
+        onEventDelete: { _ in },
+        onAddNote: { _ in }
+    )
     .padding()
     .background(Color(.systemGroupedBackground))
     .environment(SettingsStore())

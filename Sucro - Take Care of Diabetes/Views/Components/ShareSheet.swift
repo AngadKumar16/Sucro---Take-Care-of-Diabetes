@@ -22,7 +22,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 /// Helper for sending a file to the system print dialog.
 enum PrintHelper {
-    static func printFile(at url: URL, jobName: String = "Sucro Report") {
+    static func printFile(at url: URL, jobName: String = "DiabetesCare Report") {
         guard UIPrintInteractionController.canPrint(url) else { return }
         let info = UIPrintInfo(dictionary: nil)
         info.outputType = .general

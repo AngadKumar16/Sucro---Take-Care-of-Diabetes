@@ -58,8 +58,10 @@ class TimelineService {
                     type: .meal,
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
-                    title: entry.mealType ?? "Meal",
-                    subtitle: "\(Int(entry.grams))g carbs"
+                    title: MealType(stored: entry.mealType)?.rawValue ?? entry.mealType ?? "Meal",
+                    subtitle: "\(entry.grams.formatted(.number.precision(.fractionLength(0...1))))g carbs",
+                    notes: entry.notes,
+                    objectID: entry.objectID
                 )
             }
         } catch {
@@ -83,7 +85,9 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: "Bolus",
-                    subtitle: "\(entry.units.formatted(.number.precision(.fractionLength(1)))) units"
+                    subtitle: "\(entry.units.formatted(.number.precision(.fractionLength(0...1)))) units",
+                    notes: entry.notes,
+                    objectID: entry.objectID
                 )
             }
         } catch {
@@ -106,7 +110,9 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: "Site Change",
-                    subtitle: entry.location ?? "Unknown location"
+                    subtitle: entry.location ?? "Unknown location",
+                    notes: entry.notes,
+                    objectID: entry.objectID
                 )
             }
         } catch {
@@ -129,7 +135,9 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: entry.type ?? "Activity",
-                    subtitle: "\(entry.duration) min"
+                    subtitle: "\(entry.duration) min",
+                    notes: entry.notes,
+                    objectID: entry.objectID
                 )
             }
         } catch {

@@ -21,7 +21,7 @@ public class SiteChange: NSManagedObject {
     // Convert string location to SiteLocation enum
     var siteLocation: SiteLocation {
         get {
-            return SiteLocation(rawValue: location ?? "other") ?? .other
+            return SiteLocation(stored: location) ?? .other
         }
         set {
             location = newValue.rawValue

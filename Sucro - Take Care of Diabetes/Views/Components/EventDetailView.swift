@@ -2,7 +2,7 @@
 //  EventDetailView.swift
 //  Sucro - Take Care of Diabetes
 //
-//  Created by Angad Kumar on 3/13/26.
+//  Created by Angad Kumar on 3/12/26.
 //
 
 import SwiftUI
@@ -19,123 +19,66 @@ struct EventDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Event Icon & Type
-                    VStack(spacing: 12) {
+            List {
+                Section {
+                    HStack(spacing: 16) {
                         Image(systemName: event.icon)
-                            .font(.system(size: 60))
-                            .foregroundStyle(event.color)
-                        
-                        Text(event.title)
-                            .font(.title)
-                            .bold()
-                        
-                        if let subtitle = event.subtitle {
-                            Text(subtitle)
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
+                            .font(.title2.weight(.medium))
+                            .foregroundStyle(.white)
+                            .frame(width: 52, height: 52)
+                            .background(event.color.gradient, in: .circle)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(event.title)
+                                .font(.title3.bold())
+                            if let subtitle = event.subtitle {
+                                Text(subtitle)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
-                    .padding()
-                    
-                    // Timestamp & Glucose
-                    VStack(alignment: .leading, spacing: 12) {
-                        DetailRow(icon: "clock", label: "Time", value: event.timestamp.formatted(date: .abbreviated, time: .shortened))
-                        if let glucose = event.glucoseValue {
-                            DetailRow(icon: "drop.fill", label: "Glucose", value: settings.formattedGlucose(glucose))
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+
+                    LabeledContent("Time", value: event.timestamp.formatted(date: .abbreviated, time: .shortened))
+                    if let glucose = event.glucoseValue {
+                        LabeledContent("Glucose at the Time") {
+                            Text(settings.formattedGlucose(glucose))
+                                .foregroundStyle(settings.zone(for: glucose).color)
                         }
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 12))
-                    
-                    // Actions
-                    VStack(spacing: 12) {
-                        Button(action: onAddNote) {
-                            HStack {
-                                Image(systemName: "note.text")
-                                Text("Add Note")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundStyle(.blue)
-                            .clipShape(.rect(cornerRadius: 8))
-                        }
-                        
-                        Button(action: onEdit) {
-                            HStack {
-                                Image(systemName: "pencil")
-                                Text("Edit Event")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.orange.opacity(0.1))
-                            .foregroundStyle(.orange)
-                            .clipShape(.rect(cornerRadius: 8))
-                        }
-                        
-                        Button(action: {
-                            showingDeleteConfirm = true
-                        }) {
-                            HStack {
-                                Image(systemName: "trash")
-                                Text("Delete Event")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.1))
-                            .foregroundStyle(.red)
-                            .clipShape(.rect(cornerRadius: 8))
-                        }
-                    }
-                    .padding()
-                    
-                    Spacer()
                 }
-                .padding()
+
+                Section("Notes") {
+                    if let notes = event.notes, !notes.isEmpty {
+                        Text(notes)
+                            .textSelection(.enabled)
+                    }
+                    Button("Add Note", systemImage: "note.text.badge.plus", action: onAddNote)
+                }
+
+                Section {
+                    Button("Edit", systemImage: "pencil", action: onEdit)
+                    Button("Delete", systemImage: "trash", role: .destructive) {
+                        showingDeleteConfirm = true
+                    }
+                }
             }
-            .navigationTitle("Event Details")
+            .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
-            .alert("Delete Event", isPresented: $showingDeleteConfirm) {
+            .confirmationDialog("Delete \(event.title)?", isPresented: $showingDeleteConfirm, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
                     onDelete()
                     dismiss()
                 }
-                Button("Cancel", role: .cancel) { }
             } message: {
                 Text("This can't be undone.")
             }
-        }
-    }
-}
-
-struct DetailRow: View {
-    let icon: String
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
-            
-            Text(label)
-                .foregroundStyle(.secondary)
-            
-            Spacer()
-            
-            Text(value)
-                .fontWeight(.medium)
         }
     }
 }
@@ -147,7 +90,8 @@ struct DetailRow: View {
             timestamp: Date(),
             glucoseValue: 120,
             title: "Lunch",
-            subtitle: "45g carbs"
+            subtitle: "45g carbs",
+            notes: "Pasta at the office"
         ),
         onEdit: {},
         onDelete: {},

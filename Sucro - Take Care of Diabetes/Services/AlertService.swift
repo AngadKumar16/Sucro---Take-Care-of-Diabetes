@@ -108,7 +108,7 @@ final class AlertService {
 
         if let lastChange = DataService.shared.fetchLastSiteChange(context: context),
            let changed = lastChange.timestamp {
-            let rotationDays = SiteLocation(rawValue: lastChange.location ?? "")?.rotationDays ?? 3
+            let rotationDays = SiteLocation(stored: lastChange.location)?.rotationDays ?? 3
             let days = Calendar.current.dateComponents([.day], from: changed, to: now).day ?? 0
             if days >= rotationDays {
                 return .siteChangeOverdue(days)

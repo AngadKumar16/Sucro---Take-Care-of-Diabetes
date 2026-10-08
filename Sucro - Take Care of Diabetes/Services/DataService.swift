@@ -145,49 +145,38 @@ class DataService {
     
     // MARK: - Delete Operations
     
-    func deleteEntry<T: NSManagedObject>(context: NSManagedObjectContext, type: T.Type, at timestamp: Date) -> Bool {
-        let request = T.fetchRequest()
-        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
-        request.fetchLimit = 1
-        
+    /// Deletes one entry. Returns false if it's already gone or the save fails.
+    @discardableResult
+    func delete(_ objectID: NSManagedObjectID, context: NSManagedObjectContext) -> Bool {
+        guard let object = try? context.existingObject(with: objectID) else { return false }
+        context.delete(object)
         do {
-            let entries = try context.fetch(request)
-            if let entry = entries.first as? T {
-                context.delete(entry)
-                try context.save()
-                return true
-            }
+            try context.save()
+            return true
         } catch {
-            print("Error deleting \(T.self): \(error.localizedDescription)")
+            context.rollback()
+            print("Error deleting entry: \(error.localizedDescription)")
+            return false
         }
-        return false
     }
-    
-    // MARK: - Note Operations
-    
-    func addNoteToEntry<T: NSManagedObject>(context: NSManagedObjectContext, type: T.Type, at timestamp: Date, note: String) -> Bool {
-        let request = T.fetchRequest()
-        request.predicate = NSPredicate(format: "timestamp == %@", timestamp as NSDate)
-        request.fetchLimit = 1
-        
+
+    /// Adds a note to an entry, after any note it already has.
+    func appendNote(_ note: String, to objectID: NSManagedObjectID, context: NSManagedObjectContext) -> Bool {
+        guard let entry = try? context.existingObject(with: objectID),
+              entry.entity.attributesByName["notes"] != nil else { return false }
+        let existing = entry.value(forKey: "notes") as? String
+        let newNote = (existing?.isEmpty == false) ? existing! + "\n" + note : note
+        entry.setValue(newNote, forKey: "notes")
         do {
-            let entries = try context.fetch(request)
-            if let entry = entries.first as? T {
-                // Use key-value coding to set notes if property exists
-                if entry.responds(to: Selector(("setNotes:"))) {
-                    let existing = entry.value(forKey: "notes") as? String
-                    let newNote = (existing?.isEmpty == false) ? existing! + "\n" + note : note
-                    entry.setValue(newNote, forKey: "notes")
-                    try context.save()
-                    return true
-                }
-            }
+            try context.save()
+            return true
         } catch {
-            print("Error adding note to \(T.self): \(error.localizedDescription)")
+            context.rollback()
+            print("Error adding note: \(error.localizedDescription)")
+            return false
         }
-        return false
     }
-    
+
     // MARK: - Range Fetches (used by Reports & Export)
 
     func fetchGlucoseReadings(context: NSManagedObjectContext, in range: DateInterval) -> [GlucoseReading] {
@@ -237,27 +226,4 @@ class DataService {
             return false
         }
     }
-
-    func fetchEntry<T: NSManagedObject>(
-        context: NSManagedObjectContext,
-        type: T.Type,
-        at timestamp: Date
-    ) -> T? {
-        let request = T.fetchRequest()
-        request.predicate = NSPredicate(
-            format: "timestamp >= %@ AND timestamp <= %@",
-            timestamp.addingTimeInterval(-1) as CVarArg,
-            timestamp.addingTimeInterval(1) as CVarArg
-        )
-        request.fetchLimit = 1
-        
-        do {
-            let results = try context.fetch(request)
-            return results.first as? T
-        } catch {
-            print("Error fetching entry: \(error)")
-            return nil
-        }
-    }
 }
-

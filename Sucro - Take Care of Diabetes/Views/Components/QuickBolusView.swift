@@ -11,62 +11,74 @@ import CoreData
 struct QuickBolusView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(HomeViewModel.self) private var viewModel
-    
-    @State private var units: Double = 0.0
-    @State private var selectedPreset: BolusPreset?
-    @State private var notes: String = ""
+    @State private var units: Double = 0
+    @State private var notes = ""
     @State private var confirmLargeDose = false
+    @State private var confirmDiscard = false
 
     /// Doses above this ask for confirmation before they're logged, to catch
-    /// a slip of the slider or stepper.
+    /// a slip of the stepper or a preset.
     private let largeDoseUnits = 10.0
-    
+    private let maxUnits = 30.0
+
     let presets = [
         BolusPreset(name: "Small", units: 2.0),
         BolusPreset(name: "Medium", units: 4.0),
         BolusPreset(name: "Large", units: 6.0),
         BolusPreset(name: "Correction", units: 3.0)
     ]
-    
+
+    private var hasChanges: Bool { units > 0 || !notes.isEmpty }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section("Quick Presets") {
+                Section {
+                    VStack(spacing: 4) {
+                        Text(units, format: .number.precision(.fractionLength(1)))
+                            .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                            .monospacedDigit()
+                            .contentTransition(.numericText(value: units))
+                        Text("units")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .accessibilityElement(children: .combine)
+
+                    Stepper("Adjust by 0.5 units", value: $units.animation(.snappy), in: 0...maxUnits, step: 0.5)
+                        .accessibilityValue("\(units.formatted(.number.precision(.fractionLength(1)))) units")
+                        .accessibilityIdentifier("bolusStepper")
+                } footer: {
+                    Text("This records a dose you've taken or are taking. It doesn't control your pump.")
+                }
+
+                Section("Presets") {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(presets) { preset in
-                            PresetButton(
-                                preset: preset,
-                                isSelected: selectedPreset?.id == preset.id,
-                                onTap: {
-                                    selectedPreset = preset
-                                    units = preset.units
-                                }
-                            )
+                            PresetButton(preset: preset, isSelected: units == preset.units) {
+                                withAnimation(.snappy) { units = preset.units }
+                            }
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 }
-                
-                Section("Custom Amount") {
-                    HStack {
-                        Text("Units")
-                        Spacer()
-                        Text(units.formatted(.number.precision(.fractionLength(1))))
-                            .font(.title2)
-                            .bold()
+
+                Section("Notes") {
+                    TextField("Optional", text: $notes, axis: .vertical)
+                        .lineLimit(2...6)
+                }
+            }
+            .navigationTitle("Quick Bolus")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        if hasChanges { confirmDiscard = true } else { dismiss() }
                     }
-                    
-                    Slider(value: $units, in: 0...20, step: 0.5)
-                    
-                    Stepper("Adjust: \(units.formatted(.number.precision(.fractionLength(1)))) units", value: $units, in: 0...30, step: 0.5)
                 }
-                
-                Section("Notes (Optional)") {
-                    TextField("Notes", text: $notes, axis: .vertical)
-                        .lineLimit(3...8)
-                }
-                
-                Section {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Log Bolus") {
                         if units > largeDoseUnits {
                             confirmLargeDose = true
@@ -74,24 +86,7 @@ struct QuickBolusView: View {
                             logBolus()
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .foregroundStyle(.white)
-                    .padding()
-                    .background(units > 0 ? Color.blue : Color.gray)
-                    .clipShape(.rect(cornerRadius: 8))
                     .disabled(units <= 0)
-                } footer: {
-                    Text("This records a dose you've taken or are taking. It doesn't control your pump.")
-                }
-                .listRowBackground(Color.clear)
-            }
-            .navigationTitle("Quick Bolus")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
                 }
             }
             .alert("Log \(units, format: .number) units?", isPresented: $confirmLargeDose) {
@@ -100,23 +95,28 @@ struct QuickBolusView: View {
             } message: {
                 Text("That's more than \(Int(largeDoseUnits)) units. Make sure the amount is right.")
             }
+            .confirmationDialog("Discard this bolus?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) { dismiss() }
+                Button("Keep Editing", role: .cancel) {}
+            }
         }
+        .interactiveDismissDisabled(hasChanges)
     }
 
     private func logBolus() {
-        // Create insulin entry
         let timestamp = Date()
         let entry = InsulinEntry(context: viewModel.viewContext)
         entry.id = UUID()
         entry.units = units
         entry.type = InsulinType.bolus.rawValue
-        entry.deliveryMethod = "Quick Bolus"
+        entry.deliveryMethod = SettingsStore.shared.lastDeliveryMethod.rawValue
         entry.timestamp = timestamp
         entry.notes = notes.isEmpty ? nil : notes
 
         viewModel.save()
         HealthKitManager.shared.saveInsulinDose(units, type: InsulinType.bolus.rawValue, timestamp: timestamp)
         viewModel.fetchLatestData() // Refresh IOB, totals and reminders
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
         dismiss()
     }
 }
@@ -125,27 +125,27 @@ struct PresetButton: View {
     let preset: BolusPreset
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Text(preset.name)
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                 Text("\(preset.units.formatted(.number.precision(.fractionLength(1)))) U")
-                    .font(.title3)
-                    .bold()
+                    .font(.title3.bold())
+                    .monospacedDigit()
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(isSelected ? Color.blue.opacity(0.2) : Color(.systemGray6))
-            .foregroundStyle(isSelected ? .blue : .primary)
+            .frame(maxWidth: .infinity, minHeight: 60)
+            .background(isSelected ? Color.accentColor.opacity(0.15) : Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+            .foregroundStyle(isSelected ? Color.accentColor : .primary)
             .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.accentColor : .clear, lineWidth: 2)
             }
-            .clipShape(.rect(cornerRadius: 8))
+            .contentShape(.rect(cornerRadius: 10))
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

@@ -39,7 +39,7 @@ final class ReminderService {
     func refresh(context: NSManagedObjectContext, now: Date = Date()) {
         let siteChange = dataService.fetchLastSiteChange(context: context).flatMap { change -> ReminderPlanner.SiteChangeInfo? in
             guard let date = change.timestamp else { return nil }
-            let days = SiteLocation(rawValue: change.location ?? "")?.rotationDays ?? 3
+            let days = SiteLocation(stored: change.location)?.rotationDays ?? 3
             return ReminderPlanner.SiteChangeInfo(date: date, rotationDays: days)
         }
         let lastDose = dataService.fetchLastRapidActingDose(

@@ -23,24 +23,6 @@ class InsightsViewModel: BaseViewModel {
     var generatedInsights: [GeneratedInsight] = []
     var weeklyPatterns: [WeekdayPattern] = []
     
-    enum TimeRange: String, CaseIterable {
-        case day = "1 Day"
-        case week = "1 Week"
-        case month = "1 Month"
-        case quarter = "3 Months"
-        case year = "1 Year"
-        
-        var days: Int {
-            switch self {
-            case .day: return 1
-            case .week: return 7
-            case .month: return 30
-            case .quarter: return 90
-            case .year: return 365
-            }
-        }
-    }
-    
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
     }

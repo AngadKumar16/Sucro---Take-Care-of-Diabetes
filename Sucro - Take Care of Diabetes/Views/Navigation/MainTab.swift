@@ -5,7 +5,9 @@
 
 /// The tabs along the bottom of the app.
 enum MainTab: Hashable {
-    case home
+    case today
     case log
-    case monitor
+    case trends
+    case reports
+    case settings
 }

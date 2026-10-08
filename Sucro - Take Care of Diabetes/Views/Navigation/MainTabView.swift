@@ -9,50 +9,67 @@ import SwiftUI
 import CoreData
 
 struct MainTabView: View {
-    // Shared with the full-screen Monitor opened from Home; owned by the app.
-    @Environment(MonitorViewModel.self) private var monitorViewModel
-
-    @State private var selection: MainTab = .home
+    @State private var selection: MainTab = .today
     // Creating these is cheap (they load data when their screen appears),
     // so it's fine that SwiftUI may evaluate this more than once.
     @State private var homeViewModel = HomeViewModel(context: PersistenceController.shared.container.viewContext)
     @State private var logViewModel = LogViewModel(context: PersistenceController.shared.container.viewContext)
-
-    let showMore: () -> Void
+    @State private var insightsViewModel = InsightsViewModel(context: PersistenceController.shared.container.viewContext)
+    @State private var reportsViewModel = ReportsViewModel(context: PersistenceController.shared.container.viewContext)
 
     var body: some View {
         TabView(selection: $selection) {
-            Tab("Home", systemImage: "house.fill", value: .home) {
+            Tab("Today", systemImage: "house", value: .today) {
                 NavigationStack {
-                    HomeView()
+                    HomeView(onShowAllActivity: showLog, onShowTrends: showTrends)
                         .environment(homeViewModel)
-                        .moreButton(action: showMore)
                 }
             }
 
-            Tab("Log", systemImage: "plus.circle.fill", value: .log) {
+            Tab("Log", systemImage: "list.bullet.clipboard", value: .log) {
                 NavigationStack {
                     LogView()
                         .environment(logViewModel)
-                        .moreButton(action: showMore)
                 }
             }
 
-            Tab("Monitor", systemImage: "chart.line.uptrend.xyaxis", value: .monitor) {
+            Tab("Trends", systemImage: "chart.xyaxis.line", value: .trends) {
                 NavigationStack {
-                    MonitorView()
-                        .environment(monitorViewModel)
-                        .moreButton(action: showMore)
+                    TrendsView()
+                        .environment(insightsViewModel)
+                }
+            }
+
+            Tab("Reports", systemImage: "doc.text", value: .reports) {
+                NavigationStack {
+                    ReportsView()
+                        .environment(reportsViewModel)
+                }
+            }
+
+            Tab("Settings", systemImage: "gearshape", value: .settings) {
+                NavigationStack {
+                    SettingsView()
                 }
             }
         }
-        .tint(.blue)
+        .tabViewStyle(.sidebarAdaptable)
+    }
+
+    private func showLog() {
+        logViewModel.selectedDate = Date()
+        logViewModel.fetchEntriesForDate(logViewModel.selectedDate)
+        selection = .log
+    }
+
+    private func showTrends() {
+        selection = .trends
     }
 }
 
 #Preview {
     let context = PersistenceController.preview.container.viewContext
-    MainTabView(showMore: {})
+    MainTabView()
         .environment(\.managedObjectContext, context)
         .environment(MonitorViewModel(context: context))
         .environment(SettingsStore())

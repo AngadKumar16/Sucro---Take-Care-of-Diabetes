@@ -17,6 +17,7 @@ import SwiftUI
 
 struct KetoneInfoView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SettingsStore.self) private var settings
     
     var body: some View {
         NavigationStack {
@@ -34,11 +35,11 @@ struct KetoneInfoView: View {
                             .font(.headline)
                         
                         KetoneGuidanceRow(
-                            condition: "Glucose > 250 mg/dL",
+                            condition: "Glucose over \(settings.formattedGlucose(min(250, settings.urgentHigh)))",
                             action: "Check blood ketones immediately"
                         )
                         KetoneGuidanceRow(
-                            condition: "Glucose > 180 for 2+ hours",
+                            condition: "Glucose over \(settings.formattedGlucose(settings.targetHigh)) for 2+ hours",
                             action: "Check urine ketones"
                         )
                         KetoneGuidanceRow(

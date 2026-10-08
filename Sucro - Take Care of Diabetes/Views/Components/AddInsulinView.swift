@@ -10,78 +10,51 @@ import CoreData
 
 struct AddInsulinView: View {
     @Environment(LogViewModel.self) private var viewModel
-    @Environment(\.dismiss) var dismiss
-    
-    @State private var insulinUnits: String = ""
-    @State private var selectedType: InsulinType = .bolus
-    @State private var selectedDeliveryMethod: String = "Pump"
-    @State private var notes: String = ""
-    
-    private let deliveryMethods = ["Pump", "Pen", "Syringe"]
-    
+    @Environment(SettingsStore.self) private var settings
+
+    @State private var unitsText = ""
+    @State private var type: InsulinType = .bolus
+    @State private var deliveryMethod: DeliveryMethod = .pen
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @FocusState private var unitsFocused: Bool
+
+    private var units: Double? {
+        parseNumber(unitsText).flatMap { EntryLimits.insulinUnits.contains($0) ? $0 : nil }
+    }
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Insulin Entry")) {
-                    HStack {
-                        TextField("Enter units", text: $insulinUnits)
-                            .keyboardType(.decimalPad)
-                        Text("units")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Picker("Type", selection: $selectedType) {
-                        ForEach(InsulinType.allCases, id: \.self) { type in
-                            Text(type.displayName).tag(type)
-                        }
-                    }
-                    
-                    Picker("Delivery Method", selection: $selectedDeliveryMethod) {
-                        ForEach(deliveryMethods, id: \.self) { method in
-                            Text(method).tag(method)
-                        }
-                    }
-                }
-                
-                Section(header: Text("Notes (Optional)")) {
-                    TextField("Add notes...", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-            }
-            .navigationTitle("Add Insulin")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveInsulinEntry()
-                    }
-                    .disabled(insulinUnits.isEmpty || Double(insulinUnits) == nil)
-                }
-            }
+        EntryForm(
+            title: "Add Insulin",
+            canSave: units != nil,
+            hasChanges: !unitsText.isEmpty || !notes.isEmpty,
+            onSave: save
+        ) {
+            InsulinFields(unitsText: $unitsText, type: $type, deliveryMethod: $deliveryMethod, timestamp: $timestamp, notes: $notes, focus: $unitsFocused)
+        }
+        .defaultFocus($unitsFocused, true)
+        .onAppear {
+            deliveryMethod = settings.lastDeliveryMethod
+            unitsFocused = true
         }
     }
-    
-    private func saveInsulinEntry() {
-        guard let units = Double(insulinUnits) else { return }
-        
+
+    private func save() -> Bool {
+        guard let units else { return false }
+        settings.lastDeliveryMethod = deliveryMethod
         viewModel.addInsulinEntry(
             units: units,
-            type: selectedType.rawValue,
-            deliveryMethod: selectedDeliveryMethod,
-            notes: notes.isEmpty ? nil : notes
+            type: type.rawValue,
+            deliveryMethod: deliveryMethod.rawValue,
+            notes: notes.isEmpty ? nil : notes,
+            timestamp: timestamp
         )
-        
-        dismiss()
+        return true
     }
 }
 
 #Preview {
     AddInsulinView()
         .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
+        .environment(SettingsStore())
 }

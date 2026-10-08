@@ -29,13 +29,12 @@ final class SettingsStore {
         static let insulinActionHours = "settings.insulinActionHours"
         static let acceptedDisclaimerVersion = "settings.acceptedDisclaimerVersion"
         static let notificationsEnabled = "settings.notificationsEnabled"
-        static let darkModeEnabled = "settings.darkModeEnabled"
+        /// Pre-2026-10 builds stored a dark mode on/off switch here.
+        static let legacyDarkModeEnabled = "settings.darkModeEnabled"
+        static let appearance = "settings.appearance"
+        static let lastDeliveryMethod = "settings.lastDeliveryMethod"
         static let autoBackupEnabled = "settings.autoBackupEnabled"
         static let lastBackupDate = "settings.lastBackupDate"
-        static let autoSyncEnabled = "settings.autoSyncEnabled"
-        static let backgroundMonitoringEnabled = "settings.backgroundMonitoringEnabled"
-        static let lowBatteryAlertsEnabled = "settings.lowBatteryAlertsEnabled"
-        static let connectedDevices = "settings.connectedDevices"
     }
 
     // MARK: - Profile
@@ -88,8 +87,9 @@ final class SettingsStore {
     var notificationsEnabled: Bool {
         didSet { defaults.set(notificationsEnabled, forKey: Key.notificationsEnabled) }
     }
-    var darkModeEnabled: Bool {
-        didSet { defaults.set(darkModeEnabled, forKey: Key.darkModeEnabled) }
+    /// Light/dark override. `.system` (the default) follows the phone.
+    var appearance: Appearance {
+        didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
     }
     var autoBackupEnabled: Bool {
         didSet { defaults.set(autoBackupEnabled, forKey: Key.autoBackupEnabled) }
@@ -100,21 +100,11 @@ final class SettingsStore {
         didSet { defaults.set(lastBackupDate, forKey: Key.lastBackupDate) }
     }
 
-    // MARK: - Device preferences
-    var autoSyncEnabled: Bool {
-        didSet { defaults.set(autoSyncEnabled, forKey: Key.autoSyncEnabled) }
-    }
-    var backgroundMonitoringEnabled: Bool {
-        didSet { defaults.set(backgroundMonitoringEnabled, forKey: Key.backgroundMonitoringEnabled) }
-    }
-    var lowBatteryAlertsEnabled: Bool {
-        didSet { defaults.set(lowBatteryAlertsEnabled, forKey: Key.lowBatteryAlertsEnabled) }
-    }
-
-    /// Names of devices the user has connected. Persists across launches so the
-    /// Devices screen's Connect/Disconnect actions have a real effect.
-    var connectedDeviceNames: [String] {
-        didSet { defaults.set(connectedDeviceNames, forKey: Key.connectedDevices) }
+    // MARK: - Logging defaults
+    /// How the last insulin dose was delivered, so the Add Insulin form
+    /// starts on the method the user actually uses.
+    var lastDeliveryMethod: DeliveryMethod {
+        didSet { defaults.set(lastDeliveryMethod.rawValue, forKey: Key.lastDeliveryMethod) }
     }
 
     // MARK: - Init
@@ -123,7 +113,7 @@ final class SettingsStore {
 
         // Register sensible defaults the first time the app runs.
         defaults.register(defaults: [
-            Key.userName: "Angad Kumar",
+            Key.userName: "",
             Key.diabetesType: "Type 1 Diabetes",
             Key.glucoseUnit: "mg/dL",
             Key.targetLow: 70.0,
@@ -133,15 +123,10 @@ final class SettingsStore {
             Key.insulinActionHours: 4.0,
             Key.acceptedDisclaimerVersion: 0,
             Key.notificationsEnabled: true,
-            Key.darkModeEnabled: false,
-            Key.autoBackupEnabled: true,
-            Key.autoSyncEnabled: true,
-            Key.backgroundMonitoringEnabled: true,
-            Key.lowBatteryAlertsEnabled: true,
-            Key.connectedDevices: ["Dexcom G6", "Omnipod 5"]
+            Key.autoBackupEnabled: true
         ])
 
-        self.userName = defaults.string(forKey: Key.userName) ?? "Angad Kumar"
+        self.userName = defaults.string(forKey: Key.userName) ?? ""
         self.diabetesType = defaults.string(forKey: Key.diabetesType) ?? "Type 1 Diabetes"
         self.glucoseUnit = defaults.string(forKey: Key.glucoseUnit) ?? "mg/dL"
         self.targetLow = defaults.double(forKey: Key.targetLow)
@@ -151,12 +136,9 @@ final class SettingsStore {
         self.insulinActionHours = defaults.double(forKey: Key.insulinActionHours)
         self.acceptedDisclaimerVersion = defaults.integer(forKey: Key.acceptedDisclaimerVersion)
         self.notificationsEnabled = defaults.bool(forKey: Key.notificationsEnabled)
-        self.darkModeEnabled = defaults.bool(forKey: Key.darkModeEnabled)
+        self.appearance = Self.loadAppearance(from: defaults)
         self.autoBackupEnabled = defaults.bool(forKey: Key.autoBackupEnabled)
-        self.autoSyncEnabled = defaults.bool(forKey: Key.autoSyncEnabled)
-        self.backgroundMonitoringEnabled = defaults.bool(forKey: Key.backgroundMonitoringEnabled)
-        self.lowBatteryAlertsEnabled = defaults.bool(forKey: Key.lowBatteryAlertsEnabled)
-        self.connectedDeviceNames = defaults.stringArray(forKey: Key.connectedDevices) ?? []
+        self.lastDeliveryMethod = DeliveryMethod(stored: defaults.string(forKey: Key.lastDeliveryMethod)) ?? .pen
         self.lastBackupDate = defaults.object(forKey: Key.lastBackupDate) as? Date
 
         normalizeThresholds()
@@ -194,7 +176,16 @@ final class SettingsStore {
     }
 
     var preferredColorScheme: ColorScheme? {
-        darkModeEnabled ? .dark : nil
+        appearance.colorScheme
+    }
+
+    /// Reads the appearance, carrying over the old dark mode switch: on
+    /// meant dark, off meant follow the system.
+    private static func loadAppearance(from defaults: UserDefaults) -> Appearance {
+        if let stored = defaults.string(forKey: Key.appearance), let appearance = Appearance(rawValue: stored) {
+            return appearance
+        }
+        return defaults.bool(forKey: Key.legacyDarkModeEnabled) ? .dark : .system
     }
 
     /// Two-letter avatar initials derived from the user's name.
@@ -219,6 +210,14 @@ final class SettingsStore {
             ? displayGlucose(mgdl).formatted(.number.precision(.fractionLength(1)))
             : mgdl.formatted(.number.precision(.fractionLength(0)))
     }
+
+    /// Convert a value typed in the user's display unit back to mg/dL for storage.
+    func mgdl(fromDisplay value: Double) -> Double {
+        glucoseUnit == "mmol/L" ? value * 18.0182 : value
+    }
+
+    /// Glucose values outside this range (mg/dL) are almost certainly typos.
+    static let plausibleGlucose: ClosedRange<Double> = 20...600
 
     /// Formatted glucose value including the unit suffix.
     func formattedGlucose(_ mgdl: Double) -> String {

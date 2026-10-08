@@ -3,7 +3,7 @@
 //  Sucro - Take Care of Diabetes UITests
 //
 //  Drives the real app on the simulator to exercise the backend that was
-//  wired up: Settings persistence, Clear All Data, Reports, and Insights.
+//  wired up: Settings persistence, Clear All Data, Reports, and Trends.
 //
 
 import XCTest
@@ -35,55 +35,57 @@ final class SucroFlowUITests: XCTestCase {
         }
     }
 
-    /// Opens the "More" sheet and selects one of its tabs.
-    private func openSecondaryTab(_ name: String) {
-        let more = app.buttons["moreButton"]
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "More button should exist on Home")
-        more.tap()
-
-        let tab = app.buttons[name]
-        XCTAssertTrue(tab.waitForExistence(timeout: 5), "\(name) tab should appear in the More sheet")
+    private func openTab(_ name: String) {
+        let tab = app.tabBars.buttons[name]
+        XCTAssertTrue(tab.waitForExistence(timeout: 5), "\(name) tab should exist")
         tab.tap()
+    }
+
+    /// Scrolls the current screen until the element can be tapped.
+    private func scrollTo(_ element: XCUIElement) {
+        for _ in 0..<5 where !element.isHittable { app.swipeUp() }
     }
 
     // MARK: - Tests
 
-    func testHomeScreenLoads() {
-        // Tab bar with the three primary tabs should be present.
-        XCTAssertTrue(app.buttons["Home"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Log"].exists)
-        XCTAssertTrue(app.buttons["Monitor"].exists)
-        // A primary quick action from HomeView.
-        XCTAssertTrue(app.staticTexts["Sucro"].exists || app.buttons["Log Meal"].exists)
+    func testTodayScreenLoads() {
+        for tab in ["Today", "Log", "Trends", "Reports", "Settings"] {
+            XCTAssertTrue(app.tabBars.buttons[tab].waitForExistence(timeout: 5), "\(tab) tab should exist")
+        }
+        XCTAssertTrue(app.navigationBars["Today"].exists)
+        XCTAssertTrue(app.buttons["Log Meal"].exists)
     }
 
-    func testDarkModeToggledPersistsAcrossSheetReopen() {
-        openSecondaryTab("Settings")
+    func testAppearanceChoicePersistsAcrossTabs() {
+        openTab("Settings")
 
-        let darkMode = app.switches["Dark Mode"]
-        XCTAssertTrue(darkMode.waitForExistence(timeout: 5), "Dark Mode toggle should exist")
+        let picker = app.buttons["appearancePicker"]
+        scrollTo(picker)
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), "Appearance picker should exist")
+        picker.tap()
+        let dark = app.buttons["Dark"]
+        XCTAssertTrue(dark.waitForExistence(timeout: 5))
+        dark.tap()
 
-        let originalValue = darkMode.value as? String
-        darkMode.tap()
-        let toggledValue = darkMode.value as? String
-        XCTAssertNotEqual(originalValue, toggledValue, "Toggling should flip the switch value")
+        // Leave Settings and come back — the choice must stick.
+        openTab("Today")
+        openTab("Settings")
+        let pickerAgain = app.buttons["appearancePicker"]
+        scrollTo(pickerAgain)
+        XCTAssertTrue(pickerAgain.waitForExistence(timeout: 5))
+        XCTAssertTrue(pickerAgain.label.contains("Dark") || (pickerAgain.value as? String)?.contains("Dark") == true,
+                      "Appearance should still be Dark")
 
-        // Close the sheet and reopen Settings — the value must persist.
-        app.buttons["Done"].tap()
-        openSecondaryTab("Settings")
-
-        let darkModeAgain = app.switches["Dark Mode"]
-        XCTAssertTrue(darkModeAgain.waitForExistence(timeout: 5))
-        XCTAssertEqual(darkModeAgain.value as? String, toggledValue, "Dark Mode should persist after reopening")
-
-        // Restore original state to avoid side effects on later runs.
-        darkModeAgain.tap()
+        // Restore the default so later runs start from System.
+        pickerAgain.tap()
+        app.buttons["System"].tap()
     }
 
     func testClearAllDataShowsConfirmationAlert() {
-        openSecondaryTab("Settings")
+        openTab("Settings")
 
         let clearButton = app.buttons["Clear All Data"]
+        scrollTo(clearButton)
         XCTAssertTrue(clearButton.waitForExistence(timeout: 5))
         clearButton.tap()
 
@@ -97,9 +99,10 @@ final class SucroFlowUITests: XCTestCase {
     }
 
     func testExportWithNoDataShowsAlert() {
-        openSecondaryTab("Settings")
+        openTab("Settings")
 
         let exportButton = app.buttons["Export Data"]
+        scrollTo(exportButton)
         XCTAssertTrue(exportButton.waitForExistence(timeout: 5))
         exportButton.tap()
 
@@ -114,23 +117,23 @@ final class SucroFlowUITests: XCTestCase {
     }
 
     func testReportsPeriodSwitchAndExport() {
-        openSecondaryTab("Reports")
+        openTab("Reports")
 
         XCTAssertTrue(app.staticTexts["Summary Statistics"].waitForExistence(timeout: 5))
 
         // Switch the reporting period via the segmented control.
-        let monthly = app.buttons["Monthly"]
-        if monthly.waitForExistence(timeout: 3) { monthly.tap() }
+        let month = app.buttons["Month"]
+        if month.waitForExistence(timeout: 3) { month.tap() }
 
         // Tapping an export action should respond (no-data alert on fresh install).
-        let pdfButton = app.buttons["Export as PDF"]
+        let pdfButton = app.buttons["Share PDF Report"]
         XCTAssertTrue(pdfButton.waitForExistence(timeout: 5))
         pdfButton.tap()
 
         let alert = app.alerts.firstMatch
         let shareSheet = app.otherElements["ActivityListView"]
         let appeared = alert.waitForExistence(timeout: 5) || shareSheet.waitForExistence(timeout: 5)
-        XCTAssertTrue(appeared, "Export as PDF should respond")
+        XCTAssertTrue(appeared, "Share PDF Report should respond")
         if alert.exists { alert.buttons.firstMatch.tap() }
     }
 
@@ -151,26 +154,28 @@ final class SucroFlowUITests: XCTestCase {
         let logMeal = app.buttons["Log Meal"]
         XCTAssertTrue(logMeal.waitForExistence(timeout: 5))
 
-        // Long-press surfaces the Quick Presets menu.
+        // Touch and hold shows the saved-meal menu.
         logMeal.press(forDuration: 1.0)
 
-        let presetAlert = app.alerts["Quick Presets"]
-        XCTAssertTrue(presetAlert.waitForExistence(timeout: 5), "Long-press should show presets")
-        XCTAssertTrue(presetAlert.buttons["Breakfast (40g carbs)"].exists)
+        let preset = app.buttons["Breakfast (40g carbs)"]
+        XCTAssertTrue(preset.waitForExistence(timeout: 5), "Touch and hold should show saved meals")
 
-        // Logging a preset should dismiss the menu (carb entry written in the background).
-        presetAlert.buttons["Breakfast (40g carbs)"].tap()
-        XCTAssertFalse(presetAlert.exists)
+        // Logging a preset closes the menu and writes the entry right away.
+        preset.tap()
+        XCTAssertFalse(preset.waitForExistence(timeout: 1))
+        XCTAssertFalse(app.navigationBars["Add Carbs"].exists, "A preset shouldn't open the form")
     }
 
-    func testInsightsLoadsAndTimeRangeSwitches() {
-        openSecondaryTab("Insights")
+    func testTrendsLoadsAndTimeRangeSwitches() {
+        openTab("Trends")
 
         XCTAssertTrue(app.staticTexts["What Stands Out"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Weekly Patterns"].exists)
+        let weekly = app.staticTexts["Weekly Patterns"]
+        scrollTo(weekly)
+        XCTAssertTrue(weekly.exists)
 
         // The time-range segmented control should switch without crashing.
-        let month = app.buttons["1 Month"]
+        let month = app.buttons["Month"]
         if month.waitForExistence(timeout: 3) {
             month.tap()
             XCTAssertTrue(app.staticTexts["What Stands Out"].exists)

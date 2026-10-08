@@ -8,7 +8,7 @@ Based on reading the source. **The app was not built or run for this audit** —
 - iOS 26, SwiftUI + Core Data (`SucroDataModel`), Swift 5, Xcode 16 synchronized folders (new files in the source tree are added to the target automatically).
 - ~9.1k lines across 76 Swift files. Last commit 2026-06-20.
 - Architecture: `Views/` → `ViewModels/` (ObservableObject) → `Services/` singletons (`DataService`, `NotificationService`, ...) → Core Data.
-- Navigation: 3 main tabs (Home, Log, Monitor) + a "More" sheet holding a second TabView (Insights, Reports, Devices, Settings).
+- Navigation: 5 tabs (Today, Log, Trends, Reports, Settings), `sidebarAdaptable` on iPad. Devices, Help and Safety Information are pushed from Settings. (The old 3 tabs + "More" sheet with a nested TabView was removed in the 2026-10-07 HIG pass.)
 - Rebrand done today: home-screen name is **DiabetesCare** (`INFOPLIST_KEY_CFBundleDisplayName`), and the Health/Bluetooth permission strings say DiabetesCare. Target, scheme, folders, bundle ID (`com.AngadKumar16.Sucro---Take-Care-of-Diabetes`) and repo name still say Sucro.
 - `Resources/MedicalTerms.json` copied in from the old DiabetesCare prototype: 216 glossary terms (`name`, `description`, `broadCategory`, `narrowCategory`, `isPremium`, `contentURL`). **Not wired to any view yet.** All `contentURL`s are fake (`yourserver.com`).
 
@@ -75,9 +75,18 @@ Based on reading the source. **The app was not built or run for this audit** —
 
 Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and sent a bogus "HIGH GLUCOSE 0" notification for doses over 10 U; it now says "Log Bolus" and asks to confirm doses over 10 U. Long-acting doses were sent to Apple Health as boluses. The full-screen Monitor opened from Home had no way to close it. Insulin type labels were inconsistent between the Add and Edit forms.
 
+### HIG usability pass (done 2026-10-07)
+- [x] One 5-tab bar instead of tabs + More sheet; Monitor and Insights merged into Trends (one shared `TimeRange`).
+- [x] Every add/edit form shares `EntryForm` + `EntryFields`: Time field (backdating), autofocus, range validation, locale-aware number parsing, discard check, success haptic. Edit exists for every entry type; edit pickers read legacy lowercase values (`MealType/DeliveryMethod/SiteLocation(stored:)`).
+- [x] Log tab: list of the day with All filter, prev/next day, + menu, tap to edit, swipe to delete.
+- [x] Today: fixed event markers (were all drawn at one x), target band, empty states, context menus instead of custom swipe, site due date, Log Meal presets as a system menu.
+- [x] System text styles everywhere (Dynamic Type), grouped backgrounds that work in dark mode, Settings/Reports/Devices as Form/List, Appearance System/Light/Dark (migrates old dark mode switch).
+- [x] Devices is an honest stub (Apple Health status + "no direct connection yet"); fake catalog, battery and dead toggles removed.
+- Not done: Today/Log/Trends still have no iPad-specific layout beyond the sidebar; glossary still unwired.
+
 ### Phase 2 — Real data in
 - [ ] Read glucose from Apple Health (`HKObserverQuery` + anchored query, background delivery), dedupe against Health samples the app itself wrote. Set `trend` from rate of change.
-- [ ] Rework Devices tab around what's real: "Apple Health source: connected / last reading X min ago". Remove fake catalog and unused toggles (or implement them).
+- [ ] Rework Devices around what's real: "Apple Health source: connected / last reading X min ago". *(Fake catalog and unused toggles removed 2026-10-07; screen now shows write status only.)*
 - [x] Only init `CBCentralManager` when the user opts into a device flow, or remove BLE until there is a real integration. *(`DeviceMonitorService` was deleted after Phase 1: nothing used it, and its only effects were the fake phone-battery/network status and the launch-time Bluetooth prompt. A real integration starts fresh. The Bluetooth usage string in the build settings can go too if BLE is dropped for good.)* (Direct Dexcom/Libre BLE is proprietary; Dexcom has a web API — investigate later.)
 
 ### Phase 3 — Features
@@ -92,10 +101,11 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 
 ## Key files
 
-- Entry: `App/Sucro___Take_Care_of_DiabetesApp.swift` → `Views/AppNavigationView.swift`
+- Entry: `App/Sucro___Take_Care_of_DiabetesApp.swift` → `Views/Navigation/RootView.swift` → `MainTabView.swift`
 - Data: `Core/Persistence.swift`, `Models/CoreData/SucroDataModel.xcdatamodeld`, `Services/DataService.swift`
 - Math: `Utilities/GlucoseCalculator.swift`
 - Alerts: `Services/AlertService.swift`, `Services/NotificationService.swift`, `Services/ReminderService.swift`, `Models/Domain/GlucoseThresholds.swift`
 - Devices: `Views/Secondary/DevicesView.swift`
+- Forms: `Views/Components/EntryForm.swift`, `Views/Components/EntryFields.swift`, `Views/Components/EditViews/EntryEditorView.swift`
 - Health: `Core/HealthKitManager.swift`
 - Settings: `Services/SettingsStore.swift`

@@ -10,73 +10,41 @@ import CoreData
 
 struct AddCarbView: View {
     @Environment(LogViewModel.self) private var viewModel
-    @Environment(\.dismiss) var dismiss
-    
-    @State private var carbGrams: String = ""
-    @State private var selectedMealType: String = "Breakfast"
-    @State private var foodItems: String = ""
-    @State private var notes: String = ""
-    
-    private let mealTypes = ["Breakfast", "Lunch", "Dinner", "Snack", "Other"]
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Carbohydrate Entry")) {
-                    HStack {
-                        TextField("Enter grams", text: $carbGrams)
-                            .keyboardType(.decimalPad)
-                        Text("grams")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Picker("Meal Type", selection: $selectedMealType) {
-                        ForEach(mealTypes, id: \.self) { mealType in
-                            Text(mealType).tag(mealType)
-                        }
-                    }
-                }
-                
-                Section(header: Text("Food Items (Optional)")) {
-                    TextField("What did you eat?", text: $foodItems, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-                
-                Section(header: Text("Notes (Optional)")) {
-                    TextField("Add notes...", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-            }
-            .navigationTitle("Add Carbs")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveCarbEntry()
-                    }
-                    .disabled(carbGrams.isEmpty || Double(carbGrams) == nil)
-                }
-            }
-        }
+
+    @State private var gramsText = ""
+    @State private var mealType = MealType.likely(at: .now)
+    @State private var foodItems = ""
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @FocusState private var gramsFocused: Bool
+
+    private var grams: Double? {
+        parseNumber(gramsText).flatMap { EntryLimits.carbGrams.contains($0) ? $0 : nil }
     }
-    
-    private func saveCarbEntry() {
-        guard let grams = Double(carbGrams) else { return }
-        
+
+    var body: some View {
+        EntryForm(
+            title: "Add Carbs",
+            canSave: grams != nil,
+            hasChanges: !gramsText.isEmpty || !foodItems.isEmpty || !notes.isEmpty,
+            onSave: save
+        ) {
+            CarbFields(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems, timestamp: $timestamp, notes: $notes, focus: $gramsFocused)
+        }
+        .defaultFocus($gramsFocused, true)
+        .onAppear { gramsFocused = true }
+    }
+
+    private func save() -> Bool {
+        guard let grams else { return false }
         viewModel.addCarbEntry(
             grams: grams,
-            mealType: selectedMealType,
+            mealType: mealType.rawValue,
             foodItems: foodItems.isEmpty ? nil : foodItems,
-            notes: notes.isEmpty ? nil : notes
+            notes: notes.isEmpty ? nil : notes,
+            timestamp: timestamp
         )
-        
-        dismiss()
+        return true
     }
 }
 

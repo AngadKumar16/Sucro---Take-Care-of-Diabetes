@@ -57,8 +57,8 @@ struct SettingsStoreTests {
         first.targetLow = 80
         first.targetHigh = 160
         first.notificationsEnabled = false
-        first.autoSyncEnabled = false
-        first.darkModeEnabled = true
+        first.appearance = .light
+        first.lastDeliveryMethod = .pump
 
         // A brand-new instance reading the same backing store should see them.
         let second = SettingsStore(defaults: defaults)
@@ -66,8 +66,8 @@ struct SettingsStoreTests {
         #expect(second.targetLow == 80)
         #expect(second.targetHigh == 160)
         #expect(second.notificationsEnabled == false)
-        #expect(second.autoSyncEnabled == false)
-        #expect(second.darkModeEnabled == true)
+        #expect(second.appearance == .light)
+        #expect(second.lastDeliveryMethod == .pump)
     }
 
     @Test func defaultsAreSensibleOnFirstRun() {
@@ -269,7 +269,7 @@ struct ReportsViewModelTests {
         try? context.save()
 
         let vm = ReportsViewModel(context: context)
-        vm.period = .weekly  // triggers recalculate
+        vm.period = .week  // triggers recalculate
 
         #expect(vm.hasData == true)
         #expect(vm.avgGlucose == "175")          // (100 + 250) / 2
@@ -285,5 +285,68 @@ struct ReportsViewModelTests {
         let vm = ReportsViewModel(context: container.viewContext)
         #expect(vm.hasData == false)
         #expect(vm.avgGlucose == "--")
+    }
+}
+
+@MainActor
+struct StoredValueCompatibilityTests {
+
+    @Test func oldDarkModeSwitchCarriesOver() {
+        let suiteName = "SucroTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        #expect(SettingsStore(defaults: defaults).appearance == .system)
+
+        defaults.set(true, forKey: "settings.darkModeEnabled")
+        #expect(SettingsStore(defaults: defaults).appearance == .dark)
+
+        // Once the new setting is saved, it wins over the old switch.
+        SettingsStore(defaults: defaults).appearance = .light
+        #expect(SettingsStore(defaults: defaults).appearance == .light)
+    }
+
+    @Test func legacyEditScreenValuesStillRead() {
+        // Older edit screens saved lowercase tags; Quick Bolus saved its name.
+        #expect(MealType(stored: "breakfast") == .breakfast)
+        #expect(MealType(stored: " Snack ") == .snack)
+        #expect(MealType(stored: "brunch") == nil)
+        #expect(DeliveryMethod(stored: "pump") == .pump)
+        #expect(DeliveryMethod(stored: "Quick Bolus") == .pump)
+        #expect(DeliveryMethod(stored: nil) == nil)
+        #expect(SiteLocation(stored: "Abdomen Left") == .abdomenLeft)
+        #expect(SiteLocation(stored: "abdomen") == .abdomenCenter)
+        #expect(SiteLocation(stored: "arm") == .armLeft)
+        #expect(GlucoseContext(stored: "before meal") == .beforeMeal)
+    }
+
+    @Test func glucoseInputIsCheckedInTheUsersUnit() {
+        let suiteName = "SucroTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let store = SettingsStore(defaults: defaults)
+
+        #expect(parsedGlucose("120", settings: store) == 120)
+        #expect(parsedGlucose("5", settings: store) == nil)       // typo, not 5 mg/dL
+        #expect(parsedGlucose("1200", settings: store) == nil)
+        #expect(parsedGlucose("", settings: store) == nil)
+
+        store.glucoseUnit = "mmol/L"
+        let mgdl = parsedGlucose("5.5", settings: store)
+        #expect(mgdl != nil && abs(mgdl! - 99.1) < 0.1)
+        #expect(parsedGlucose("120", settings: store) == nil)     // mg/dL typed in mmol/L mode
+    }
+
+    @Test func likelyMealFollowsTheClock() {
+        let calendar = Calendar(identifier: .gregorian)
+        func at(_ hour: Int) -> Date {
+            calendar.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: hour))!
+        }
+        #expect(MealType.likely(at: at(7), calendar: calendar) == .breakfast)
+        #expect(MealType.likely(at: at(12), calendar: calendar) == .lunch)
+        #expect(MealType.likely(at: at(19), calendar: calendar) == .dinner)
+        #expect(MealType.likely(at: at(16), calendar: calendar) == .snack)
+        #expect(GlucoseContext.likely(at: at(6), calendar: calendar) == .fasting)
+        #expect(GlucoseContext.likely(at: at(23), calendar: calendar) == .bedtime)
     }
 }

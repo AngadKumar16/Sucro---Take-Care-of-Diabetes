@@ -20,31 +20,6 @@ class MonitorViewModel: BaseViewModel {
     var timeInRange: Double = 0.0
     var trendData: [GlucoseTrendPoint] = []
     
-    enum TimeRange: String, CaseIterable {
-        case day = "24h"
-        case week = "7d"
-        case month = "30d"
-        case quarter = "3m"
-        
-        var calendarComponent: Calendar.Component {
-            switch self {
-            case .day: return .day
-            case .week: return .weekOfYear
-            case .month: return .month
-            case .quarter: return .month
-            }
-        }
-        
-        var value: Int {
-            switch self {
-            case .day: return 1
-            case .week: return 1
-            case .month: return 1
-            case .quarter: return 3
-            }
-        }
-    }
-    
     struct GlucoseTrendPoint: Identifiable {
         let id = UUID()
         let timestamp: Date
@@ -59,11 +34,8 @@ class MonitorViewModel: BaseViewModel {
     
     
     func fetchDataForTimeRange() {
-        let calendar = Calendar.current
-        let endDate = Date()
-        let startDate = calendar.date(byAdding: timeRange.calendarComponent, value: -timeRange.value, to: endDate)!
-        
-        fetchGlucoseReadings(from: startDate, to: endDate)
+        let range = timeRange.interval()
+        fetchGlucoseReadings(from: range.start, to: range.end)
         calculateStatistics()
         generateTrendData()
     }

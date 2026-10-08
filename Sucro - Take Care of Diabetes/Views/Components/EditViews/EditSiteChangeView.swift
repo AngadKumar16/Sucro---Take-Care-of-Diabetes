@@ -2,53 +2,46 @@
 //  EditSiteChangeView.swift
 //  Sucro - Take Care of Diabetes
 //
-//  Created by Angad Kumar on 3/13/26.
-//
 
 import SwiftUI
+import CoreData
 
 struct EditSiteChangeView: View {
-    @ObservedObject var entry: SiteChange
-    
-    // Explicit custom bindings - no extension needed
-    private var locationBinding: Binding<String> {
-        Binding(
-            get: { entry.location ?? "abdomen" },
-            set: { entry.location = $0 }
-        )
-    }
-    
-    private var timestampBinding: Binding<Date> {
-        Binding(
-            get: { entry.timestamp ?? Date() },
-            set: { entry.timestamp = $0 }
-        )
-    }
-    
-    private var notesBinding: Binding<String> {
-        Binding(
-            get: { entry.notes ?? "" },
-            set: { entry.notes = $0.isEmpty ? nil : $0 }
-        )
-    }
-    
+    let entry: SiteChange
+    let operation: DraftOperation<NSManagedObject>
+
+    @State private var location: SiteLocation = .other
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @State private var original: [AnyHashable] = []
+
+    private var current: [AnyHashable] { [location, timestamp, notes] }
+
     var body: some View {
-        Form {
-            Section("Site Details") {
-                Picker("Location", selection: locationBinding) {
-                    Text("Abdomen").tag("abdomen")
-                    Text("Arm").tag("arm")
-                    Text("Thigh").tag("thigh")
-                    Text("Buttocks").tag("buttocks")
-                }
-                
-                DatePicker("Change Time", selection: timestampBinding)
-            }
-            
-            Section("Notes") {
-                TextField("Notes", text: notesBinding, axis: .vertical)
-                    .lineLimit(3...8)
-            }
+        EntryForm(
+            title: "Edit Site Change",
+            canSave: true,
+            hasChanges: !original.isEmpty && current != original,
+            onSave: save,
+            onCancel: operation.cancel
+        ) {
+            SiteFields(location: $location, timestamp: $timestamp, notes: $notes)
         }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        guard original.isEmpty else { return }
+        location = SiteLocation(stored: entry.location) ?? .other
+        timestamp = entry.timestamp ?? Date()
+        notes = entry.notes ?? ""
+        original = current
+    }
+
+    private func save() -> Bool {
+        entry.location = location.rawValue
+        entry.timestamp = timestamp
+        entry.notes = notes.isEmpty ? nil : notes
+        return operation.save()
     }
 }

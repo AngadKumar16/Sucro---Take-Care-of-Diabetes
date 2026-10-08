@@ -10,85 +10,58 @@ import CoreData
 
 struct AddActivityView: View {
     @Environment(LogViewModel.self) private var viewModel
-    @Environment(\.dismiss) var dismiss
-    
-    @State private var selectedActivityType: String = "Walking"
-    @State private var duration: String = ""
-    @State private var selectedIntensity: String = "Moderate"
-    @State private var caloriesBurned: String = ""
-    @State private var notes: String = ""
-    
-    private let activityTypes = ["Walking", "Running", "Cycling", "Swimming", "Gym", "Yoga", "Other"]
-    private let intensities = ["Light", "Moderate", "Vigorous"]
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Activity Details")) {
-                    Picker("Activity Type", selection: $selectedActivityType) {
-                        ForEach(activityTypes, id: \.self) { type in
-                            Text(type).tag(type)
-                        }
-                    }
-                    
-                    HStack {
-                        TextField("Duration", text: $duration)
-                            .keyboardType(.numberPad)
-                        Text("minutes")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Picker("Intensity", selection: $selectedIntensity) {
-                        ForEach(intensities, id: \.self) { intensity in
-                            Text(intensity).tag(intensity)
-                        }
-                    }
-                    
-                    HStack {
-                        TextField("Calories", text: $caloriesBurned)
-                            .keyboardType(.decimalPad)
-                        Text("kcal")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Section(header: Text("Notes (Optional)")) {
-                    TextField("Add notes...", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-            }
-            .navigationTitle("Add Activity")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveActivityEntry()
-                    }
-                    .disabled(duration.isEmpty || Int16(duration) == nil)
-                }
-            }
-        }
+
+    @State private var activityType = "Walking"
+    @State private var durationText = ""
+    @State private var intensity = "Moderate"
+    @State private var caloriesText = ""
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @FocusState private var durationFocused: Bool
+
+    private var duration: Int16? {
+        parseNumber(durationText)
+            .flatMap { EntryLimits.activityMinutes.contains($0) ? Int16($0.rounded()) : nil }
     }
-    
-    private func saveActivityEntry() {
-        guard let durationMinutes = Int16(duration) else { return }
-        let calories = Double(caloriesBurned) ?? 0.0
-        
+
+    /// Empty calories are fine; a typo isn't.
+    private var calories: Double? {
+        guard !caloriesText.isEmpty else { return 0 }
+        return parseNumber(caloriesText).flatMap { EntryLimits.calories.contains($0) ? $0 : nil }
+    }
+
+    var body: some View {
+        EntryForm(
+            title: "Add Activity",
+            canSave: duration != nil && calories != nil,
+            hasChanges: !durationText.isEmpty || !caloriesText.isEmpty || !notes.isEmpty,
+            onSave: save
+        ) {
+            ActivityFields(
+                activityType: $activityType,
+                durationText: $durationText,
+                intensity: $intensity,
+                caloriesText: $caloriesText,
+                timestamp: $timestamp,
+                notes: $notes,
+                focus: $durationFocused
+            )
+        }
+        .defaultFocus($durationFocused, true)
+        .onAppear { durationFocused = true }
+    }
+
+    private func save() -> Bool {
+        guard let duration, let calories else { return false }
         viewModel.addActivityEntry(
-            type: selectedActivityType,
-            duration: durationMinutes,
-            intensity: selectedIntensity,
+            type: activityType,
+            duration: duration,
+            intensity: intensity,
             caloriesBurned: calories,
-            notes: notes.isEmpty ? nil : notes
+            notes: notes.isEmpty ? nil : notes,
+            timestamp: timestamp
         )
-        
-        dismiss()
+        return true
     }
 }
 

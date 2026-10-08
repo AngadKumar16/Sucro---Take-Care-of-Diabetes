@@ -47,7 +47,10 @@ class DraftOperation<Object: NSManagedObject>: Identifiable {
         self.draftObject = createObject(tempContext)
     }
     
-    func save() {
+    /// Saves the draft through to the store. Returns false if that fails,
+    /// leaving the draft as it was so the user can try again.
+    @discardableResult
+    func save() -> Bool {
         do {
             // Push the draft into the parent context...
             try tempContext.save()
@@ -57,46 +60,15 @@ class DraftOperation<Object: NSManagedObject>: Identifiable {
                 try parent.save()
             }
             onSave()
+            return true
         } catch {
             print("Error saving draft: \(error)")
+            return false
         }
     }
-    
+
     func cancel() {
         tempContext.rollback()
         onCancel()
-    }
-}
-
-// Presents a draft for editing with Cancel and Save buttons.
-struct DraftingView<Object: NSManagedObject, Content: View>: View {
-    let operation: DraftOperation<Object>
-    @Environment(\.dismiss) private var dismiss
-    let content: (Object) -> Content
-    
-    init(operation: DraftOperation<Object>, @ViewBuilder content: @escaping (Object) -> Content) {
-        self.operation = operation
-        self.content = content
-    }
-    
-    var body: some View {
-        NavigationStack {
-            content(operation.draftObject)
-                .environment(\.managedObjectContext, operation.tempContext)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            operation.cancel()
-                            dismiss()
-                        }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            operation.save()
-                            dismiss()
-                        }
-                    }
-                }
-        }
     }
 }

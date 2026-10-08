@@ -2,70 +2,58 @@
 //  EditCarbView.swift
 //  Sucro - Take Care of Diabetes
 //
-//  Created by Angad Kumar on 3/13/26.
-//
 
 import SwiftUI
+import CoreData
 
 struct EditCarbView: View {
-    @ObservedObject var entry: CarbEntry
-    
-    // Explicit custom bindings
-    private var foodItemsBinding: Binding<String> {
-        Binding(
-            get: { entry.foodItems ?? "" },
-            set: { entry.foodItems = $0.isEmpty ? nil : $0 }
-        )
+    let entry: CarbEntry
+    let operation: DraftOperation<NSManagedObject>
+
+    @State private var gramsText = ""
+    @State private var mealType: MealType = .other
+    @State private var foodItems = ""
+    @State private var timestamp = Date()
+    @State private var notes = ""
+    @State private var original: [AnyHashable] = []
+    @FocusState private var gramsFocused: Bool
+
+    private var current: [AnyHashable] { [gramsText, mealType, foodItems, timestamp, notes] }
+
+    private var grams: Double? {
+        parseNumber(gramsText).flatMap { EntryLimits.carbGrams.contains($0) ? $0 : nil }
     }
-    
-    private var mealTypeBinding: Binding<String> {
-        Binding(
-            get: { entry.mealType ?? "snack" },
-            set: { entry.mealType = $0 }
-        )
-    }
-    
-    private var timestampBinding: Binding<Date> {
-        Binding(
-            get: { entry.timestamp ?? Date() },
-            set: { entry.timestamp = $0 }
-        )
-    }
-    
-    private var notesBinding: Binding<String> {
-        Binding(
-            get: { entry.notes ?? "" },
-            set: { entry.notes = $0.isEmpty ? nil : $0 }
-        )
-    }
-    
+
     var body: some View {
-        Form {
-            Section("Meal Details") {
-                TextField("Food Items", text: foodItemsBinding)
-                
-                Picker("Meal Type", selection: mealTypeBinding) {
-                    Text("Breakfast").tag("breakfast")
-                    Text("Lunch").tag("lunch")
-                    Text("Dinner").tag("dinner")
-                    Text("Snack").tag("snack")
-                }
-                
-                HStack {
-                    Text("Carbs (g)")
-                    Spacer()
-                    TextField("Grams", value: $entry.grams, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-                
-                DatePicker("Time", selection: timestampBinding)
-            }
-            
-            Section("Notes") {
-                TextField("Notes", text: notesBinding, axis: .vertical)
-                    .lineLimit(3...8)
-            }
+        EntryForm(
+            title: "Edit Carbs",
+            canSave: grams != nil,
+            hasChanges: !original.isEmpty && current != original,
+            onSave: save,
+            onCancel: operation.cancel
+        ) {
+            CarbFields(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems, timestamp: $timestamp, notes: $notes, focus: $gramsFocused)
         }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        guard original.isEmpty else { return }
+        gramsText = editableNumber(entry.grams)
+        mealType = MealType(stored: entry.mealType) ?? .other
+        foodItems = entry.foodItems ?? ""
+        timestamp = entry.timestamp ?? Date()
+        notes = entry.notes ?? ""
+        original = current
+    }
+
+    private func save() -> Bool {
+        guard let grams else { return false }
+        entry.grams = grams
+        entry.mealType = mealType.rawValue
+        entry.foodItems = foodItems.isEmpty ? nil : foodItems
+        entry.timestamp = timestamp
+        entry.notes = notes.isEmpty ? nil : notes
+        return operation.save()
     }
 }

@@ -20,8 +20,9 @@ class LogViewModel: BaseViewModel {
     var showAddCarbs = false
     var showAddInsulin = false
     var showAddActivity = false
-    
-    
+    /// The entry being edited, if any.
+    var editOperation: DraftOperation<NSManagedObject>?
+
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
     }
@@ -85,8 +86,7 @@ class LogViewModel: BaseViewModel {
         }
     }
     
-    func addGlucoseReading(value: Double, unit: String, context: String?, notes: String?) {
-        let timestamp = Date()
+    func addGlucoseReading(value: Double, unit: String, context: String?, notes: String?, timestamp: Date = Date()) {
         let reading = GlucoseReading(context: viewContext)
         reading.id = UUID()
         reading.value = value
@@ -115,8 +115,7 @@ class LogViewModel: BaseViewModel {
         return GlucoseCalculator.trend(samples: earlier + [sample])
     }
 
-    func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?) {
-        let timestamp = Date()
+    func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?, timestamp: Date = Date()) {
         let entry = CarbEntry(context: viewContext)
         entry.id = UUID()
         entry.grams = grams
@@ -130,8 +129,7 @@ class LogViewModel: BaseViewModel {
         fetchEntriesForDate(selectedDate)
     }
 
-    func addInsulinEntry(units: Double, type: String?, deliveryMethod: String?, notes: String?) {
-        let timestamp = Date()
+    func addInsulinEntry(units: Double, type: String?, deliveryMethod: String?, notes: String?, timestamp: Date = Date()) {
         let entry = InsulinEntry(context: viewContext)
         entry.id = UUID()
         entry.units = units
@@ -146,8 +144,7 @@ class LogViewModel: BaseViewModel {
         fetchEntriesForDate(selectedDate)
     }
 
-    func addActivityEntry(type: String?, duration: Int16, intensity: String?, caloriesBurned: Double, notes: String?) {
-        let timestamp = Date()
+    func addActivityEntry(type: String?, duration: Int16, intensity: String?, caloriesBurned: Double, notes: String?, timestamp: Date = Date()) {
         let entry = ActivityEntry(context: viewContext)
         entry.id = UUID()
         entry.type = type
@@ -164,6 +161,45 @@ class LogViewModel: BaseViewModel {
             caloriesBurned: caloriesBurned,
             timestamp: timestamp
         )
+        fetchEntriesForDate(selectedDate)
+    }
+
+    // MARK: - Day navigation
+
+    var isShowingToday: Bool {
+        Calendar.current.isDateInToday(selectedDate)
+    }
+
+    /// Moves the day being shown, never past today.
+    func moveDay(by days: Int) {
+        let calendar = Calendar.current
+        guard let date = calendar.date(byAdding: .day, value: days, to: selectedDate) else { return }
+        selectedDate = min(date, Date())
+        fetchEntriesForDate(selectedDate)
+    }
+
+    // MARK: - Editing
+
+    func edit(_ object: NSManagedObject) {
+        editOperation = DraftOperation(
+            withExistingObject: object,
+            inParentContext: viewContext,
+            onSave: { [weak self] in
+                self?.entriesChanged()
+            }
+        )
+    }
+
+    func deleteEntry(_ object: NSManagedObject) {
+        if DataService.shared.delete(object.objectID, context: viewContext) {
+            entriesChanged()
+        }
+    }
+
+    /// Refreshes the list and anything computed from the logged data.
+    private func entriesChanged() {
+        AlertService.shared.evaluate(context: viewContext)
+        ReminderService.shared.refresh(context: viewContext)
         fetchEntriesForDate(selectedDate)
     }
 }
