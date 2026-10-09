@@ -29,6 +29,7 @@ struct EntryForm<Content: View>: View {
             Form {
                 content
             }
+            .instrumentBackground()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

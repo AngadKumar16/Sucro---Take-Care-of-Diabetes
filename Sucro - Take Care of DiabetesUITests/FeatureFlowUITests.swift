@@ -219,7 +219,9 @@ final class FeatureFlowUITests: XCTestCase {
         pickFirstPhoto()
         let preview = app.images["sitePhoto"]
         XCTAssertTrue(preview.waitForExistence(timeout: 10), "The picked photo should show in the form")
-        XCTAssertTrue(app.buttons["Change Photo"].exists)
+        let changePhoto = app.buttons["Change Photo"]
+        scrollTo(changePhoto)
+        XCTAssertTrue(changePhoto.exists)
         save()
 
         // The photo is kept with the site change and shows when editing it.
@@ -343,10 +345,8 @@ final class FeatureFlowUITests: XCTestCase {
         save()
 
         openTab("Settings")
-        let unit = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Unit'")).firstMatch
-        scrollTo(unit)
-        unit.tap()
         let mmol = app.buttons.matching(NSPredicate(format: "label == 'mmol/L'")).firstMatch
+        scrollTo(mmol)
         XCTAssertTrue(mmol.waitForExistence(timeout: 5))
         mmol.tap()
 

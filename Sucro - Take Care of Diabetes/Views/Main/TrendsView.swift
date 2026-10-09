@@ -20,6 +20,8 @@ struct TrendsView: View {
     @State private var range: TimeRange = .day
     @State private var showingReport = false
     @State private var explainedTerm: GlossaryTerm?
+    /// The last week of readings, for the test tubes.
+    @State private var weekSamples: [GlucoseSample] = []
 
     var body: some View {
         ScrollView {
@@ -44,13 +46,19 @@ struct TrendsView: View {
                         .card()
                 }
 
+                VStack(alignment: .leading, spacing: 8) {
+                    CardHeader("Time in range")
+                    TimeInRangeTubes(samples: weekSamples)
+                        .card()
+                }
+
                 insightsSection
                 weekdaySection
             }
             .padding(.horizontal)
             .padding(.bottom)
         }
-        .background(Color(.systemGroupedBackground))
+        .instrumentBackground()
         .navigationTitle("Trends")
         .onAppear {
             range = monitor.timeRange
@@ -89,6 +97,11 @@ struct TrendsView: View {
     }
 
     private func refresh() {
+        let now = Date()
+        weekSamples = DataService.shared.fetchGlucoseReadings(
+            context: viewContext,
+            in: DateInterval(start: Calendar.current.startOfDay(for: now.addingTimeInterval(-6 * 86_400)), end: now)
+        ).compactMap(\.sample)
         insights.timeRange = range
         monitor.fetchDataForTimeRange()
         insights.fetchInsights()
@@ -122,7 +135,7 @@ struct TrendsView: View {
                     InsightCard(title: insight.title, description: insight.description, type: insight.type)
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+            .printSurface()
         }
     }
 

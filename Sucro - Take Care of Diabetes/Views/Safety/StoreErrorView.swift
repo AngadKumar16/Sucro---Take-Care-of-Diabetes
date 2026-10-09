@@ -21,6 +21,7 @@ struct StoreErrorView: View {
         } actions: {
             Button("Try Again", action: persistence.retry)
                 .buttonStyle(.borderedProminent)
+                .foregroundStyle(Theme.onAccent)
 
             Button("Erase Data and Start Over", role: .destructive, action: askToErase)
 

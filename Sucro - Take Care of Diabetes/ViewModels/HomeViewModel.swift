@@ -23,11 +23,19 @@ class HomeViewModel: BaseViewModel {
     var todayCarbTotal: Double = 0.0
     var insulinOnBoard: Double = 0.0
     var timelineEvents: [TimelineEvent] = []
+    /// Everything the thread can scroll back through, oldest first.
+    var threadSamples: [GlucoseSample] = []
+    /// Every event in the thread's span, newest first.
+    var threadEvents: [TimelineEvent] = []
+    /// How far back the thread reaches.
+    static let threadSpan: TimeInterval = 14 * 24 * 3600
     /// Today's Plan, straight from the reminder service so snoozes and
     /// completions show immediately.
     var upcomingReminders: [Reminder] { reminderService.upcomingReminders }
     var smartSuggestion: String?
     var lastSiteChange: SiteChange?
+    /// When each site was last used, for the body map and rotation.
+    var siteHistory: [SiteLocation: Date] = [:]
     var criticalAlert: AlertType?
     /// Id of the banner the user closed; it stays hidden until the alert is
     /// about a different event.
@@ -87,6 +95,33 @@ class HomeViewModel: BaseViewModel {
         fetchLatestData()
     }
         
+    /// When to check again after treating a low; drives the countdown on
+    /// the low card. `nil` when no treatment is in progress.
+    var lowRecheckAt: Date?
+    /// How much was taken for the current low.
+    var lowTreatmentGrams: Double = 0
+
+    /// Logs fast-acting carbs taken for a low, then schedules the
+    /// 15-minute recheck (the rule of 15).
+    func logFastCarbs(grams: Double) {
+        let timestamp = Date()
+        let entry = CarbEntry(context: viewContext)
+        entry.id = UUID()
+        entry.grams = grams
+        entry.mealType = MealType.snack.rawValue
+        entry.foodItems = "Fast-acting carbs"
+        entry.notes = "Treating a low"
+        entry.timestamp = timestamp
+        save()
+        HealthKitManager.shared.saveCarbohydrateIntake(grams, timestamp: timestamp)
+
+        let recheck = timestamp.addingTimeInterval(15 * 60)
+        lowRecheckAt = recheck
+        lowTreatmentGrams = grams
+        NotificationService.shared.scheduleLowRecheck(at: recheck, grams: grams)
+        fetchLatestData()
+    }
+
     func quickBolus() {
         showQuickBolusSheet = true
     }
@@ -176,14 +211,35 @@ class HomeViewModel: BaseViewModel {
         todayCarbTotal = totals.carbs
         
         insulinOnBoard = dataService.calculateIOB(context: viewContext)
+        threadSamples = dataService.fetchGlucoseReadings(
+            context: viewContext,
+            in: DateInterval(start: now.addingTimeInterval(-Self.threadSpan), end: now)
+        ).compactMap(\.sample)
+        threadEvents = timelineService.buildTimeline(
+            context: viewContext, hoursBack: Int(Self.threadSpan / 3600), limited: false
+        )
         lastSiteChange = dataService.fetchLastSiteChange(context: viewContext)
+        siteHistory = fetchSiteHistory()
         
         fetchTimelineEvents()
         reminderService.refresh(context: viewContext)
         generateSmartSuggestion()
         checkForCriticalAlerts()
+        // A finished low treatment clears once glucose is no longer low.
+        if case .lowGlucose = criticalAlert {} else { lowRecheckAt = nil }
     }
     
+    private func fetchSiteHistory() -> [SiteLocation: Date] {
+        let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]
+        var history: [SiteLocation: Date] = [:]
+        for change in (try? viewContext.fetch(request)) ?? [] {
+            guard let location = SiteLocation(stored: change.location), let date = change.timestamp, history[location] == nil else { continue }
+            history[location] = date
+        }
+        return history
+    }
+
     private func fetchTimelineEvents() {
         timelineEvents = timelineService.buildTimeline(context: viewContext, hoursBack: 12)
     }

@@ -19,19 +19,19 @@ struct RecentTimelineCardsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CardHeader("Recent Activity") {
+            CardHeader("Logged in View") {
                 Button("See All", action: onShowAll)
                     .font(.subheadline)
             }
 
             if events.isEmpty {
-                Text("Nothing logged in the last 12 hours.")
+                Text("Nothing logged in this stretch.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .card()
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(events.prefix(5).enumerated()), id: \.element.id) { index, event in
+                    ForEach(Array(events.prefix(8).enumerated()), id: \.element.id) { index, event in
                         if index > 0 {
                             Divider().padding(.leading, 60)
                         }
@@ -47,8 +47,7 @@ struct RecentTimelineCardsView: View {
                             .accessibilityAction(named: "Delete") { pendingDelete = event }
                     }
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-                .clipShape(.rect(cornerRadius: 16))
+                .instrumentPanel(padding: 0)
             }
         }
         .confirmationDialog(
@@ -74,9 +73,10 @@ struct TimelineCard: View {
             HStack(spacing: 12) {
                 Image(systemName: event.icon)
                     .font(.body.weight(.medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.green)
                     .frame(width: 36, height: 36)
-                    .background(event.color.gradient, in: .circle)
+                    .background(Theme.card)
+                    .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: 1.5))
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {

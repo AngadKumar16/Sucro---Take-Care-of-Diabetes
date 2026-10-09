@@ -20,6 +20,7 @@ final class NotificationService: NSObject {
         static let glucosePrefix = "alert.glucose."
         static let staleData = "alert.cgmStale"
         static let reminderPrefix = "reminder."
+        static let lowRecheck = "alert.lowRecheck"
 
         static func glucose(_ kind: GlucoseAlertKind) -> String { glucosePrefix + kind.rawValue }
     }
@@ -103,6 +104,18 @@ final class NotificationService: NSObject {
         let interval = date.timeIntervalSinceNow
         let trigger = interval > 1 ? UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false) : nil
         add(UNNotificationRequest(identifier: Identifier.staleData, content: content, trigger: trigger))
+    }
+
+    /// The "check again" nudge 15 minutes after treating a low.
+    func scheduleLowRecheck(at date: Date, grams: Double) {
+        guard notificationsEnabled else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Check Your Glucose Again"
+        content.body = "It's been 15 minutes since you had \(grams.formatted(.number.precision(.fractionLength(0)))) g of carbs for a low."
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date.timeIntervalSinceNow), repeats: false)
+        add(UNNotificationRequest(identifier: Identifier.lowRecheck, content: content, trigger: trigger))
     }
 
     func cancelStaleDataAlert() {

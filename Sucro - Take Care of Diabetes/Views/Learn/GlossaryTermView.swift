@@ -95,7 +95,7 @@ struct GlossaryTermView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
+                        .printSurface()
                     }
                 }
 
@@ -110,7 +110,7 @@ struct GlossaryTermView: View {
         } action: { _, isPastHeading in
             withAnimation(.easeInOut(duration: 0.2)) { showsInlineTitle = isPastHeading }
         }
-        .background(Color(.systemGroupedBackground))
+        .instrumentBackground()
         .navigationTitle(term.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

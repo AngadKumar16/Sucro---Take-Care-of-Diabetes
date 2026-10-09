@@ -44,19 +44,13 @@ struct CriticalAlertBanner: View {
 
             Button(action: onAction) {
                 Label(alert.actionTitle, systemImage: alert.actionIcon)
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(alert.color)
+            .buttonStyle(PrintButtonStyle(kind: alert.color == Theme.vermilion ? .destructive : .secondary, compact: true))
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .stroke(alert.color, lineWidth: 2)
-        )
-        .shadow(color: alert.color.opacity(0.3), radius: 8, x: 0, y: 4)
+        .padding(14)
+        .background(Theme.card)
+        .overlay(Rectangle().strokeBorder(alert.color, lineWidth: 2))
+        .background(alert.color.offset(x: 3, y: 3))
     }
 }
 

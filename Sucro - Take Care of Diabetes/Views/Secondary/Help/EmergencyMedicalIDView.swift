@@ -21,6 +21,7 @@ struct EmergencyMedicalIDView: View {
                     LabeledContent("Name", value: settings.userName.isEmpty ? "Not set" : settings.userName)
                     LabeledContent("Condition", value: settings.diabetesType)
                 }
+                .listRowBackground(Theme.card)
 
                 Section("Latest Glucose") {
                     if let latest = dataService.fetchLatestGlucoseReading(context: viewContext) {
@@ -32,6 +33,8 @@ struct EmergencyMedicalIDView: View {
                     }
                 }
 
+                .listRowBackground(Theme.card)
+
                 Section("In an Emergency") {
                     Label("If this person is unconscious, call emergency services", systemImage: "phone.fill")
                         .foregroundStyle(.red)
@@ -39,6 +42,8 @@ struct EmergencyMedicalIDView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                .listRowBackground(Theme.card)
             }
             .navigationTitle("Medical ID")
             .safeAreaInset(edge: .bottom) {

@@ -74,6 +74,15 @@ struct GlucoseThresholdTests {
     }
 }
 
+struct GlucoseManagementIndicatorTests {
+    // Reference points from Bergenstal et al. 2018, Table 1.
+    @Test(arguments: [(100.0, 5.7), (154.0, 7.0), (200.0, 8.1)])
+    func matchesPublishedTable(average: Double, expected: Double) {
+        let gmi = GlucoseCalculator.glucoseManagementIndicator(averageMgdl: average)
+        #expect(abs(gmi - expected) < 0.05)
+    }
+}
+
 @MainActor
 struct ThresholdSettingsTests {
 

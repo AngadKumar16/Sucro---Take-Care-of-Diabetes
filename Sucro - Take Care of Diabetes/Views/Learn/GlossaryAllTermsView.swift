@@ -17,6 +17,7 @@ struct GlossaryAllTermsView: View {
                         GlossaryTermRow(term: term)
                     }
                 }
+                .listRowBackground(Theme.card)
                 .sectionIndexLabel(group.letter)
             }
         }

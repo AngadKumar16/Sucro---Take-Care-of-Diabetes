@@ -56,9 +56,8 @@ enum AlertType: Equatable {
 
     var color: Color {
         switch self {
-        case .lowGlucose, .highGlucose: return .red
-        case .cgmDataStale: return .purple
-        case .siteChangeOverdue: return .orange
+        case .lowGlucose, .highGlucose: return Theme.vermilion
+        case .cgmDataStale, .siteChangeOverdue: return Theme.amber
         }
     }
 

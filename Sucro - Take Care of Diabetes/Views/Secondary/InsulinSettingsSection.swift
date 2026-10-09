@@ -26,5 +26,6 @@ struct InsulinSettingsSection: View {
                 GlossaryLink(termID: "insulin-action-time", title: "About insulin action time")
             }
         }
+        .listRowBackground(Theme.card)
     }
 }

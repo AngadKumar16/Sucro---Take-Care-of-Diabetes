@@ -21,7 +21,9 @@ class TimelineService {
     
     private init() {}
     
-    func buildTimeline(context: NSManagedObjectContext, hoursBack: Int = 12) -> [TimelineEvent] {
+    /// Events from the last `hoursBack` hours, newest first. With `limited`,
+    /// only the latest few of each kind, for short summaries.
+    func buildTimeline(context: NSManagedObjectContext, hoursBack: Int = 12, limited: Bool = true) -> [TimelineEvent] {
         let calendar = Calendar.current
         guard let startTime = calendar.date(byAdding: .hour, value: -hoursBack, to: Date()) else {
             return []
@@ -31,28 +33,28 @@ class TimelineService {
         let dataService = DataService.shared
         
         // Fetch meals
-        events += fetchMeals(context: context, since: startTime, dataService: dataService)
+        events += fetchMeals(context: context, since: startTime, limit: limited ? 5 : nil, dataService: dataService)
         
         // Fetch boluses
-        events += fetchBoluses(context: context, since: startTime, dataService: dataService)
+        events += fetchBoluses(context: context, since: startTime, limit: limited ? 5 : nil, dataService: dataService)
         
         // Fetch site changes
-        events += fetchSiteChanges(context: context, since: startTime, dataService: dataService)
+        events += fetchSiteChanges(context: context, since: startTime, limit: limited ? 3 : nil, dataService: dataService)
         
         // Fetch activities
-        events += fetchActivities(context: context, since: startTime, dataService: dataService)
+        events += fetchActivities(context: context, since: startTime, limit: limited ? 3 : nil, dataService: dataService)
         
         return events.sorted { $0.timestamp > $1.timestamp }
     }
     
-    private func fetchMeals(context: NSManagedObjectContext, since: Date, dataService: DataService) -> [TimelineEvent] {
+    private func fetchMeals(context: NSManagedObjectContext, since: Date, limit: Int?, dataService: DataService) -> [TimelineEvent] {
         let request: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
         request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \CarbEntry.timestamp, ascending: false)]
         
         do {
             let entries = try context.fetch(request)
-            return entries.prefix(5).map { entry in
+            return entries.prefix(limit ?? .max).map { entry in
                 let glucose = dataService.getGlucoseAtTime(context: context, time: entry.timestamp ?? Date())
                 return TimelineEvent(
                     type: .meal,
@@ -70,7 +72,7 @@ class TimelineService {
         }
     }
     
-    private func fetchBoluses(context: NSManagedObjectContext, since: Date, dataService: DataService) -> [TimelineEvent] {
+    private func fetchBoluses(context: NSManagedObjectContext, since: Date, limit: Int?, dataService: DataService) -> [TimelineEvent] {
         let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
         request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
@@ -78,7 +80,7 @@ class TimelineService {
         do {
             let entries = try context.fetch(request)
                 .filter { InsulinType(stored: $0.type)?.isRapidActing == true }
-            return entries.prefix(5).map { entry in
+            return entries.prefix(limit ?? .max).map { entry in
                 let glucose = dataService.getGlucoseAtTime(context: context, time: entry.timestamp ?? Date())
                 return TimelineEvent(
                     type: .bolus,
@@ -96,14 +98,14 @@ class TimelineService {
         }
     }
     
-    private func fetchSiteChanges(context: NSManagedObjectContext, since: Date, dataService: DataService) -> [TimelineEvent] {
+    private func fetchSiteChanges(context: NSManagedObjectContext, since: Date, limit: Int?, dataService: DataService) -> [TimelineEvent] {
         let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
         request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]
         
         do {
             let entries = try context.fetch(request)
-            return entries.prefix(3).map { entry in
+            return entries.prefix(limit ?? .max).map { entry in
                 let glucose = dataService.getGlucoseAtTime(context: context, time: entry.timestamp ?? Date())
                 return TimelineEvent(
                     type: .siteChange,
@@ -121,14 +123,14 @@ class TimelineService {
         }
     }
     
-    private func fetchActivities(context: NSManagedObjectContext, since: Date, dataService: DataService) -> [TimelineEvent] {
+    private func fetchActivities(context: NSManagedObjectContext, since: Date, limit: Int?, dataService: DataService) -> [TimelineEvent] {
         let request: NSFetchRequest<ActivityEntry> = ActivityEntry.fetchRequest()
         request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ActivityEntry.timestamp, ascending: false)]
         
         do {
             let entries = try context.fetch(request)
-            return entries.prefix(3).map { entry in
+            return entries.prefix(limit ?? .max).map { entry in
                 let glucose = dataService.getGlucoseAtTime(context: context, time: entry.timestamp ?? Date())
                 return TimelineEvent(
                     type: .activity,

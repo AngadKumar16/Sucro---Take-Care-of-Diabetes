@@ -59,8 +59,11 @@ struct ReportsView: View {
             } footer: {
                 Text("The report covers glucose, insulin and carbs for the period above. Share it with your care team by Mail, Messages or AirDrop.")
             }
+
+            .listRowBackground(Theme.card)
         }
         .listStyle(.insetGrouped)
+        .instrumentBackground()
         .navigationTitle("Reports")
         .onAppear(perform: viewModel.recalculate)
         .sheet(isPresented: Bindable(viewModel).showShareSheet) {

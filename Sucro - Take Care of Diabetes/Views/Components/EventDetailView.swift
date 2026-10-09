@@ -48,6 +48,7 @@ struct EventDetailView: View {
                         }
                     }
                 }
+                .listRowBackground(Theme.card)
 
                 Section("Notes") {
                     if let notes = event.notes, !notes.isEmpty {
@@ -57,12 +58,16 @@ struct EventDetailView: View {
                     Button("Add Note", systemImage: "note.text.badge.plus", action: onAddNote)
                 }
 
+                .listRowBackground(Theme.card)
+
                 Section {
                     Button("Edit", systemImage: "pencil", action: onEdit)
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         showingDeleteConfirm = true
                     }
                 }
+
+                .listRowBackground(Theme.card)
             }
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)

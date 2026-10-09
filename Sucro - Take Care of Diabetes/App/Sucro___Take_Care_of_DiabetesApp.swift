@@ -39,6 +39,12 @@ struct SucroApp: App {
             SettingsStore.shared.glucoseUnit = "mg/dL"
         }
 
+        #if DEBUG
+        if arguments.contains("-demoData"), PersistenceController.shared.loadError == nil {
+            DemoData.install(context: PersistenceController.shared.container.viewContext)
+        }
+        #endif
+
         // Registered here rather than in a view so that when HealthKit wakes
         // the app in the background for new glucose, the observer exists.
         let persistence = PersistenceController.shared

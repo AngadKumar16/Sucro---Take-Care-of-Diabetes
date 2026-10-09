@@ -2,8 +2,8 @@
 //  Card.swift
 //  Sucro - Take Care of Diabetes
 //
-//  The rounded panel used on Today and Trends. Grouped-background colors
-//  keep cards visible against the page in both light and dark mode.
+//  The inset panel used on Today and Trends, set into the instrument body
+//  (see Theme).
 //
 
 import SwiftUI
@@ -13,9 +13,7 @@ struct CardBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+            .instrumentPanel(padding: padding)
     }
 }
 
@@ -33,7 +31,8 @@ struct CardHeader<Accessory: View>: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(.title3.bold())
+                .font(.system(.title3, design: .serif, weight: .semibold))
+                .foregroundStyle(Theme.ink)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
             accessory

@@ -19,35 +19,20 @@ struct CurrentSiteRow: View {
         let due = Calendar.current.date(byAdding: .day, value: location?.rotationDays ?? 3, to: changed) ?? changed
         let isOverdue = now >= due
 
-        return HStack(spacing: 12) {
-            Image(systemName: "bandage.fill")
-                .font(.title3)
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(Color.purple.gradient, in: .circle)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.headline)
-                Text("Inserted \(changed, format: .relative(presentation: .named))")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Label {
-                    Text(isOverdue ? "Change overdue" : "Change due \(dueText(due, now: now))")
-                } icon: {
-                    Image(systemName: isOverdue ? "exclamationmark.triangle.fill" : "calendar")
-                }
-                .font(.subheadline.weight(isOverdue ? .semibold : .regular))
-                .foregroundStyle(isOverdue ? .orange : .secondary)
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(location?.spokenName ?? name)
+                .font(.system(.headline, design: .serif, weight: .semibold))
+                .foregroundStyle(Theme.vermilion)
+            Text("Inserted \(changed, format: .relative(presentation: .named))")
+                .font(.subheadline)
+                .foregroundStyle(Theme.ink)
+            Label {
+                Text(isOverdue ? "Change overdue" : "Change due \(dueText(due, now: now))")
+            } icon: {
+                Image(systemName: isOverdue ? "exclamationmark.triangle.fill" : "calendar")
             }
-
-            Spacer(minLength: 8)
-
-            Image(systemName: "chevron.right")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .accessibilityHidden(true)
+            .font(.subheadline.weight(isOverdue ? .semibold : .regular))
+            .foregroundStyle(isOverdue ? Theme.vermilion : Theme.soft)
         }
         .accessibilityElement(children: .combine)
         .accessibilityHint("Logs a new site change")

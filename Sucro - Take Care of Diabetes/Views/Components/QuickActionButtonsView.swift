@@ -37,19 +37,19 @@ struct QuickActionButtonsView: View {
                 onLogMeal()
             }
             .menuStyle(.button)
-            .buttonStyle(QuickActionButtonStyle(color: .orange))
+            .buttonStyle(QuickActionButtonStyle())
             .accessibilityLabel("Log Meal")
             .accessibilityHint("Touch and hold for saved meals")
 
             Button(action: onQuickBolus) {
                 QuickActionLabel(title: "Quick Bolus", icon: "syringe")
             }
-            .buttonStyle(QuickActionButtonStyle(color: .green))
+            .buttonStyle(QuickActionButtonStyle())
 
             Button(action: onChangeSite) {
                 QuickActionLabel(title: "Change Site", icon: "bandage")
             }
-            .buttonStyle(QuickActionButtonStyle(color: .purple))
+            .buttonStyle(QuickActionButtonStyle())
         }
         .sensoryFeedback(.success, trigger: loggedPreset)
     }
@@ -63,9 +63,12 @@ private struct QuickActionLabel: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.title2.weight(.medium))
+                .foregroundStyle(Theme.green)
                 .accessibilityHidden(true)
             Text(title)
                 .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.8)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
@@ -76,19 +79,22 @@ private struct QuickActionLabel: View {
     }
 }
 
-/// A filled tile that dims and shrinks a little while pressed.
+/// A printed key: card stock, a black rule and a black offset that the
+/// key sinks into while pressed. Neutral on purpose; the inks mean zones.
 struct QuickActionButtonStyle: ButtonStyle {
-    let color: Color
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
         configuration.label
-            .foregroundStyle(.white)
-            .background(color.gradient, in: .rect(cornerRadius: 16))
-            .opacity(configuration.isPressed ? 0.85 : 1)
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1)
-            .animation(.snappy(duration: 0.15), value: configuration.isPressed)
-            .contentShape(.rect(cornerRadius: 16))
+            .foregroundStyle(Theme.ink)
+            .background(Theme.card)
+            .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: 1.5))
+            .background(Theme.ink.offset(x: pressed ? 0 : 2, y: pressed ? 0 : 2))
+            .offset(x: pressed && !reduceMotion ? 2 : 0, y: pressed && !reduceMotion ? 2 : 0)
+            .animation(.snappy(duration: 0.12), value: pressed)
+            .contentShape(.rect)
+            .sensoryFeedback(.impact(weight: .light), trigger: pressed) { _, new in new }
     }
 }
 

@@ -32,6 +32,7 @@ struct NoteInputView: View {
             } footer: {
                 Text("Added to \(eventTitle).")
             }
+            .listRowBackground(Theme.card)
         }
         .onAppear { isFocused = true }
     }

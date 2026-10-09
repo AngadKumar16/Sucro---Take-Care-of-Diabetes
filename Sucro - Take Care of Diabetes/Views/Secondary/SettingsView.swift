@@ -34,6 +34,7 @@ struct SettingsView: View {
         Form {
             profileSection
             glucoseSection
+            guidesSection
             InsulinSettingsSection()
             notificationsSection
             appearanceSection
@@ -42,7 +43,10 @@ struct SettingsView: View {
             Section {
                 LabeledContent("Version", value: AppInfo.version)
             }
+            .listRowBackground(Theme.card)
         }
+        .listRowBackground(Theme.card)
+        .instrumentBackground()
         .navigationTitle("Settings")
         .helpDestinations()
         .task { await checkNotificationPermission() }
@@ -81,6 +85,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .listRowBackground(Theme.card)
     }
 
     private var glucoseSection: some View {
@@ -89,18 +94,32 @@ struct SettingsView: View {
                 Text("mg/dL").tag("mg/dL")
                 Text("mmol/L").tag("mmol/L")
             }
-            ThresholdRow(title: "Urgent High", color: GlucoseZone.urgentHigh.color, value: Bindable(settings).urgentHigh, bounds: settings.urgentHighBounds)
-            ThresholdRow(title: "High", color: GlucoseZone.high.color, value: Bindable(settings).targetHigh, bounds: settings.targetHighBounds)
-            ThresholdRow(title: "Low", color: GlucoseZone.low.color, value: Bindable(settings).targetLow, bounds: settings.targetLowBounds)
-            ThresholdRow(title: "Urgent Low", color: GlucoseZone.urgentLow.color, value: Bindable(settings).urgentLow, bounds: settings.urgentLowBounds)
+            .pickerStyle(.segmented)
+            .listRowSeparator(.hidden)
+            GlucoseRangeBar(thresholds: settings.thresholds)
+            ThresholdRow(title: "Urgent High", zone: .urgentHigh, value: Bindable(settings).urgentHigh, bounds: settings.urgentHighBounds)
+            ThresholdRow(title: "High", zone: .high, value: Bindable(settings).targetHigh, bounds: settings.targetHighBounds)
+            ThresholdRow(title: "Low", zone: .low, value: Bindable(settings).targetLow, bounds: settings.targetLowBounds)
+            ThresholdRow(title: "Urgent Low", zone: .urgentLow, value: Bindable(settings).urgentLow, bounds: settings.urgentLowBounds)
+            Button("Reset to Common Defaults", systemImage: "arrow.counterclockwise") {
+                resetThresholds()
+            }
+            .disabled(settings.thresholds == .standard)
         } header: {
             Text("Glucose")
         } footer: {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Readings between Low and High count as in range. You get an alert below Low and above Urgent High.")
-                GlossaryLink(termID: "target-range", title: "About glucose ranges")
-            }
+            Text("Readings between Low and High count as in range. You get an alert below Low and above Urgent High.")
         }
+        .listRowBackground(Theme.card)
+    }
+
+    private var guidesSection: some View {
+        Section("Learn About Glucose") {
+            GuideCarousel()
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+        }
+        .listRowBackground(Theme.card)
     }
 
     private var notificationsSection: some View {
@@ -126,6 +145,7 @@ struct SettingsView: View {
                 Text("Glucose alerts, site change reminders and post-dose glucose checks.")
             }
         }
+        .listRowBackground(Theme.card)
     }
 
     private var appearanceSection: some View {
@@ -137,6 +157,7 @@ struct SettingsView: View {
             }
             .accessibilityIdentifier("appearancePicker")
         }
+        .listRowBackground(Theme.card)
     }
 
     private var dataSection: some View {
@@ -164,6 +185,7 @@ struct SettingsView: View {
         } footer: {
             Text(backupFooter)
         }
+        .listRowBackground(Theme.card)
     }
 
     private var moreSection: some View {
@@ -178,6 +200,7 @@ struct SettingsView: View {
                 Label("Safety Information", systemImage: "exclamationmark.shield")
             }
         }
+        .listRowBackground(Theme.card)
     }
 
     // MARK: - Actions
@@ -188,6 +211,16 @@ struct SettingsView: View {
         }
         let last = settings.lastBackupDate.map { "Last backup \($0.formatted(date: .abbreviated, time: .shortened))." } ?? "No backup yet."
         return "Saves your glucose readings on this phone once a day. \(last) Export saves your last 90 days as a spreadsheet."
+    }
+
+    private func resetThresholds() {
+        withAnimation(.snappy) {
+            let standard = GlucoseThresholds.standard
+            settings.targetLow = standard.targetLow
+            settings.targetHigh = standard.targetHigh
+            settings.urgentLow = standard.urgentLow
+            settings.urgentHigh = standard.urgentHigh
+        }
     }
 
     private func checkNotificationPermission() async {

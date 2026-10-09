@@ -35,11 +35,13 @@ nonisolated enum GlucoseZone: Equatable, Sendable {
         }
     }
 
+    /// The ink for each zone (see Theme): vermilion for anything that needs
+    /// action, amber for high, green for in range.
     var color: Color {
         switch self {
-        case .urgentLow, .low, .urgentHigh: return .red
-        case .high: return .orange
-        case .inRange: return .green
+        case .urgentLow, .low, .urgentHigh: return Theme.vermilion
+        case .high: return Theme.amber
+        case .inRange: return Theme.green
         }
     }
 }

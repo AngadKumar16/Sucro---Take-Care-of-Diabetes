@@ -34,9 +34,12 @@ struct QuickBolusView: View {
         NavigationStack {
             Form {
                 Section {
+                    InsulinPen(units: units)
+                        .padding(.top, 6)
+                        .animation(.snappy, value: units)
                     VStack(spacing: 4) {
                         Text(units, format: .number.precision(.fractionLength(1)))
-                            .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                            .font(.system(size: 56, weight: .semibold, design: .serif).monospacedDigit())
                             .monospacedDigit()
                             .contentTransition(.numericText(value: units))
                         Text("units")
@@ -53,6 +56,7 @@ struct QuickBolusView: View {
                 } footer: {
                     Text("This records a dose you've taken or are taking. It doesn't control your pump.")
                 }
+                .listRowBackground(Theme.card)
 
                 Section("Presets") {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -65,11 +69,16 @@ struct QuickBolusView: View {
                     .padding(.vertical, 4)
                 }
 
+                .listRowBackground(Theme.card)
+
                 Section("Notes") {
                     TextField("Optional", text: $notes, axis: .vertical)
                         .lineLimit(2...6)
                 }
+
+                .listRowBackground(Theme.card)
             }
+            .instrumentBackground()
             .navigationTitle("Quick Bolus")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -128,23 +137,14 @@ struct PresetButton: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text(preset.name)
                     .font(.subheadline.weight(.semibold))
                 Text("\(preset.units.formatted(.number.precision(.fractionLength(1)))) U")
-                    .font(.title3.bold())
-                    .monospacedDigit()
+                    .font(Theme.mono(.subheadline))
             }
-            .frame(maxWidth: .infinity, minHeight: 60)
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
-            .foregroundStyle(isSelected ? Color.accentColor : .primary)
-            .overlay {
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? Color.accentColor : .clear, lineWidth: 2)
-            }
-            .contentShape(.rect(cornerRadius: 10))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PrintButtonStyle(kind: isSelected ? .primary : .secondary))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

@@ -51,6 +51,7 @@ struct SitePhotoSection: View {
                 Text("That photo couldn't be loaded. Try another one.")
             }
         }
+        .listRowBackground(Theme.card)
         // `task(id:)` cancels a load still running when another photo is picked.
         .task(id: item) { await load(item) }
     }

@@ -26,6 +26,7 @@ struct HelpView: View {
                     Label("Safety Information", systemImage: "exclamationmark.shield.fill")
                 }
             }
+            .listRowBackground(Theme.card)
             
             // Tutorial Sections
             Section("Tutorials & Guides") {
@@ -35,6 +36,7 @@ struct HelpView: View {
                     }
                 }
             }
+            .listRowBackground(Theme.card)
 
             // FAQ
             Section("Frequently Asked Questions") {
@@ -42,11 +44,15 @@ struct HelpView: View {
                     NavigationLink(article.title, value: HelpDestination.article(article))
                 }
             }
+            .listRowBackground(Theme.card)
             
             Section {
                 LabeledContent("Version", value: AppInfo.version)
             }
+            
+            .listRowBackground(Theme.card)
         }
+        .instrumentBackground()
         .navigationTitle("Help & Tutorials")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showEmergencyCard) {

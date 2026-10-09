@@ -14,6 +14,7 @@ struct GlossaryCategoryView: View {
             GlossaryTermRow(term: term)
         }
         .listStyle(.insetGrouped)
+        .instrumentBackground()
         .navigationTitle(category.title)
         .navigationBarTitleDisplayMode(.inline)
     }

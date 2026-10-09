@@ -42,7 +42,7 @@ struct RemindersView: View {
                         )
                     }
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+                .instrumentPanel(padding: 0)
             }
         }
     }
@@ -58,11 +58,9 @@ struct SuggestionCard: View {
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "lightbulb.fill")
-                .foregroundStyle(.yellow)
+                .foregroundStyle(Theme.amber)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.yellow.opacity(0.15), in: .rect(cornerRadius: 16))
+        .instrumentPanel(border: Theme.amber, offset: Theme.amber.opacity(0.5))
     }
 }
 
@@ -78,9 +76,10 @@ struct ReminderCard: View {
             // Reminder Icon
             Image(systemName: reminder.type.icon)
                 .font(.body.weight(.medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.green)
                 .frame(width: 36, height: 36)
-                .background(reminder.type.tint.gradient, in: .circle)
+                .background(Theme.card)
+                .overlay(Rectangle().strokeBorder(Theme.ink, lineWidth: 1.5))
                 .accessibilityHidden(true)
             
             // Reminder Details
@@ -101,11 +100,11 @@ struct ReminderCard: View {
             HStack(spacing: 8) {
                 Button("Snooze \(reminder.title)", systemImage: "clock.arrow.circlepath", action: showSnoozeOptions)
                     .labelStyle(.iconOnly)
-                    .buttonStyle(ReminderIconButtonStyle(tint: .blue))
+                    .buttonStyle(ReminderIconButtonStyle(tint: Theme.ink))
 
-                Button("Mark \(reminder.title) done", systemImage: "checkmark.circle.fill", action: onComplete)
+                Button("Mark \(reminder.title) done", systemImage: "checkmark", action: onComplete)
                     .labelStyle(.iconOnly)
-                    .buttonStyle(ReminderIconButtonStyle(tint: .green))
+                    .buttonStyle(ReminderIconButtonStyle(tint: Theme.green, filled: true))
             }
         }
         .padding(.leading, 12)

@@ -160,6 +160,13 @@ nonisolated enum GlucoseCalculator {
         )
     }
 
+    /// Glucose management indicator: the A1C-like percentage estimated from
+    /// mean glucose (Bergenstal et al., Diabetes Care 2018). Meant for at
+    /// least 14 days of CGM data.
+    static func glucoseManagementIndicator(averageMgdl: Double) -> Double {
+        3.31 + 0.02392 * averageMgdl
+    }
+
     /// Percentage of readings in the target range. This counts readings, so
     /// it only approximates time when readings are evenly spaced (CGM data).
     /// `hours` is that share of the span between the first and last reading.

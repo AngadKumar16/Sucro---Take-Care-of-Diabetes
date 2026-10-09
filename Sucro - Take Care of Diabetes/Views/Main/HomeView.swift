@@ -26,71 +26,29 @@ struct HomeView: View {
         context: PersistenceController.shared.container.viewContext
     )
 
+    /// How much of the thread is on screen, and where it starts.
+    @State private var zoom: ThreadZoom = .day
+    @State private var scrollStart = ThreadView.start(showing: .day, at: Date())
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                if let criticalAlert = viewModel.criticalAlert {
-                    CriticalAlertBanner(
-                        alert: criticalAlert,
-                        onDismiss: viewModel.dismissCriticalAlert,
-                        onAction: viewModel.handleCriticalAlertAction
-                    )
-                }
-
-                GlucoseHeroView(
-                    glucoseReading: viewModel.latestGlucoseReading,
-                    insulinOnBoard: viewModel.insulinOnBoard,
-                    onTap: onShowTrends,
-                    onLogGlucose: viewModel.logGlucose
-                )
-
-                QuickActionButtonsView(
-                    onLogMeal: viewModel.logMeal,
-                    onQuickBolus: viewModel.quickBolus,
-                    onChangeSite: viewModel.changeSite,
-                    onLogPreset: viewModel.logMeal(preset:)
-                )
-
-                TodaySummaryView(
-                    insulinUnits: viewModel.todayInsulinTotal,
-                    carbGrams: viewModel.todayCarbTotal,
-                    readingCount: viewModel.todayReadingCount
-                )
-
-                MiniTimelineView(
-                    glucoseReadings: viewModel.recentReadings,
-                    events: viewModel.timelineEvents,
-                    window: HomeViewModel.chartWindow,
-                    onExpand: onShowTrends
-                )
-
-                RecentTimelineCardsView(
-                    events: viewModel.timelineEvents,
-                    onShowAll: onShowAllActivity,
-                    onEventTap: viewModel.showEventDetails,
-                    onEventEdit: viewModel.editEvent,
-                    onEventDelete: viewModel.deleteEvent,
-                    onAddNote: viewModel.showAddNote(for:)
-                )
-
-                RemindersView(
-                    reminders: viewModel.upcomingReminders,
-                    suggestion: viewModel.smartSuggestion,
-                    onSnooze: viewModel.snoozeReminder,
-                    onComplete: viewModel.completeReminder
-                )
-
-                SiteSnapshotView(
-                    lastSiteChange: viewModel.lastSiteChange,
-                    onChangeSite: viewModel.changeSite
-                )
+            // Re-render each minute so "now", ages and stale styling keep up.
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                content(now: context.date)
             }
             .padding(.horizontal)
             .padding(.bottom)
         }
-        .background(Color(.systemGroupedBackground))
+        .instrumentBackground()
         .navigationTitle("Today")
         .onAppear(perform: viewModel.fetchLatestData)
+        // A new reading moves the thread along if it was showing now.
+        .onChange(of: viewModel.latestGlucoseReading?.timestamp) { _, _ in
+            let now = Date()
+            if scrollStart.addingTimeInterval(zoom.duration) >= now.addingTimeInterval(-30 * 60) {
+                withAnimation(.smooth) { scrollStart = ThreadView.start(showing: zoom, at: now) }
+            }
+        }
         .refreshable {
             await healthImporter.sync()
             viewModel.fetchLatestData()
@@ -147,64 +105,117 @@ struct HomeView: View {
             DeviceTroubleshootingView()
         }
     }
-}
 
-/// Today's totals: insulin, carbs and how many readings were logged.
-struct TodaySummaryView: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    let insulinUnits: Double
-    let carbGrams: Double
-    let readingCount: Int
+    private func content(now: Date) -> some View {
+        // While the thread shows now, the view keeps up with it: anything
+        // logged since the thread last moved still counts as in view.
+        let visibleEnd = scrollStart.addingTimeInterval(zoom.duration)
+        let followsNow = visibleEnd >= now.addingTimeInterval(-30 * 60)
+        // `now` ticks once a minute, so reach past it to include an entry
+        // logged a few seconds ago.
+        let window = ThreadWindow(start: scrollStart, end: followsNow ? now.addingTimeInterval(ThreadView.future) : visibleEnd)
+        let visibleEvents = viewModel.threadEvents.filter { window.contains($0.timestamp) }
 
-    var body: some View {
-        // Side by side normally; stacked at accessibility text sizes so
-        // the numbers never wrap mid-word.
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 8))
-            : AnyLayout(HStackLayout(spacing: 0))
-        layout {
-            SummaryTile(
-                value: insulinUnits.formatted(.number.precision(.fractionLength(0...1))),
-                unit: "U",
-                label: "Insulin"
-            )
-            Divider()
-            SummaryTile(
-                value: carbGrams.formatted(.number.precision(.fractionLength(0))),
-                unit: "g",
-                label: "Carbs"
-            )
-            Divider()
-            SummaryTile(value: "\(readingCount)", unit: nil, label: readingCount == 1 ? "Reading" : "Readings")
-        }
-        .card(padding: 12)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Today: \(insulinUnits.formatted(.number.precision(.fractionLength(0...1)))) units of insulin, \(Int(carbGrams)) grams of carbs, \(readingCount) glucose readings")
-    }
-}
-
-private struct SummaryTile: View {
-    let value: String
-    let unit: String?
-    let label: String
-
-    var body: some View {
-        VStack(spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value)
-                    .font(.title2.bold())
-                    .monospacedDigit()
-                if let unit {
-                    Text(unit)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+        return VStack(spacing: 16) {
+            if case .lowGlucose(let mgdl) = viewModel.criticalAlert {
+                LowTreatmentCard(
+                    mgdl: mgdl,
+                    recheckAt: viewModel.lowRecheckAt,
+                    treatedGrams: viewModel.lowTreatmentGrams,
+                    onLogTreatment: viewModel.logFastCarbs(grams:),
+                    onLogCarbs: viewModel.handleCriticalAlertAction,
+                    onLogGlucose: viewModel.logGlucose,
+                    onDismiss: viewModel.dismissCriticalAlert
+                )
+            } else if let criticalAlert = viewModel.criticalAlert {
+                CriticalAlertBanner(
+                    alert: criticalAlert,
+                    onDismiss: viewModel.dismissCriticalAlert,
+                    onAction: viewModel.handleCriticalAlertAction
+                )
             }
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 12) {
+                if let reading = viewModel.latestGlucoseReading {
+                    // Tapping the latest reading brings the thread back to now.
+                    Button {
+                        withAnimation(.smooth) { scrollStart = ThreadView.start(showing: zoom, at: now) }
+                    } label: {
+                        ReadingRingCard(reading: reading, insulinOnBoard: viewModel.insulinOnBoard, now: now)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Shows now on the thread")
+                } else {
+                    noReadings
+                }
+                ThreadView(
+                    samples: viewModel.threadSamples,
+                    events: viewModel.threadEvents,
+                    reminders: viewModel.upcomingReminders,
+                    now: now,
+                    zoom: $zoom,
+                    scrollStart: $scrollStart
+                )
+            }
+            .card()
+
+            InViewSummary(window: window, samples: viewModel.threadSamples, events: viewModel.threadEvents)
+
+            QuickActionButtonsView(
+                onLogMeal: viewModel.logMeal,
+                onQuickBolus: viewModel.quickBolus,
+                onChangeSite: viewModel.changeSite,
+                onLogPreset: viewModel.logMeal(preset:)
+            )
+
+            // The events list follows the thread: it shows what's in view.
+            RecentTimelineCardsView(
+                events: Array(visibleEvents.prefix(20)),
+                onShowAll: onShowAllActivity,
+                onEventTap: viewModel.showEventDetails,
+                onEventEdit: viewModel.editEvent,
+                onEventDelete: viewModel.deleteEvent,
+                onAddNote: viewModel.showAddNote(for:)
+            )
+
+            RemindersView(
+                reminders: viewModel.upcomingReminders,
+                suggestion: viewModel.smartSuggestion,
+                onSnooze: viewModel.snoozeReminder,
+                onComplete: viewModel.completeReminder
+            )
+
+            SiteSnapshotView(
+                lastSiteChange: viewModel.lastSiteChange,
+                history: viewModel.siteHistory,
+                onChangeSite: viewModel.changeSite
+            )
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private var noReadings: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("No Readings Yet")
+                    .font(.headline)
+                Text("Log a fingerstick reading to start the thread.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Log Glucose", systemImage: "plus", action: viewModel.logGlucose)
+                .buttonStyle(.borderedProminent)
+                .foregroundStyle(Theme.onAccent)
+        }
+        // A dose can be logged before any reading; still show what's active.
+        .overlay(alignment: .bottomLeading) {
+            if viewModel.insulinOnBoard > 0 {
+                InsulinOnBoardLabel(units: viewModel.insulinOnBoard)
+                    .offset(y: 22)
+            }
+        }
+        .padding(.bottom, viewModel.insulinOnBoard > 0 ? 22 : 0)
     }
 }
 

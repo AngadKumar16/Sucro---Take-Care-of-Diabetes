@@ -30,6 +30,14 @@ struct AddInsulinView: View {
             hasChanges: !unitsText.isEmpty || !notes.isEmpty,
             onSave: save
         ) {
+            if deliveryMethod == .pen {
+                Section {
+                    InsulinPen(units: parseNumber(unitsText) ?? 0)
+                        .padding(.vertical, 4)
+                        .animation(.snappy, value: unitsText)
+                }
+                .listRowBackground(Theme.card)
+            }
             InsulinFields(unitsText: $unitsText, type: $type, deliveryMethod: $deliveryMethod, timestamp: $timestamp, notes: $notes, focus: $unitsFocused)
         }
         .defaultFocus($unitsFocused, true)

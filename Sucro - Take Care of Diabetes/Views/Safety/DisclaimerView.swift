@@ -31,6 +31,7 @@ struct DisclaimerView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .foregroundStyle(Theme.onAccent)
             .controlSize(.large)
             .padding(.horizontal, 24)
             .padding(.bottom, 8)

@@ -33,6 +33,7 @@ struct DevicesView: View {
                     Text("Apple Health isn't available on this device.")
                         .foregroundStyle(.secondary)
                 }
+                .listRowBackground(Theme.card)
             }
 
             Section {
@@ -41,7 +42,10 @@ struct DevicesView: View {
             } footer: {
                 Text("\(AppInfo.name) doesn't connect to devices over Bluetooth. Readings arrive through Apple Health, or you can log them yourself.")
             }
+
+            .listRowBackground(Theme.card)
         }
+        .instrumentBackground()
         .navigationTitle("Devices")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await importer.sync() }
@@ -106,6 +110,7 @@ struct DevicesView: View {
                 Text("To see CGM readings here, turn on Apple Health sharing in your CGM app, then allow \(AppInfo.name) to read Blood Glucose in Settings › Apps › Health › Data Access & Devices. New readings arrive in the background.")
             }
         }
+        .listRowBackground(Theme.card)
     }
 
     private func statusRow(_ status: HealthGlucoseStatus) -> some View {
@@ -141,6 +146,7 @@ struct DevicesView: View {
                  ? "Glucose, carbs, insulin and workouts you log here are also saved to Apple Health."
                  : "To save what you log to Apple Health, open Settings › Apps › Health › Data Access & Devices › \(AppInfo.name) and turn the categories on.")
         }
+        .listRowBackground(Theme.card)
     }
 
     private func refreshPermissions() async {

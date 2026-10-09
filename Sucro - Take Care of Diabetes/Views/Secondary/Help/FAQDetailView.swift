@@ -17,6 +17,7 @@ struct FAQDetailView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .instrumentBackground()
         .navigationTitle(article.title)
         .navigationBarTitleDisplayMode(.large)
     }

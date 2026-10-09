@@ -24,10 +24,12 @@ struct TimeAndNotesSections: View {
                 LabeledContent(timeLabel, value: timestamp.formatted(date: .abbreviated, time: .shortened))
             }
         }
+        .listRowBackground(Theme.card)
         Section("Notes") {
             TextField("Optional", text: $notes, axis: .vertical)
                 .lineLimit(2...6)
         }
+        .listRowBackground(Theme.card)
     }
 }
 
@@ -63,6 +65,7 @@ struct GlucoseFields: View {
                 Text(message).foregroundStyle(.red)
             }
         }
+        .listRowBackground(Theme.card)
         TimeAndNotesSections(timestamp: $timestamp, notes: $notes, isTimeEditable: !importedFromHealth)
     }
 }
@@ -113,6 +116,7 @@ struct CarbFields: View {
                 Text(message).foregroundStyle(.red)
             }
         }
+        .listRowBackground(Theme.card)
         TimeAndNotesSections(timestamp: $timestamp, notes: $notes)
     }
 }
@@ -146,6 +150,7 @@ struct InsulinFields: View {
                 Text("This records a dose. It doesn't control a pump.")
             }
         }
+        .listRowBackground(Theme.card)
         TimeAndNotesSections(timestamp: $timestamp, notes: $notes)
     }
 }
@@ -185,6 +190,7 @@ struct ActivityFields: View {
                 Text(message).foregroundStyle(.red)
             }
         }
+        .listRowBackground(Theme.card)
         TimeAndNotesSections(timestamp: $timestamp, notes: $notes, timeLabel: "Started")
     }
 
@@ -211,6 +217,7 @@ struct SiteFields: View {
         } footer: {
             Text("You'll get a reminder when this site is due.")
         }
+        .listRowBackground(Theme.card)
         TimeAndNotesSections(timestamp: $timestamp, notes: $notes, timeLabel: "Changed")
     }
 }

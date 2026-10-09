@@ -29,6 +29,7 @@ struct AddCarbView: View {
             hasChanges: !gramsText.isEmpty || !foodItems.isEmpty || !notes.isEmpty,
             onSave: save
         ) {
+            KitchenScaleSection(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems)
             CarbFields(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems, timestamp: $timestamp, notes: $notes, focus: $gramsFocused)
         }
         .defaultFocus($gramsFocused, true)

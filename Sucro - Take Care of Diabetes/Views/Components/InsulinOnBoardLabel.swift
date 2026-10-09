@@ -16,7 +16,7 @@ struct InsulinOnBoardLabel: View {
         } icon: {
             Image(systemName: "syringe")
         }
-        .font(.caption)
+        .font(Theme.readout(.caption))
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Estimated insulin on board: \(units, format: .number.precision(.fractionLength(1))) units")

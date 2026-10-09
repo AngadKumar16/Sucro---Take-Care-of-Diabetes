@@ -36,9 +36,11 @@ struct LearnView: View {
                 } header: {
                     Text("\(results.count) \(results.count == 1 ? "Term" : "Terms")")
                 }
+                .listRowBackground(Theme.card)
             }
         }
         .listStyle(.insetGrouped)
+        .instrumentBackground()
         .navigationTitle("Learn")
         .searchable(text: $query, prompt: "Search \(glossary.terms.count) terms")
         .glossaryDestinations()
@@ -46,12 +48,20 @@ struct LearnView: View {
 
     @ViewBuilder
     private var browseSections: some View {
+        Section("Guides") {
+            GuideCarousel()
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+        }
+        .listRowBackground(Theme.card)
+
         if !savedTerms.isEmpty {
             Section("Saved") {
                 ForEach(savedTerms) { term in
                     GlossaryTermRow(term: term)
                 }
             }
+            .listRowBackground(Theme.card)
         }
 
         Section {
@@ -63,6 +73,8 @@ struct LearnView: View {
         } footer: {
             Text("The words you'll see most in DiabetesCare and at appointments.")
         }
+
+        .listRowBackground(Theme.card)
 
         Section("Topics") {
             ForEach(GlossaryCategory.allCases, id: \.self) { category in
@@ -81,6 +93,8 @@ struct LearnView: View {
             }
         }
 
+        .listRowBackground(Theme.card)
+
         Section {
             NavigationLink(value: GlossaryDestination.allTerms) {
                 Label("All Terms A–Z", systemImage: "textformat.abc")
@@ -89,6 +103,8 @@ struct LearnView: View {
             GlossaryDisclaimer()
                 .padding(.top, 8)
         }
+
+        .listRowBackground(Theme.card)
     }
 }
 

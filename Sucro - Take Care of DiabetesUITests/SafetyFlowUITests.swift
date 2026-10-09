@@ -51,18 +51,32 @@ final class SafetyFlowUITests: XCTestCase {
         app.launch()
         openSettings()
 
-        for title in ["Urgent Low", "Low", "High", "Urgent High"] {
-            XCTAssertTrue(app.steppers["threshold.\(title)"].waitForExistence(timeout: 5), "\(title) stepper should exist")
+        // The four rulers run down the Glucose section, past the first
+        // screen, so nudge the list up a little until each one shows.
+        for title in ["Urgent High", "High", "Low", "Urgent Low"] {
+            let slider = app.sliders["threshold.\(title)"]
+            for _ in 0..<4 where !slider.waitForExistence(timeout: 2) {
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                    .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+            }
+            XCTAssertTrue(slider.exists, "\(title) slider should exist")
         }
 
-        // Each stepper button's label includes the current value.
-        let increment = app.buttons["threshold.Low-Increment"]
-        let decrement = app.buttons["threshold.Low-Decrement"]
-        let before = increment.label
-        increment.tap()
-        XCTAssertNotEqual(increment.label, before, "Incrementing should change the Low threshold")
-        decrement.tap()
-        XCTAssertEqual(increment.label, before)
+        // Each threshold is a ruler tape. Dragging the scale left moves
+        // higher values under the needle; the value reads in the user's unit.
+        let low = app.sliders["threshold.Low"]
+        // Bring it clear of the floating tab bar before dragging.
+        if low.frame.maxY > app.frame.maxY - 140 { app.swipeUp() }
+        let before = low.value as? String
+        low.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: low.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.5)))
+        XCTAssertNotEqual(low.value as? String, before, "Dragging the tape should change the Low threshold")
+
+        // Put the lines back so later tests see the defaults.
+        let reset = app.buttons["Reset to Common Defaults"]
+        if !reset.isHittable { app.swipeUp() }
+        XCTAssertTrue(reset.waitForExistence(timeout: 5))
+        reset.tap()
 
         let actionTime = app.steppers["insulinActionTime"]
         if !actionTime.exists { app.swipeUp() }

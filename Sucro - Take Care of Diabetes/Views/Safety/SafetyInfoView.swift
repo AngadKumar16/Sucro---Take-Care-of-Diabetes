@@ -12,6 +12,7 @@ struct SafetyInfoView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .instrumentBackground()
         .navigationTitle("Safety Information")
         .navigationBarTitleDisplayMode(.inline)
     }
