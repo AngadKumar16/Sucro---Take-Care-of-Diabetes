@@ -13,9 +13,10 @@ struct EditSiteChangeView: View {
     @State private var location: SiteLocation = .other
     @State private var timestamp = Date()
     @State private var notes = ""
+    @State private var photo: Data?
     @State private var original: [AnyHashable] = []
 
-    private var current: [AnyHashable] { [location, timestamp, notes] }
+    private var current: [AnyHashable] { [location, timestamp, notes, photo] }
 
     var body: some View {
         EntryForm(
@@ -26,6 +27,7 @@ struct EditSiteChangeView: View {
             onCancel: operation.cancel
         ) {
             SiteFields(location: $location, timestamp: $timestamp, notes: $notes)
+            SitePhotoSection(photo: $photo)
         }
         .onAppear(perform: load)
     }
@@ -35,6 +37,7 @@ struct EditSiteChangeView: View {
         location = SiteLocation(stored: entry.location) ?? .other
         timestamp = entry.timestamp ?? Date()
         notes = entry.notes ?? ""
+        photo = entry.photo
         original = current
     }
 
@@ -42,6 +45,7 @@ struct EditSiteChangeView: View {
         entry.location = location.rawValue
         entry.timestamp = timestamp
         entry.notes = notes.isEmpty ? nil : notes
+        entry.photo = photo
         return operation.save()
     }
 }

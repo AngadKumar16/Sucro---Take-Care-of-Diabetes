@@ -196,6 +196,61 @@ final class FeatureFlowUITests: XCTestCase {
         XCTAssertTrue(inserted.exists, "Today should show the new site")
     }
 
+    /// Picks the first photo in the system photo picker. The picker runs out
+    /// of process but its grid shows up in the app's tree. Relies on the
+    /// sample photos every simulator ships with.
+    private func pickFirstPhoto() {
+        let photo = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
+        XCTAssertTrue(photo.waitForExistence(timeout: 10), "The photo library should show photos")
+        // The cells report themselves as not hittable, so tap by position.
+        photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
+    func testSitePhotoCanBeAddedSeenAndRemoved() {
+        openTab("Today")
+        let change = app.buttons["Change Site"]
+        scrollTo(change)
+        change.tap()
+        XCTAssertTrue(app.navigationBars["Change Site"].waitForExistence(timeout: 5))
+
+        let add = app.buttons["Add Photo"]
+        scrollTo(add)
+        add.tap()
+        pickFirstPhoto()
+        let preview = app.images["sitePhoto"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 10), "The picked photo should show in the form")
+        XCTAssertTrue(app.buttons["Change Photo"].exists)
+        save()
+
+        // The photo is kept with the site change and shows when editing it.
+        let card = app.buttons.containing(NSPredicate(format: "label CONTAINS 'Site Change'")).firstMatch
+        openEdit(card)
+        scrollTo(preview)
+        XCTAssertTrue(preview.exists, "The saved photo should show when editing")
+
+        let remove = app.buttons["Remove Photo"]
+        scrollTo(remove)
+        remove.tap()
+        XCTAssertTrue(preview.waitForNonExistence(timeout: 5))
+        save()
+
+        openEdit(card)
+        let addAgain = app.buttons["Add Photo"]
+        scrollTo(addAgain)
+        XCTAssertTrue(addAgain.exists, "The photo should be gone after removing it")
+        XCTAssertFalse(preview.exists)
+    }
+
+    /// Opens a Recent Activity card on Today, then Edit in its details.
+    private func openEdit(_ card: XCUIElement) {
+        openTab("Today")
+        scrollTo(card)
+        card.tap()
+        XCTAssertTrue(app.navigationBars["Details"].waitForExistence(timeout: 5))
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.navigationBars["Edit Site Change"].waitForExistence(timeout: 5))
+    }
+
     func testRecentEntryOpensDetailsAndTakesANote() {
         addFromLog("Add Carbs")
         type("44", into: "Carbs")

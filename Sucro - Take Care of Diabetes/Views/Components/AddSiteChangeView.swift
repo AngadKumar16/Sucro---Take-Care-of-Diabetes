@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import PhotosUI
 import CoreData
 
 struct AddSiteChangeView: View {
@@ -15,7 +14,6 @@ struct AddSiteChangeView: View {
     @State private var location: SiteLocation = .abdomenLeft
     @State private var timestamp = Date()
     @State private var notes = ""
-    @State private var photoItem: PhotosPickerItem?
     @State private var photoData: Data?
 
     var body: some View {
@@ -26,31 +24,9 @@ struct AddSiteChangeView: View {
             onSave: save
         ) {
             SiteFields(location: $location, timestamp: $timestamp, notes: $notes)
-
-            Section("Photo") {
-                if let photoData, let image = UIImage(data: photoData) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 200)
-                        .clipShape(.rect(cornerRadius: 8))
-                        .accessibilityLabel("Site photo")
-                }
-                PhotosPicker(selection: $photoItem, matching: .images) {
-                    Label(photoData == nil ? "Add Photo" : "Change Photo", systemImage: "photo")
-                }
-                if photoData != nil {
-                    Button("Remove Photo", role: .destructive) {
-                        photoItem = nil
-                        photoData = nil
-                    }
-                }
-            }
+            SitePhotoSection(photo: $photoData)
         }
         .onAppear { location = suggestedLocation }
-        .onChange(of: photoItem) { _, item in
-            Task { await loadPhoto(item) }
-        }
     }
 
     /// The next site in the rotation after the current one, so the same
@@ -62,14 +38,6 @@ struct AddSiteChangeView: View {
             return .abdomenLeft
         }
         return rotation[(index + 1) % rotation.count]
-    }
-
-    private func loadPhoto(_ item: PhotosPickerItem?) async {
-        guard let item,
-              let data = try? await item.loadTransferable(type: Data.self),
-              let image = UIImage(data: data) else { return }
-        // Re-encode so large HEIC originals don't bloat the store.
-        photoData = image.jpegData(compressionQuality: 0.8)
     }
 
     private func save() -> Bool {
