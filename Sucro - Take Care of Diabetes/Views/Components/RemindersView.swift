@@ -42,7 +42,7 @@ struct RemindersView: View {
                         )
                     }
                 }
-                .instrumentPanel(padding: 0)
+                .softPanel(padding: 0)
             }
         }
     }
@@ -60,7 +60,7 @@ struct SuggestionCard: View {
             Image(systemName: "lightbulb.fill")
                 .foregroundStyle(Theme.amber)
         }
-        .instrumentPanel(border: Theme.amber, offset: Theme.amber.opacity(0.5))
+        .softPanel(border: Theme.amber)
     }
 }
 

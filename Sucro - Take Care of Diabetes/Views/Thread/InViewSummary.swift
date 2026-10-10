@@ -23,7 +23,7 @@ struct InViewSummary: View {
 
         VStack(alignment: .leading, spacing: 10) {
             Text("In view · \(rangeText)")
-                .instrumentLabel()
+                .friendlyLabel()
                 .accessibilityAddTraits(.isHeader)
 
             if count == 0 {
@@ -84,7 +84,7 @@ struct InViewSummary: View {
     private func cell(_ title: String, _ value: String, _ unit: String?, color: Color?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
-                .instrumentLabel()
+                .friendlyLabel()
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(Theme.readout(.title3, weight: .semibold))

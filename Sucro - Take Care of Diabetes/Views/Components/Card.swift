@@ -2,8 +2,8 @@
 //  Card.swift
 //  Sucro - Take Care of Diabetes
 //
-//  The inset panel used on Today and Trends, set into the instrument body
-//  (see Theme).
+//  The panel used on Today and Trends: soft, rounded card stock with a
+//  light edge and shadow, so screens feel friendly rather than machined.
 //
 
 import SwiftUI
@@ -13,8 +13,51 @@ struct CardBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .instrumentPanel(padding: padding)
+            .softPanel(padding: padding)
     }
+}
+
+extension View {
+    /// Rounded card stock with a hairline edge and a soft shadow. A colored
+    /// edge marks a card that needs attention.
+    func softPanel(padding: CGFloat = 16, border: Color = Theme.rule) -> some View {
+        self
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card, in: .rect(cornerRadius: 22, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(border, lineWidth: 1))
+            .shadow(color: Theme.ink.opacity(0.07), radius: 12, y: 4)
+    }
+
+    /// A small, friendly section label: sentence case, not shouted.
+    func friendlyLabel() -> some View {
+        self
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Theme.soft)
+    }
+}
+
+/// A soft, rounded filled button for the main action on a card.
+struct SoftButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.semibold))
+            .foregroundStyle(Theme.onAccent)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(Theme.green, in: .rect(cornerRadius: 16, style: .continuous))
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(isEnabled ? 1 : 0.4)
+            .animation(.snappy(duration: 0.15), value: configuration.isPressed)
+            .contentShape(.rect)
+    }
+}
+
+extension ButtonStyle where Self == SoftButtonStyle {
+    static var soft: SoftButtonStyle { SoftButtonStyle() }
 }
 
 extension View {
@@ -31,7 +74,7 @@ struct CardHeader<Accessory: View>: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(title)
-                .font(.system(.title3, design: .serif, weight: .semibold))
+                .font(.system(.title3, design: .rounded, weight: .bold))
                 .foregroundStyle(Theme.ink)
                 .accessibilityAddTraits(.isHeader)
             Spacer()

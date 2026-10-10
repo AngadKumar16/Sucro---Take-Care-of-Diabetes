@@ -14,6 +14,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(HealthGlucoseImporter.self) private var healthImporter
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(SettingsStore.self) private var settings
 
     /// Switches to the Log tab.
     let onShowAllActivity: () -> Void
@@ -38,6 +39,7 @@ struct HomeView: View {
             }
             .padding(.horizontal)
             .padding(.bottom)
+            .fontDesign(.rounded)
         }
         .instrumentBackground()
         .navigationTitle("Today")
@@ -135,8 +137,10 @@ struct HomeView: View {
                 )
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                if let reading = viewModel.latestGlucoseReading {
+            dateline(now: now)
+
+            if let reading = viewModel.latestGlucoseReading {
+                VStack(alignment: .leading, spacing: 12) {
                     // Tapping the latest reading brings the thread back to now.
                     Button {
                         withAnimation(.smooth) { scrollStart = ThreadView.start(showing: zoom, at: now) }
@@ -146,38 +150,55 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Shows now on the thread")
-                } else {
-                    noReadings
+                    ThreadView(
+                        samples: viewModel.threadSamples,
+                        events: viewModel.threadEvents,
+                        reminders: viewModel.upcomingReminders,
+                        now: now,
+                        zoom: $zoom,
+                        scrollStart: $scrollStart
+                    )
                 }
-                ThreadView(
-                    samples: viewModel.threadSamples,
-                    events: viewModel.threadEvents,
-                    reminders: viewModel.upcomingReminders,
-                    now: now,
-                    zoom: $zoom,
-                    scrollStart: $scrollStart
-                )
-            }
-            .card()
+                .card()
 
-            InViewSummary(window: window, samples: viewModel.threadSamples, events: viewModel.threadEvents)
+                InViewSummary(window: window, samples: viewModel.threadSamples, events: viewModel.threadEvents)
+            } else {
+                // An empty chart says nothing; a meter to set says what to do.
+                FirstReadingCard(onLog: logFirstReading, onMoreDetails: viewModel.logGlucose)
+                    .overlay(alignment: .topLeading) {
+                        // A dose can be logged before any reading.
+                        if viewModel.insulinOnBoard > 0 {
+                            InsulinOnBoardLabel(units: viewModel.insulinOnBoard)
+                                .padding(12)
+                        }
+                    }
+            }
 
             QuickActionButtonsView(
                 onLogMeal: viewModel.logMeal,
                 onQuickBolus: viewModel.quickBolus,
                 onChangeSite: viewModel.changeSite,
-                onLogPreset: viewModel.logMeal(preset:)
+                onLogPreset: viewModel.logMeal(preset:),
+                todayCarbs: viewModel.todayCarbTotal,
+                todayInsulin: viewModel.todayInsulinTotal,
+                nextSite: SiteLocation.suggested(
+                    current: SiteLocation(stored: viewModel.lastSiteChange?.location),
+                    history: viewModel.siteHistory
+                )
             )
 
             // The events list follows the thread: it shows what's in view.
-            RecentTimelineCardsView(
-                events: Array(visibleEvents.prefix(20)),
-                onShowAll: onShowAllActivity,
-                onEventTap: viewModel.showEventDetails,
-                onEventEdit: viewModel.editEvent,
-                onEventDelete: viewModel.deleteEvent,
-                onAddNote: viewModel.showAddNote(for:)
-            )
+            // Before anything is logged it would only be an empty box.
+            if viewModel.latestGlucoseReading != nil || !visibleEvents.isEmpty {
+                RecentTimelineCardsView(
+                    events: Array(visibleEvents.prefix(20)),
+                    onShowAll: onShowAllActivity,
+                    onEventTap: viewModel.showEventDetails,
+                    onEventEdit: viewModel.editEvent,
+                    onEventDelete: viewModel.deleteEvent,
+                    onAddNote: viewModel.showAddNote(for:)
+                )
+            }
 
             RemindersView(
                 reminders: viewModel.upcomingReminders,
@@ -194,28 +215,39 @@ struct HomeView: View {
         }
     }
 
-    private var noReadings: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("No Readings Yet")
-                    .font(.headline)
-                Text("Log a fingerstick reading to start the thread.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button("Log Glucose", systemImage: "plus", action: viewModel.logGlucose)
-                .buttonStyle(.borderedProminent)
-                .foregroundStyle(Theme.onAccent)
+    /// A hello with the person's name when they've given one, and the date.
+    private func dateline(now: Date) -> some View {
+        let name = settings.userName.trimmingCharacters(in: .whitespaces)
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(name.isEmpty ? greeting(at: now) : "\(greeting(at: now)), \(name)")
+                .font(.system(.title3, design: .rounded, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+            Text(now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                .font(.subheadline)
+                .foregroundStyle(Theme.soft)
         }
-        // A dose can be logged before any reading; still show what's active.
-        .overlay(alignment: .bottomLeading) {
-            if viewModel.insulinOnBoard > 0 {
-                InsulinOnBoardLabel(units: viewModel.insulinOnBoard)
-                    .offset(y: 22)
-            }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func greeting(at date: Date) -> String {
+        switch Calendar.current.component(.hour, from: date) {
+        case 5..<12: "Good morning"
+        case 12..<17: "Good afternoon"
+        default: "Good evening"
         }
-        .padding(.bottom, viewModel.insulinOnBoard > 0 ? 22 : 0)
+    }
+
+    private func logFirstReading(_ mgdl: Double) {
+        let now = Date()
+        logViewModel.addGlucoseReading(
+            value: mgdl,
+            unit: "mg/dL",
+            context: GlucoseContext.likely(at: now).rawValue,
+            notes: nil,
+            timestamp: now
+        )
+        withAnimation(.smooth) { viewModel.fetchLatestData() }
     }
 }
 

@@ -38,7 +38,7 @@ struct ReadingRingCard: View {
                     .frame(width: 200, height: 210)
                 VStack(spacing: 0) {
                     Text(settings.glucoseValueString(reading.value))
-                        .font(.system(size: 56, weight: .semibold, design: .serif).monospacedDigit())
+                        .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(inkColor)
                         .minimumScaleFactor(0.6)
                         .lineLimit(1)

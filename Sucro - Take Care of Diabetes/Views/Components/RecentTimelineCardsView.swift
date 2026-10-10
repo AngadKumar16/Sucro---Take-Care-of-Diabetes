@@ -47,7 +47,7 @@ struct RecentTimelineCardsView: View {
                             .accessibilityAction(named: "Delete") { pendingDelete = event }
                     }
                 }
-                .instrumentPanel(padding: 0)
+                .softPanel(padding: 0)
             }
         }
         .confirmationDialog(

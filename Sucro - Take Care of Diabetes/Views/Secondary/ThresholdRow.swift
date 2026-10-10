@@ -63,16 +63,17 @@ struct ThresholdRow: View {
 /// A horizontal scale from 40 to 400 mg/dL that scrolls under a fixed
 /// center needle. Ticks outside `bounds` are dimmed; let go past them and
 /// the tape springs back to the nearest allowed value.
-private struct RulerTape: View {
+struct RulerTape: View {
     @Environment(SettingsStore.self) private var settings
     @Binding var value: Double
     let bounds: ClosedRange<Double>
     let step: Double
     let needle: Color
+    /// Width of one step on the tape. Narrower ticks for fine steps.
+    var tickWidth: CGFloat = 9
 
     /// The tape covers the same span as the range bar.
     private static let scale = GlucoseRangeBar.scale
-    private static let tickWidth: CGFloat = 9
 
     @State private var position: Double?
     @State private var isScrolling = false
@@ -87,13 +88,13 @@ private struct RulerTape: View {
                 HStack(spacing: 0) {
                     ForEach(ticks, id: \.self) { tick in
                         Tick(value: tick, allowed: bounds.contains(tick), zone: settings.zone(for: tick))
-                            .frame(width: Self.tickWidth)
+                            .frame(width: tickWidth)
                             .id(tick)
                     }
                 }
                 .scrollTargetLayout()
             }
-            .contentMargins(.horizontal, (proxy.size.width - Self.tickWidth) / 2, for: .scrollContent)
+            .contentMargins(.horizontal, (proxy.size.width - tickWidth) / 2, for: .scrollContent)
             .scrollTargetBehavior(.viewAligned)
             .scrollPosition(id: $position, anchor: .center)
             .scrollIndicators(.hidden)
