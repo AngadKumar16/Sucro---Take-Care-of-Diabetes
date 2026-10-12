@@ -1,0 +1,230 @@
+//
+//  DataService.swift
+//  DiabetesCare
+//
+//  Created by Angad Kumar on 3/12/26.
+//
+
+
+//
+//  DataService.swift
+//  DiabetesCare
+//
+//  Created by Angad Kumar on 3/13/26.
+//
+
+import Foundation
+import OSLog
+import CoreData
+
+class DataService {
+    static let shared = DataService()
+    
+    private init() {}
+    
+    // MARK: - Fetch Operations
+    
+    func fetchLatestGlucoseReading(context: NSManagedObjectContext) -> GlucoseReading? {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: false)]
+        request.fetchLimit = 1
+        
+        do {
+            return try context.fetch(request).first
+        } catch {
+            Log.data.error("Error fetching latest glucose: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+    
+    func fetchRecentGlucoseReadings(context: NSManagedObjectContext, limit: Int = 10) -> [GlucoseReading] {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: false)]
+        request.fetchLimit = limit
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            Log.data.error("Error fetching recent readings: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
+    }
+    
+    func fetchTodayTotals(context: NSManagedObjectContext) -> (insulin: Double, carbs: Double) {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: Date())
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return (0, 0)
+        }
+        
+        var insulinTotal: Double = 0
+        var carbTotal: Double = 0
+        
+        // Fetch insulin
+        let insulinRequest: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        insulinRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate)
+        
+        do {
+            let entries = try context.fetch(insulinRequest)
+            insulinTotal = entries.reduce(0) { $0 + $1.units }
+        } catch {
+            Log.data.error("Error fetching insulin totals: \(error.localizedDescription, privacy: .public)")
+        }
+        
+        // Fetch carbs
+        let carbRequest: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
+        carbRequest.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", startOfDay as NSDate, endOfDay as NSDate)
+        
+        do {
+            let entries = try context.fetch(carbRequest)
+            carbTotal = entries.reduce(0) { $0 + $1.grams }
+        } catch {
+            Log.data.error("Error fetching carb totals: \(error.localizedDescription, privacy: .public)")
+        }
+        
+        return (insulinTotal, carbTotal)
+    }
+    
+    /// Estimated insulin on board from rapid-acting doses within the user's
+    /// insulin action time. See `GlucoseCalculator.insulinOnBoard`.
+    func calculateIOB(context: NSManagedObjectContext, at now: Date = Date()) -> Double {
+        let actionHours = SettingsStore.shared.insulinActionHours
+        let since = now.addingTimeInterval(-actionHours * 3600)
+
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", since as NSDate, now as NSDate)
+
+        do {
+            let doses = try context.fetch(request).compactMap(\.dose)
+            return GlucoseCalculator.insulinOnBoard(doses: doses, at: now, actionHours: actionHours)
+        } catch {
+            Log.data.error("Error calculating IOB: \(error.localizedDescription, privacy: .public)")
+            return 0
+        }
+    }
+
+    /// Most recent rapid-acting dose, used to time the post-bolus glucose check.
+    func fetchLastRapidActingDose(context: NSManagedObjectContext, since: Date) -> InsulinEntry? {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: false)]
+
+        do {
+            return try context.fetch(request).first { InsulinType(stored: $0.type)?.isRapidActing == true }
+        } catch {
+            Log.data.error("Error fetching last dose: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+    
+    func fetchLastSiteChange(context: NSManagedObjectContext) -> SiteChange? {
+        let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]
+        request.fetchLimit = 1
+        
+        do {
+            return try context.fetch(request).first
+        } catch {
+            Log.data.error("Error fetching last site change: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+    
+    /// The latest reading taken up to 30 minutes before `time`, or `nil` if
+    /// there isn't one. Older readings say nothing about glucose at `time`.
+    func getGlucoseAtTime(context: NSManagedObjectContext, time: Date) -> Double? {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "timestamp >= %@ AND timestamp <= %@",
+            time.addingTimeInterval(-30 * 60) as NSDate,
+            time as NSDate
+        )
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: false)]
+        request.fetchLimit = 1
+        return (try? context.fetch(request))?.first?.value
+    }
+    
+    // MARK: - Delete Operations
+    
+    /// Deletes one entry. Returns false if it's already gone or the save fails.
+    @discardableResult
+    func delete(_ objectID: NSManagedObjectID, context: NSManagedObjectContext) -> Bool {
+        guard let object = try? context.existingObject(with: objectID) else { return false }
+        context.delete(object)
+        do {
+            try context.save()
+            return true
+        } catch {
+            context.rollback()
+            Log.data.error("Error deleting entry: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
+    /// Adds a note to an entry, after any note it already has.
+    func appendNote(_ note: String, to objectID: NSManagedObjectID, context: NSManagedObjectContext) -> Bool {
+        guard let entry = try? context.existingObject(with: objectID),
+              entry.entity.attributesByName["notes"] != nil else { return false }
+        let existing = entry.value(forKey: "notes") as? String
+        let newNote = (existing?.isEmpty == false) ? existing! + "\n" + note : note
+        entry.setValue(newNote, forKey: "notes")
+        do {
+            try context.save()
+            return true
+        } catch {
+            context.rollback()
+            Log.data.error("Error adding note: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
+    // MARK: - Range Fetches (used by Reports & Export)
+
+    func fetchGlucoseReadings(context: NSManagedObjectContext, in range: DateInterval) -> [GlucoseReading] {
+        let request: NSFetchRequest<GlucoseReading> = GlucoseReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \GlucoseReading.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    func fetchInsulinEntries(context: NSManagedObjectContext, in range: DateInterval) -> [InsulinEntry] {
+        let request: NSFetchRequest<InsulinEntry> = InsulinEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \InsulinEntry.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    func fetchCarbEntries(context: NSManagedObjectContext, in range: DateInterval) -> [CarbEntry] {
+        let request: NSFetchRequest<CarbEntry> = CarbEntry.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp <= %@", range.start as NSDate, range.end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \CarbEntry.timestamp, ascending: true)]
+        return (try? context.fetch(request)) ?? []
+    }
+
+    // MARK: - Destructive Operations
+
+    /// Deletes every record in every entity. Used by Settings > Clear All Data.
+    func clearAllData(context: NSManagedObjectContext) -> Bool {
+        let entityNames = ["GlucoseReading", "InsulinEntry", "CarbEntry", "ActivityEntry", "SiteChange", "DeviceStatus"]
+        do {
+            for name in entityNames {
+                let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: name)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
+                deleteRequest.resultType = .resultTypeObjectIDs
+                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                if let objectIDs = result?.result as? [NSManagedObjectID], !objectIDs.isEmpty {
+                    // Keep the in-memory view context in sync with the store.
+                    NSManagedObjectContext.mergeChanges(
+                        fromRemoteContextSave: [NSDeletedObjectsKey: objectIDs],
+                        into: [context]
+                    )
+                }
+            }
+            try context.save()
+            return true
+        } catch {
+            Log.data.error("Error clearing all data: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+}

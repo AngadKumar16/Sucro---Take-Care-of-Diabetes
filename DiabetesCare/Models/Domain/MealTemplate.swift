@@ -1,0 +1,47 @@
+//
+//  MealTemplate.swift
+//  DiabetesCare
+//
+//  Created by Angad Kumar on 3/12/26.
+//
+//
+
+import Foundation
+
+struct MealTemplate: Identifiable, Codable {
+    var id = UUID()
+    var name: String
+    var carbs: Double
+    var protein: Double?
+    var fat: Double?
+    var fiber: Double?
+    var typicalBolus: Double?
+    var notes: String?
+    var isFavorite: Bool
+    var photoData: Data?
+    var createdAt: Date
+    
+    init(name: String, carbs: Double, protein: Double? = nil, fat: Double? = nil,
+         fiber: Double? = nil, typicalBolus: Double? = nil, notes: String? = nil,
+         isFavorite: Bool = false, photoData: Data? = nil) {
+        self.name = name
+        self.carbs = carbs
+        self.protein = protein
+        self.fat = fat
+        self.fiber = fiber
+        self.typicalBolus = typicalBolus
+        self.notes = notes
+        self.isFavorite = isFavorite
+        self.photoData = photoData
+        self.createdAt = Date()
+    }
+}
+
+extension MealTemplate {
+    /// Built-in quick-log presets surfaced from the Home screen's Log Meal button.
+    static let standardPresets: [MealTemplate] = [
+        MealTemplate(name: "Breakfast", carbs: 40),
+        MealTemplate(name: "Lunch", carbs: 60),
+        MealTemplate(name: "Dinner", carbs: 70)
+    ]
+}

@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROJECT: "Sucro - Take Care of Diabetes.xcodeproj"
-  SCHEME: "Sucro - Take Care of Diabetes"
+  PROJECT: "DiabetesCare.xcodeproj"
+  SCHEME: "DiabetesCare"
 
 jobs:
   test:

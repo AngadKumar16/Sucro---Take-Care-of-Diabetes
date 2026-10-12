@@ -11,4 +11,4 @@ The result is **"Data Not Collected."**
 
 Revisit this if any of the following is added: crash reporting (for example Sentry or Crashlytics), analytics, an account or sync server, a Dexcom web API integration, or support uploads.
 
-Privacy manifest: `Sucro - Take Care of Diabetes/PrivacyInfo.xcprivacy`. It declares no tracking, no collected data, and one required-reason API: UserDefaults with reason CA92.1, which covers app-only preferences.
+Privacy manifest: `DiabetesCare/PrivacyInfo.xcprivacy`. It declares no tracking, no collected data, and one required-reason API: UserDefaults with reason CA92.1, which covers app-only preferences.

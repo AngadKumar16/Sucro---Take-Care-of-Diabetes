@@ -1,0 +1,24 @@
+//
+//  FAQDetailView.swift
+//  DiabetesCare
+//
+
+import SwiftUI
+
+struct FAQDetailView: View {
+    let article: HelpArticle
+
+    var body: some View {
+        ScrollView {
+            Text(article.body)
+                .font(.body)
+                .lineSpacing(3)
+                .frame(maxWidth: 640, alignment: .leading)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .instrumentBackground()
+        .navigationTitle(article.title)
+        .navigationBarTitleDisplayMode(.large)
+    }
+}

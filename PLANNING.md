@@ -1,15 +1,13 @@
 # DiabetesCare — Planning Guide
 
-Status audit of the codebase (repo folder still named `Sucro - Take Care of Diabetes`), written 2026-10-07 for handoff to Claude Code.
-Based on reading the source. **The app was not built or run for this audit** — step 0 below is to confirm it compiles and tests pass.
+Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; every phase below is now done (2026-10-12). What's left needs a person or Apple: see `docs/release-checklist.md`.
 
 ## Snapshot
 
-- iOS 26, SwiftUI + Core Data (`SucroDataModel`), Swift 5, Xcode 16 synchronized folders (new files in the source tree are added to the target automatically).
-- ~9.1k lines across 76 Swift files. Last commit 2026-06-20.
+- iOS 26, SwiftUI + Core Data (`SucroDataModel`, name kept so existing stores open), Swift 5, Xcode 16 synchronized folders (new files in the source tree are added to the target automatically).
 - Architecture: `Views/` → `ViewModels/` (ObservableObject) → `Services/` singletons (`DataService`, `NotificationService`, ...) → Core Data.
 - Navigation: 5 tabs (Today, Log, Trends, Learn, Settings), `sidebarAdaptable` on iPad. Reports opens from the Share Report button on Trends. Devices, Help and Safety Information are pushed from Settings.
-- Rebrand done today: home-screen name is **DiabetesCare** (`INFOPLIST_KEY_CFBundleDisplayName`), and the Health/Bluetooth permission strings say DiabetesCare. Target, scheme, folders, bundle ID (`com.AngadKumar16.Sucro---Take-Care-of-Diabetes`) and repo name still say Sucro.
+- Name: **DiabetesCare** everywhere — `DiabetesCare.xcodeproj`, scheme/target/module `DiabetesCare`, folders `DiabetesCare/`, `DiabetesCareTests/`, `DiabetesCareUITests/`, bundle ID `com.AngadKumar16.DiabetesCare` (renamed 2026-10-12; the old ID's installs don't carry over). Only the repo folder and `SucroDataModel` still say Sucro.
 - `Resources/Glossary.json`: 134 curated glossary terms (`id`, `name`, `aliases`, `category`, `summary`, `details`, `related`, `inApp`) behind the Learn tab. Replaced the prototype's `MedicalTerms.json` (216 terms, about half off-topic, fake URLs, unused `isPremium`). Content is general information, written in plain language, and should get a clinician review before release.
 
 ## What works
@@ -21,13 +19,16 @@ Based on reading the source. **The app was not built or run for this audit** —
 | Home dashboard: latest glucose, today totals, IOB, mini timeline, recent cards, site snapshot, quick actions, meal/bolus presets | Works off local data. |
 | Monitor tab: readings by date range, average, min–max | Works. |
 | Insights: stats (avg, SD, CV, TIR), weekday patterns, carb→spike correlations | Computes from real data (see bugs below). |
-| Reports + export (PDF / PNG / CSV via share sheet) | Works; no-data case handled. |
-| Settings: unit, target range, notifications, dark mode, auto backup, export, clear all data | Persisted in UserDefaults via `SettingsStore`; dark mode, unit and target range drive the UI. |
-| Site-change reminders | Local notification scheduled on site change (rotation days per body site). |
-| Auto backup | Daily CSV of glucose readings to app `Documents/Backups` on launch. |
+| Reports + export (PDF report, print; glucose CSV from Settings) | Works; no-data case handled. There is no PNG export. |
+| Settings: unit, thresholds, insulin action time, notifications, appearance, backup/restore, export, clear all data | Persisted in UserDefaults via `SettingsStore`. |
+| Site changes | Body-map picker (add and edit), reminders from rotation days, Site History (rest per site, days worn), Sites filter in Log. |
+| Backup / restore | Daily JSON backup of every entry (photos included) + settings to `Documents/Backups`, newest 7 kept, visible in Files. Back Up Now (save anywhere) and Restore (add missing or replace all). |
+| iPad | Today and Trends use two columns at regular width; Log keeps a readable width. |
 | Tests | Swift Testing unit tests (settings persistence, unit conversion, Core Data persistence, clear-all, date-range fetch, draft edit, report stats) + XCUITests for main flows (`-uiTesting` launch arg skips HealthKit prompt). |
 
 ## What doesn't work / is fake
+
+Everything in this section has been fixed; kept as a record. Fixes are noted in the phases below.
 
 ### Not real (UI exists, nothing behind it)
 1. **CGM connection.** `DeviceMonitorService` creates a `CBCentralManager` but never scans, never discovers services, and all peripheral delegate methods are empty. No glucose ever arrives from a device. Side effect: Bluetooth permission prompt fires at launch for no reason.
@@ -35,7 +36,7 @@ Based on reading the source. **The app was not built or run for this audit** —
 3. **Devices toggles** `autoSyncEnabled`, `backgroundMonitoringEnabled`, `lowBatteryAlertsEnabled` are saved but never read anywhere.
 4. **Apple Health import.** `HealthKitManager.fetchGlucoseReadings` exists but is never called — the app only writes to Health, never reads. (This is the cheapest real path to CGM data: Dexcom/Libre apps write to Health.)
 5. **"Battery" on Home** is the *phone's* battery (`UIDevice`), not the CGM/pump.
-7. `BodyMapView` taps just `print`. `NoteInputView` preview prints (real usage is fine).
+7. ~~`BodyMapView` taps just `print`.~~ Stale by 2026-10: `BodyMap` taps select a site. Edit Site Change now uses it too.
 
 ### Bugs / logic problems
 1. **"Device offline" alert = phone has no internet.** `isConnected` comes from `NWPathMonitor` and is fed into `AlertService` as device connectivity.
@@ -50,9 +51,9 @@ Based on reading the source. **The app was not built or run for this audit** —
 10. **Two reminder systems** (`RealReminderService` and `NotificationService`) both request notification permission and schedule notifications. Consolidate.
 11. **Duplicate `MonitorViewModel`.** Created in `SucroApp` (injected as env object) and again in `MainTabView`. Only one is used per view — remove the app-level one or share it.
 12. **Crashes on store failure.** `Persistence.swift` `fatalError`s if Core Data fails to load; fine in dev, not in a release health app.
-13. **Backup** only covers glucose (no carbs/insulin/activity/sites) and stays on-device (lost if app is deleted). No restore.
+13. ~~**Backup** only covers glucose and stays on-device. No restore.~~ Fixed in Phase 3.
 14. **CI is broken.** `.github/workflows/swift.yml` runs `swift build` / `swift test`, but there's no `Package.swift`. Needs `xcodebuild test -scheme ... -destination 'platform=iOS Simulator,...'`.
-15. Dead code: `App/ContentView.swift` (Xcode template, unused). Hundreds of `print` error handlers — swallow errors silently from the user's perspective.
+15. ~~Dead code; `print` error handlers swallow errors.~~ Fixed: dead code removed in Phase 0; all 42 `print`s replaced by `Log` (OSLog categories data/health/notifications/backup/export) on 2026-10-12, and failed deletes, notes and site saves now show an alert.
 16. `.windsurf/plans/home_page_feature_gap_analysis.md` is stale (says ~15% done; most of that list is now built).
 
 ## Plan (suggested order)
@@ -81,7 +82,7 @@ Also fixed along the way: Quick Bolus said "Deliver Bolus" (it only logs) and se
 - [x] Today: fixed event markers (were all drawn at one x), target band, empty states, context menus instead of custom swipe, site due date, Log Meal presets as a system menu.
 - [x] System text styles everywhere (Dynamic Type), grouped backgrounds that work in dark mode, Settings/Reports/Devices as Form/List, Appearance System/Light/Dark (migrates old dark mode switch).
 - [x] Devices is an honest stub (Apple Health status + "no direct connection yet"); fake catalog, battery and dead toggles removed.
-- Not done: Today/Log/Trends still have no iPad-specific layout beyond the sidebar.
+- [x] iPad layout (2026-10-12): Today splits into glucose (reading, thread, quick actions) and activity (logged in view, plan, sites) columns at regular width; Trends puts chart beside time in range and insights beside weekly patterns; Log caps at 720 pt. Compact width (iPhone, Split View) is unchanged.
 
 ### Feature sweep (done 2026-10-08)
 Every feature driven in the simulator through UI tests (`FeatureFlowUITests`, `HealthImportUITests`, launched with `-resetData` for an empty store). Bugs found and fixed:
@@ -100,17 +101,22 @@ Covered: add/edit/delete carbs, insulin, activity, glucose; Log filters and day 
 
 ### Phase 3 — Features
 - [x] Glossary/Learn tab *(2026-10-07: search by name/alias/definition, Start Here, 9 topics, A–Z with section index, saved terms, related links, share. Inline links from Trends stat tiles, Settings footers and the ketone sheet. Reports moved into a Trends sheet to make room. Still to do: clinician review of the wording; localization.)*
-- [ ] Full backup/restore (all entities, JSON) to Files/iCloud Drive.
-- [ ] Body map: make taps select a site; rotation history.
+- [x] Full backup/restore *(2026-10-12: `BackupArchive` (versioned JSON, every entity, site photos, main settings) + `BackupStore` (batch insert, merge by id or replace) in `Services/BackupArchive.swift`; `BackupService` writes the daily file and prunes to 7; Files app sharing on (`UIFileSharingEnabled`, `LSSupportsOpeningDocumentsInPlace`) so backups can be moved to iCloud Drive. Settings › Back Up Now (`.fileExporter`) / Restore from Backup (`.fileImporter` → Add Missing Entries / Replace All Data). Health readings keep their id and source, so Health deletions still carry over after a restore. Tests: `BackupTests`.)*
+- [x] Body map + rotation history *(2026-10-12: taps already selected a site. `SitePicker` is shared by Change Site and Edit Site Change. Today › Your sites › History opens `SiteHistoryView`: map, rest per site, every change with days worn vs rotation days (amber when overdue), photo thumbnail, edit/delete. Log lists site changes with a Sites filter. Math in `SiteRotation`, tested in `SiteRotationTests`; flow in `testSiteHistoryListsChangesAndEditsWithTheBodyMap`.)*
+- [x] Localization groundwork *(2026-10-12: `Resources/Localizable.xcstrings`; String-returning UI helpers use `String(localized:)`. English only. Xcode fills the catalog on build in the IDE. For the glossary, add `<lang>.lproj/Glossary.json`; the loader is already locale-aware.)*
 
 ### Phase 4 — Ship
-- [ ] Full rename if desired: target/scheme/folders → DiabetesCare; bundle ID must be final **before** first App Store upload.
-- [ ] Check App Store name availability ("DiabetesCare" is generic).
-- [ ] Request critical-alerts entitlement from Apple (bug 4), privacy policy, HealthKit review notes, App Privacy labels.
+- [x] Full rename → DiabetesCare, bundle ID `com.AngadKumar16.DiabetesCare` *(2026-10-12; CI and CLAUDE.md updated; all unit tests and all 42 UI tests pass on iPhone 17 / iOS 26. `-resetData` now also resets thresholds, Safety UI tests use it, and the stale "tapping the reading opens Trends" test was updated: tapping it returns the thread to now).*
+- [x] Privacy manifest `DiabetesCare/PrivacyInfo.xcprivacy` (no tracking, no collected data, UserDefaults CA92.1). HealthKit read access narrowed to blood glucose.
+- [x] Drafts in `docs/`: privacy policy, App Review notes, App Privacy answers ("Data Not Collected"), critical-alerts request text, release checklist.
+- [ ] **Manual** (see `docs/release-checklist.md`): check App Store name availability, register the bundle ID, host the privacy policy, confirm the support email, submit the critical-alerts request (bug 4), clinician review of the glossary and advice text, screenshots.
 
 ## Key files
 
-- Entry: `App/Sucro___Take_Care_of_DiabetesApp.swift` → `Views/Navigation/RootView.swift` → `MainTabView.swift`
+Paths are relative to `DiabetesCare/`.
+
+
+- Entry: `App/DiabetesCareApp.swift` → `Views/Navigation/RootView.swift` → `MainTabView.swift`
 - Data: `Core/Persistence.swift`, `Models/CoreData/SucroDataModel.xcdatamodeld`, `Services/DataService.swift`
 - Math: `Utilities/GlucoseCalculator.swift`
 - Alerts: `Services/AlertService.swift`, `Services/NotificationService.swift`, `Services/ReminderService.swift`, `Models/Domain/GlucoseThresholds.swift`
@@ -119,3 +125,7 @@ Covered: add/edit/delete carbs, insulin, activity, glucose; Log filters and day 
 - Forms: `Views/Components/EntryForm.swift`, `Views/Components/EntryFields.swift`, `Views/Components/EditViews/EntryEditorView.swift`
 - Health: `Core/HealthKitManager.swift` (writes, permissions), `Services/HealthGlucoseImporter.swift` (observer + anchored query), `Services/HealthGlucoseStore.swift` (Core Data batch writes), `Services/HealthGlucoseImport.swift` (pure dedupe/trend)
 - Settings: `Services/SettingsStore.swift`
+- Backup: `Services/BackupArchive.swift` (format + Core Data), `Services/BackupService.swift` (daily file, restore), `Services/BackupDocument.swift`
+- Sites: `Views/Components/BodyMap.swift`, `Views/Components/SitePicker.swift`, `Views/Secondary/SiteHistoryView.swift`, `Models/Domain/SiteRotation.swift`
+- Logging: `Utilities/Log.swift`
+- Ship docs: `docs/`

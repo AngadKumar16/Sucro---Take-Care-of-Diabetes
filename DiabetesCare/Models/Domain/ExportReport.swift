@@ -1,0 +1,37 @@
+//
+//  ExportReport.swift
+//  DiabetesCare
+//
+//  Created by Angad Kumar on 3/12/26.
+//
+
+
+//
+//  ExportReport.swift
+//  DiabetesCare
+//
+
+import Foundation
+
+struct ExportReport: Identifiable, Codable {
+    var id = UUID()
+    var startDate: Date
+    var endDate: Date
+    var reportType: ReportType
+    var fileURL: URL?
+    var createdAt: Date
+    var isPDF: Bool
+    
+    enum ReportType: String, Codable {
+        case summary = "summary"
+        case detailed = "detailed"
+        case clinician = "clinician"
+        case siteAnalysis = "site_analysis"
+    }
+    
+    var dateRangeString: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return "\(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
+    }
+}
