@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 
 class TimelineService {
@@ -67,7 +68,7 @@ class TimelineService {
                 )
             }
         } catch {
-            print("Error fetching meals: \(error.localizedDescription)")
+            Log.data.error("Error fetching meals: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -93,7 +94,7 @@ class TimelineService {
                 )
             }
         } catch {
-            print("Error fetching boluses: \(error.localizedDescription)")
+            Log.data.error("Error fetching boluses: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -118,7 +119,7 @@ class TimelineService {
                 )
             }
         } catch {
-            print("Error fetching site changes: \(error.localizedDescription)")
+            Log.data.error("Error fetching site changes: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -143,7 +144,7 @@ class TimelineService {
                 )
             }
         } catch {
-            print("Error fetching activities: \(error.localizedDescription)")
+            Log.data.error("Error fetching activities: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }

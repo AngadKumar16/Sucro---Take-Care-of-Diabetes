@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 
 /// Shared Core Data plumbing for the view models. Subclasses are
@@ -18,11 +19,16 @@ class BaseViewModel {
         self.viewContext = context
     }
     
-    func save() {
+    /// Saves the view context. On failure the changes are kept in memory
+    /// so the caller can say so and the user can try again.
+    @discardableResult
+    func save() -> Bool {
         do {
             try viewContext.save()
+            return true
         } catch {
-            print("Error saving context: \(error)")
+            Log.data.error("Error saving context: \(String(describing: error), privacy: .public)")
+            return false
         }
     }
     

@@ -6,6 +6,7 @@
 //
 
 import CoreData
+import OSLog
 import SwiftUI
 
 // Generic drafting operation for any Core Data object.
@@ -62,7 +63,7 @@ class DraftOperation<Object: NSManagedObject>: Identifiable {
             onSave()
             return true
         } catch {
-            print("Error saving draft: \(error)")
+            Log.data.error("Error saving draft: \(String(describing: error), privacy: .public)")
             return false
         }
     }

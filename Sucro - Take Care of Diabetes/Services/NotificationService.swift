@@ -10,6 +10,7 @@
 //
 
 import Foundation
+import OSLog
 import UserNotifications
 
 @MainActor
@@ -46,7 +47,7 @@ final class NotificationService: NSObject {
         do {
             try await center.requestAuthorization(options: [.alert, .badge, .sound])
         } catch {
-            print("Notification authorization error: \(error.localizedDescription)")
+            Log.notifications.error("Notification authorization error: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -167,7 +168,7 @@ final class NotificationService: NSObject {
             do {
                 try await center.add(request)
             } catch {
-                print("Failed to schedule \(identifier): \(error.localizedDescription)")
+                Log.notifications.error("Failed to schedule \(identifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
     }

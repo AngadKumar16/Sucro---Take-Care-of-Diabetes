@@ -17,6 +17,7 @@
 //
 
 import CoreData
+import OSLog
 import Foundation
 import HealthKit
 import Observation
@@ -89,7 +90,7 @@ final class HealthGlucoseImporter {
             do {
                 try await store.enableBackgroundDelivery(for: Self.glucoseType, frequency: .immediate)
             } catch {
-                print("Health background delivery not enabled: \(error.localizedDescription)")
+                Log.health.error("Health background delivery not enabled: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -140,7 +141,7 @@ final class HealthGlucoseImporter {
                 }
             } catch {
                 lastError = error.localizedDescription
-                print("Health glucose import failed: \(error.localizedDescription)")
+                Log.health.error("Health glucose import failed: \(error.localizedDescription, privacy: .public)")
                 return
             }
         } while needsAnotherPass

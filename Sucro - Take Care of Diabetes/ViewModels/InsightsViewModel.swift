@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 import Charts
 
@@ -53,7 +54,7 @@ class InsightsViewModel: BaseViewModel {
                 thresholds: SettingsStore.shared.thresholds
             )
         } catch {
-            print("Error fetching glucose statistics: \(error)")
+            Log.data.error("Error fetching glucose statistics: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -81,7 +82,7 @@ class InsightsViewModel: BaseViewModel {
                 averageDailyUnits: totalUnits / Double(timeRange.days)
             )
         } catch {
-            print("Error fetching insulin statistics: \(error)")
+            Log.data.error("Error fetching insulin statistics: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -102,7 +103,7 @@ class InsightsViewModel: BaseViewModel {
                 averagePerMeal: entries.isEmpty ? 0 : totalCarbs / Double(entries.count)
             )
         } catch {
-            print("Error fetching carb statistics: \(error)")
+            Log.data.error("Error fetching carb statistics: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -125,7 +126,7 @@ class InsightsViewModel: BaseViewModel {
             
             correlations = analyzeCorrelations(carbEntries: carbEntries, glucoseReadings: glucoseReadings)
         } catch {
-            print("Error fetching correlations: \(error)")
+            Log.data.error("Error fetching correlations: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -141,7 +142,7 @@ class InsightsViewModel: BaseViewModel {
             let readings = try viewContext.fetch(request)
             trends = calculateTrends(readings: readings)
         } catch {
-            print("Error fetching trends: \(error)")
+            Log.data.error("Error fetching trends: \(String(describing: error), privacy: .public)")
         }
     }
     

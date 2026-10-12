@@ -100,6 +100,7 @@ struct HomeView: View {
         .sheet(item: Bindable(viewModel).editOperation) { operation in
             EntryEditorView(operation: operation)
         }
+        .errorAlert(Bindable(viewModel).actionError)
         // MARK: - Alert Sheets
         .sheet(isPresented: Bindable(viewModel).showKetoneInfoSheet) {
             KetoneInfoView()

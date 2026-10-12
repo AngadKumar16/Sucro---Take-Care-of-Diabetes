@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 
 @MainActor
@@ -27,6 +28,8 @@ class LogViewModel: BaseViewModel {
     var showAddActivity = false
     /// The entry being edited, if any.
     var editOperation: DraftOperation<NSManagedObject>?
+    /// Set when deleting fails, for the Log to show.
+    var actionError: String?
 
     override init(context: NSManagedObjectContext) {
         super.init(context: context)
@@ -53,7 +56,7 @@ class LogViewModel: BaseViewModel {
         do {
             glucoseReadings = try viewContext.fetch(request)
         } catch {
-            print("Error fetching glucose readings: \(error)")
+            Log.data.error("Error fetching glucose readings: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -65,7 +68,7 @@ class LogViewModel: BaseViewModel {
         do {
             carbEntries = try viewContext.fetch(request)
         } catch {
-            print("Error fetching carb entries: \(error)")
+            Log.data.error("Error fetching carb entries: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -77,7 +80,7 @@ class LogViewModel: BaseViewModel {
         do {
             insulinEntries = try viewContext.fetch(request)
         } catch {
-            print("Error fetching insulin entries: \(error)")
+            Log.data.error("Error fetching insulin entries: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -89,7 +92,7 @@ class LogViewModel: BaseViewModel {
         do {
             activityEntries = try viewContext.fetch(request)
         } catch {
-            print("Error fetching activity entries: \(error)")
+            Log.data.error("Error fetching activity entries: \(String(describing: error), privacy: .public)")
         }
     }
     
@@ -101,7 +104,7 @@ class LogViewModel: BaseViewModel {
         do {
             siteChanges = try viewContext.fetch(request)
         } catch {
-            print("Error fetching site changes: \(error)")
+            Log.data.error("Error fetching site changes: \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -212,6 +215,8 @@ class LogViewModel: BaseViewModel {
     func deleteEntry(_ object: NSManagedObject) {
         if DataService.shared.delete(object.objectID, context: viewContext) {
             entriesChanged()
+        } else {
+            actionError = "This entry couldn't be deleted. Please try again."
         }
     }
 

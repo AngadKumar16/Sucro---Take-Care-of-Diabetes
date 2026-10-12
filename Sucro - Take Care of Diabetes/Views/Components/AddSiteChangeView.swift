@@ -52,7 +52,10 @@ struct AddSiteChangeView: View {
         siteChange.siteType = "Infusion"
         siteChange.deviceType = "Pump"
         siteChange.photo = photoData
-        viewModel.save()
+        guard viewModel.save() else {
+            viewModel.viewContext.delete(siteChange)
+            return false
+        }
         // Refreshing also schedules the reminder for the next change.
         viewModel.fetchLatestData()
         return true

@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 
 class DataService {
@@ -31,7 +32,7 @@ class DataService {
         do {
             return try context.fetch(request).first
         } catch {
-            print("Error fetching latest glucose: \(error.localizedDescription)")
+            Log.data.error("Error fetching latest glucose: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -44,7 +45,7 @@ class DataService {
         do {
             return try context.fetch(request)
         } catch {
-            print("Error fetching recent readings: \(error.localizedDescription)")
+            Log.data.error("Error fetching recent readings: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -67,7 +68,7 @@ class DataService {
             let entries = try context.fetch(insulinRequest)
             insulinTotal = entries.reduce(0) { $0 + $1.units }
         } catch {
-            print("Error fetching insulin totals: \(error.localizedDescription)")
+            Log.data.error("Error fetching insulin totals: \(error.localizedDescription, privacy: .public)")
         }
         
         // Fetch carbs
@@ -78,7 +79,7 @@ class DataService {
             let entries = try context.fetch(carbRequest)
             carbTotal = entries.reduce(0) { $0 + $1.grams }
         } catch {
-            print("Error fetching carb totals: \(error.localizedDescription)")
+            Log.data.error("Error fetching carb totals: \(error.localizedDescription, privacy: .public)")
         }
         
         return (insulinTotal, carbTotal)
@@ -97,7 +98,7 @@ class DataService {
             let doses = try context.fetch(request).compactMap(\.dose)
             return GlucoseCalculator.insulinOnBoard(doses: doses, at: now, actionHours: actionHours)
         } catch {
-            print("Error calculating IOB: \(error.localizedDescription)")
+            Log.data.error("Error calculating IOB: \(error.localizedDescription, privacy: .public)")
             return 0
         }
     }
@@ -111,7 +112,7 @@ class DataService {
         do {
             return try context.fetch(request).first { InsulinType(stored: $0.type)?.isRapidActing == true }
         } catch {
-            print("Error fetching last dose: \(error.localizedDescription)")
+            Log.data.error("Error fetching last dose: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -124,7 +125,7 @@ class DataService {
         do {
             return try context.fetch(request).first
         } catch {
-            print("Error fetching last site change: \(error.localizedDescription)")
+            Log.data.error("Error fetching last site change: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -155,7 +156,7 @@ class DataService {
             return true
         } catch {
             context.rollback()
-            print("Error deleting entry: \(error.localizedDescription)")
+            Log.data.error("Error deleting entry: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }
@@ -172,7 +173,7 @@ class DataService {
             return true
         } catch {
             context.rollback()
-            print("Error adding note: \(error.localizedDescription)")
+            Log.data.error("Error adding note: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }
@@ -222,7 +223,7 @@ class DataService {
             try context.save()
             return true
         } catch {
-            print("Error clearing all data: \(error.localizedDescription)")
+            Log.data.error("Error clearing all data: \(error.localizedDescription, privacy: .public)")
             return false
         }
     }

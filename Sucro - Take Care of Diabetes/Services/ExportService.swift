@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import UIKit
 import CoreData
 
@@ -77,7 +78,7 @@ class ExportService {
             
             return tempURL
         } catch {
-            print("PDF generation error: \(error.localizedDescription)")
+            Log.export.error("PDF generation error: \(error.localizedDescription, privacy: .public)")
             throw ExportError.pdfGenerationFailed
         }
     }
@@ -108,7 +109,7 @@ class ExportService {
             try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
             return tempURL
         } catch {
-            print("CSV export error: \(error.localizedDescription)")
+            Log.export.error("CSV export error: \(error.localizedDescription, privacy: .public)")
             throw ExportError.fileWriteFailed
         }
     }

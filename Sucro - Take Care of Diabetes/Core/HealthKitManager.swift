@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import HealthKit
 
 /// Writes logged data to Apple Health and owns the app's health store.
@@ -46,7 +47,7 @@ final class HealthKitManager {
             try await healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead)
             checkAuthorizationStatus()
         } catch {
-            print("HealthKit authorization failed: \(error.localizedDescription)")
+            Log.health.error("HealthKit authorization failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -81,9 +82,9 @@ final class HealthKitManager {
         
         healthStore.save(sample) { success, error in
             if success {
-                print("Glucose reading saved to HealthKit")
+                Log.health.debug("Glucose reading saved to HealthKit")
             } else if let error = error {
-                print("Failed to save glucose to HealthKit: \(error.localizedDescription)")
+                Log.health.error("Failed to save glucose to HealthKit: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -106,9 +107,9 @@ final class HealthKitManager {
         
         healthStore.save(sample) { success, error in
             if success {
-                print("Insulin dose saved to HealthKit")
+                Log.health.debug("Insulin dose saved to HealthKit")
             } else if let error = error {
-                print("Failed to save insulin to HealthKit: \(error.localizedDescription)")
+                Log.health.error("Failed to save insulin to HealthKit: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -122,9 +123,9 @@ final class HealthKitManager {
         
         healthStore.save(sample) { success, error in
             if success {
-                print("Carbohydrate intake saved to HealthKit")
+                Log.health.debug("Carbohydrate intake saved to HealthKit")
             } else if let error = error {
-                print("Failed to save carbs to HealthKit: \(error.localizedDescription)")
+                Log.health.error("Failed to save carbs to HealthKit: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -151,7 +152,7 @@ final class HealthKitManager {
                 try await builder.endCollection(at: end)
                 _ = try await builder.finishWorkout()
             } catch {
-                print("Failed to save workout to HealthKit: \(error.localizedDescription)")
+                Log.health.error("Failed to save workout to HealthKit: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

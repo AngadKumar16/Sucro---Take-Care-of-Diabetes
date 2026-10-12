@@ -18,6 +18,7 @@ struct SiteHistoryView: View {
     @State private var editOperation: DraftOperation<NSManagedObject>?
     @State private var pendingDelete: SiteChange?
     @State private var side: BodySide = .front
+    @State private var actionError: String?
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -39,6 +40,7 @@ struct SiteHistoryView: View {
         } message: { _ in
             Text("This can't be undone.")
         }
+        .errorAlert($actionError)
     }
 
     private func content(now: Date) -> some View {
@@ -122,6 +124,8 @@ struct SiteHistoryView: View {
     private func delete(_ change: SiteChange) {
         if DataService.shared.delete(change.objectID, context: viewContext) {
             ReminderService.shared.refresh(context: viewContext)
+        } else {
+            actionError = "This site change couldn't be deleted. Please try again."
         }
     }
 }

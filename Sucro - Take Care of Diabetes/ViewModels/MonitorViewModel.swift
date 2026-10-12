@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 import CoreData
 
 @MainActor
@@ -48,7 +49,7 @@ class MonitorViewModel: BaseViewModel {
         do {
             glucoseReadings = try viewContext.fetch(request)
         } catch {
-            print("Error fetching glucose readings: \(error)")
+            Log.data.error("Error fetching glucose readings: \(String(describing: error), privacy: .public)")
         }
     }
     

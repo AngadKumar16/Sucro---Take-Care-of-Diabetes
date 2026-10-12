@@ -144,6 +144,7 @@ struct LogView: View {
         .sheet(item: Bindable(viewModel).editOperation) { operation in
             EntryEditorView(operation: operation)
         }
+        .errorAlert(Bindable(viewModel).actionError)
     }
 
     private var emptyTitle: String {

@@ -6,6 +6,7 @@
 //
 
 import CoreData
+import OSLog
 import Observation
 
 /// Owns the Core Data stack. If the store can't be opened (disk full, a
@@ -114,7 +115,7 @@ final class PersistenceController {
             }
         }
         if let firstError {
-            print("Core Data store failed to load: \(firstError)")
+            Log.data.error("Core Data store failed to load: \(String(describing: firstError), privacy: .public)")
         }
         loadError = firstError
     }

@@ -55,6 +55,8 @@ class HomeViewModel: BaseViewModel {
     
     // MARK: - Edit and Alert Sheets
     var editOperation: DraftOperation<NSManagedObject>?
+    /// Set when deleting or adding a note fails, for Today to show.
+    var actionError: String?
     var showKetoneInfoSheet = false
     var showTroubleshootingSheet = false
     
@@ -155,6 +157,8 @@ class HomeViewModel: BaseViewModel {
             selectedEvent = nil
             detailEvent = nil
             fetchLatestData()
+        } else {
+            actionError = "This entry couldn't be deleted. Please try again."
         }
     }
 
@@ -169,6 +173,8 @@ class HomeViewModel: BaseViewModel {
         if dataService.appendNote(note, to: objectID, context: viewContext) {
             showNoteInput = false
             fetchTimelineEvents()
+        } else {
+            actionError = "The note couldn't be saved. Please try again."
         }
     }
 
