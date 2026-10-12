@@ -29,9 +29,9 @@ enum HealthGlucoseStatus: Equatable {
 
     var title: String {
         switch self {
-        case .waiting: "Waiting for Readings"
-        case .receiving: "Receiving"
-        case .stale: "No Recent Readings"
+        case .waiting: String(localized: "Waiting for Readings")
+        case .receiving: String(localized: "Receiving")
+        case .stale: String(localized: "No Recent Readings")
         }
     }
 
@@ -41,7 +41,7 @@ enum HealthGlucoseStatus: Equatable {
         case .waiting:
             ""
         case .receiving(let age), .stale(let age):
-            age < 60 ? "Just now" : "\(Self.ageFormat(age)) ago"
+            age < 60 ? String(localized: "Just now") : String(localized: "\(Self.ageFormat(age)) ago")
         }
     }
 

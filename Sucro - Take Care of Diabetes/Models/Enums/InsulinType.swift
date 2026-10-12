@@ -19,12 +19,12 @@ nonisolated enum InsulinType: String, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .bolus: return "Rapid-Acting"
-        case .correction: return "Correction"
-        case .basal: return "Long-Acting"
-        case .intermediate: return "Intermediate"
-        case .mixed: return "Mixed"
-        case .other: return "Other"
+        case .bolus: return String(localized: "Rapid-Acting")
+        case .correction: return String(localized: "Correction")
+        case .basal: return String(localized: "Long-Acting")
+        case .intermediate: return String(localized: "Intermediate")
+        case .mixed: return String(localized: "Mixed")
+        case .other: return String(localized: "Other")
         }
     }
 

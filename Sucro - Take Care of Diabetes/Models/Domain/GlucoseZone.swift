@@ -27,11 +27,11 @@ nonisolated enum GlucoseZone: Equatable, Sendable {
     /// Spoken by VoiceOver and shown when color can't be relied on.
     var name: String {
         switch self {
-        case .urgentLow: "Urgent low"
-        case .low: "Low"
-        case .inRange: "In range"
-        case .high: "High"
-        case .urgentHigh: "Urgent high"
+        case .urgentLow: String(localized: "Urgent low")
+        case .low: String(localized: "Low")
+        case .inRange: String(localized: "In range")
+        case .high: String(localized: "High")
+        case .urgentHigh: String(localized: "Urgent high")
         }
     }
 

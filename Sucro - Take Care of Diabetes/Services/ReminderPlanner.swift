@@ -22,20 +22,20 @@ nonisolated enum ReminderPlanner {
            let due = Calendar.current.date(byAdding: .day, value: change.rotationDays, to: change.date) {
             reminders.append(PlannedReminder(
                 id: "reminder.siteChange.\(Int(change.date.timeIntervalSince1970))",
-                title: "Site Change Due",
+                title: String(localized: "Site Change Due"),
                 time: due,
                 kind: .siteChange,
-                notes: "Your infusion site is \(change.rotationDays) days old. Time to change it."
+                notes: String(localized: "Your infusion site is \(change.rotationDays) days old. Time to change it.")
             ))
         }
 
         if let dose = lastRapidDose {
             reminders.append(PlannedReminder(
                 id: "reminder.glucoseCheck.\(Int(dose.timeIntervalSince1970))",
-                title: "Check Glucose",
+                title: String(localized: "Check Glucose"),
                 time: dose.addingTimeInterval(glucoseCheckDelay),
                 kind: .glucoseCheck,
-                notes: "It's been 2 hours since your last dose. Check your glucose."
+                notes: String(localized: "It's been 2 hours since your last dose. Check your glucose.")
             ))
         }
 

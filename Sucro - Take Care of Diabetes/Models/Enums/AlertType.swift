@@ -30,13 +30,13 @@ enum AlertType: Equatable {
     var title: String {
         switch self {
         case .lowGlucose(let value):
-            return SettingsStore.shared.zone(for: value) == .urgentLow ? "URGENT LOW" : "LOW GLUCOSE"
+            return SettingsStore.shared.zone(for: value) == .urgentLow ? String(localized: "URGENT LOW") : String(localized: "LOW GLUCOSE")
         case .highGlucose:
-            return "HIGH GLUCOSE"
+            return String(localized: "HIGH GLUCOSE")
         case .cgmDataStale:
-            return "NO RECENT READINGS"
+            return String(localized: "NO RECENT READINGS")
         case .siteChangeOverdue:
-            return "SITE CHANGE DUE"
+            return String(localized: "SITE CHANGE DUE")
         }
     }
 
@@ -44,13 +44,13 @@ enum AlertType: Equatable {
         let settings = SettingsStore.shared
         switch self {
         case .lowGlucose(let value):
-            return "\(settings.formattedGlucose(value)). Eat 15g of fast-acting carbs and recheck in 15 minutes."
+            return String(localized: "\(settings.formattedGlucose(value)). Eat 15g of fast-acting carbs and recheck in 15 minutes.")
         case .highGlucose(let value):
-            return "\(settings.formattedGlucose(value)). Check for ketones."
+            return String(localized: "\(settings.formattedGlucose(value)). Check for ketones.")
         case .cgmDataStale(let minutes):
-            return "Last reading \(Self.duration(minutes: minutes)) ago. Check your CGM sensor."
+            return String(localized: "Last reading \(Self.duration(minutes: minutes)) ago. Check your CGM sensor.")
         case .siteChangeOverdue(let days):
-            return "Last changed \(days) days ago"
+            return String(localized: "Last changed \(days) days ago")
         }
     }
 
@@ -72,10 +72,10 @@ enum AlertType: Equatable {
 
     var actionTitle: String {
         switch self {
-        case .lowGlucose: return "Log Carbs"
-        case .highGlucose: return "Check Ketones"
-        case .cgmDataStale: return "Troubleshoot"
-        case .siteChangeOverdue: return "Change Site"
+        case .lowGlucose: return String(localized: "Log Carbs")
+        case .highGlucose: return String(localized: "Check Ketones")
+        case .cgmDataStale: return String(localized: "Troubleshoot")
+        case .siteChangeOverdue: return String(localized: "Change Site")
         }
     }
 

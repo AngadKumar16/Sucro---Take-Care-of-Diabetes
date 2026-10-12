@@ -66,14 +66,14 @@ final class NotificationService: NSObject {
         let content = UNMutableNotificationContent()
         switch kind {
         case .urgentLow:
-            content.title = "Urgent Low Glucose"
-            content.body = "Glucose is \(formatted). Eat 15g of fast-acting carbs now and recheck in 15 minutes."
+            content.title = String(localized: "Urgent Low Glucose")
+            content.body = String(localized: "Glucose is \(formatted). Eat 15g of fast-acting carbs now and recheck in 15 minutes.")
         case .low:
-            content.title = "Low Glucose"
-            content.body = "Glucose is \(formatted). Eat 15g of fast-acting carbs and recheck in 15 minutes."
+            content.title = String(localized: "Low Glucose")
+            content.body = String(localized: "Glucose is \(formatted). Eat 15g of fast-acting carbs and recheck in 15 minutes.")
         case .urgentHigh:
-            content.title = "High Glucose"
-            content.body = "Glucose is \(formatted). Check for ketones."
+            content.title = String(localized: "High Glucose")
+            content.body = String(localized: "Glucose is \(formatted). Check for ketones.")
         }
         content.sound = .default
         content.interruptionLevel = .timeSensitive
@@ -96,9 +96,9 @@ final class NotificationService: NSObject {
         guard notificationsEnabled else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "No Recent Glucose Readings"
+        content.title = String(localized: "No Recent Glucose Readings")
         let time = lastReading.formatted(date: .omitted, time: .shortened)
-        content.body = "The last reading was at \(time). Check that your CGM sensor is working."
+        content.body = String(localized: "The last reading was at \(time). Check that your CGM sensor is working.")
         content.sound = .default
         content.interruptionLevel = .timeSensitive
 
@@ -111,8 +111,8 @@ final class NotificationService: NSObject {
     func scheduleLowRecheck(at date: Date, grams: Double) {
         guard notificationsEnabled else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Check Your Glucose Again"
-        content.body = "It's been 15 minutes since you had \(grams.formatted(.number.precision(.fractionLength(0)))) g of carbs for a low."
+        content.title = String(localized: "Check Your Glucose Again")
+        content.body = String(localized: "It's been 15 minutes since you had \(grams.formatted(.number.precision(.fractionLength(0)))) g of carbs for a low.")
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date.timeIntervalSinceNow), repeats: false)

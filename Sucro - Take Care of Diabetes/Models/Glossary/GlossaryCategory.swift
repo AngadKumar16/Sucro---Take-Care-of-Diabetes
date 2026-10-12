@@ -20,15 +20,15 @@ nonisolated enum GlossaryCategory: String, Codable, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .basics: return "Diabetes Basics"
-        case .glucose: return "Glucose & Monitoring"
-        case .lowsHighs: return "Lows, Highs & Ketones"
-        case .insulin: return "Insulin"
-        case .food: return "Food & Carbs"
-        case .devices: return "Devices & Tech"
-        case .medications: return "Other Medicines"
-        case .complications: return "Complications & Checkups"
-        case .living: return "Everyday Life"
+        case .basics: return String(localized: "Diabetes Basics")
+        case .glucose: return String(localized: "Glucose & Monitoring")
+        case .lowsHighs: return String(localized: "Lows, Highs & Ketones")
+        case .insulin: return String(localized: "Insulin")
+        case .food: return String(localized: "Food & Carbs")
+        case .devices: return String(localized: "Devices & Tech")
+        case .medications: return String(localized: "Other Medicines")
+        case .complications: return String(localized: "Complications & Checkups")
+        case .living: return String(localized: "Everyday Life")
         }
     }
 

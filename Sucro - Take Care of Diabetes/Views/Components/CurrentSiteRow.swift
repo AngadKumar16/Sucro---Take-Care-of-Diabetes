@@ -41,10 +41,10 @@ struct CurrentSiteRow: View {
     private func dueText(_ due: Date, now: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(due) {
-            return "today at \(due.formatted(date: .omitted, time: .shortened))"
+            return String(localized: "today at \(due.formatted(date: .omitted, time: .shortened))")
         }
         if calendar.isDateInTomorrow(due) {
-            return "tomorrow"
+            return String(localized: "tomorrow")
         }
         return due.formatted(.dateTime.weekday(.wide))
     }

@@ -148,8 +148,8 @@ struct LogView: View {
     }
 
     private var emptyTitle: String {
-        let kind = filter == .all ? "Entries" : filter.rawValue
-        return viewModel.isShowingToday ? "No \(kind) Today" : "No \(kind) This Day"
+        let kind = filter == .all ? String(localized: "Entries") : filter.rawValue
+        return viewModel.isShowingToday ? String(localized: "No \(kind) Today") : String(localized: "No \(kind) This Day")
     }
 
     /// Everything logged on the selected day, newest first.
@@ -237,7 +237,7 @@ struct LogView: View {
         guard filter == .all else { return entries }
         let hidden = hiddenHealthCount
         guard hidden > 0 else { return entries }
-        return "\(entries). \(hidden) Apple Health \(hidden == 1 ? "reading is" : "readings are") under Glucose."
+        return String(localized: "\(entries). \(hidden) Apple Health \(hidden == 1 ? "reading is" : "readings are") under Glucose.")
     }
 
     /// Health readings left out of All on this day.

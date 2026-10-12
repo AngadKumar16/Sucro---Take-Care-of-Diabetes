@@ -71,9 +71,9 @@ struct SiteSnapshotView: View {
     }
 
     private func restedText(_ site: SiteLocation) -> String {
-        guard let used = history[site] else { return "Not used yet" }
+        guard let used = history[site] else { return String(localized: "Not used yet") }
         let days = Calendar.current.dateComponents([.day], from: used, to: .now).day ?? 0
-        return days == 1 ? "Rested 1 day" : "Rested \(days) days"
+        return days == 1 ? String(localized: "Rested 1 day") : String(localized: "Rested \(days) days")
     }
 }
 

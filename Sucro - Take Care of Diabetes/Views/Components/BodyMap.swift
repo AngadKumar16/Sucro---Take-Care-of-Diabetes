@@ -53,16 +53,16 @@ extension SiteLocation {
     /// "Left abdomen" rather than the stored "Abdomen Left".
     var spokenName: String {
         switch self {
-        case .abdomenLeft: "Left abdomen"
-        case .abdomenRight: "Right abdomen"
-        case .abdomenCenter: "Center abdomen"
-        case .thighLeft: "Left thigh"
-        case .thighRight: "Right thigh"
-        case .armLeft: "Left arm"
-        case .armRight: "Right arm"
-        case .buttocksLeft: "Left buttock"
-        case .buttocksRight: "Right buttock"
-        case .other: "Other site"
+        case .abdomenLeft: String(localized: "Left abdomen")
+        case .abdomenRight: String(localized: "Right abdomen")
+        case .abdomenCenter: String(localized: "Center abdomen")
+        case .thighLeft: String(localized: "Left thigh")
+        case .thighRight: String(localized: "Right thigh")
+        case .armLeft: String(localized: "Left arm")
+        case .armRight: String(localized: "Right arm")
+        case .buttocksLeft: String(localized: "Left buttock")
+        case .buttocksRight: String(localized: "Right buttock")
+        case .other: String(localized: "Other site")
         }
     }
 
@@ -159,12 +159,12 @@ struct BodyMap: View {
 
     private func label(for site: SiteLocation) -> String {
         var parts = [site.spokenName]
-        if site == current { parts.append("current site") }
-        if site == suggested { parts.append("rested longest") }
+        if site == current { parts.append(String(localized: "current site")) }
+        if site == suggested { parts.append(String(localized: "rested longest")) }
         if let used = history[site], site != current {
-            parts.append("last used \(used.formatted(.relative(presentation: .named)))")
+            parts.append(String(localized: "last used \(used.formatted(.relative(presentation: .named)))"))
         } else if history[site] == nil {
-            parts.append("not used yet")
+            parts.append(String(localized: "not used yet"))
         }
         return parts.joined(separator: ", ")
     }

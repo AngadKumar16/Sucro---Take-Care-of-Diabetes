@@ -78,15 +78,15 @@ nonisolated enum GlucoseTrend: String, CaseIterable, Codable, Sendable {
     var description: String {
         switch self {
         case .risingFast:
-            return "Rising Fast"
+            return String(localized: "Rising Fast")
         case .rising:
-            return "Rising"
+            return String(localized: "Rising")
         case .stable:
-            return "Stable"
+            return String(localized: "Stable")
         case .falling:
-            return "Falling"
+            return String(localized: "Falling")
         case .fallingFast:
-            return "Falling Fast"
+            return String(localized: "Falling Fast")
         }
     }
 }

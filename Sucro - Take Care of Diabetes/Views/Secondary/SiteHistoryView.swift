@@ -107,10 +107,10 @@ struct SiteHistoryView: View {
     }
 
     private func restText(_ site: SiteLocation, lastUsed: [SiteLocation: Date], current: SiteLocation?, now: Date) -> String {
-        if site == current { return "In use" }
-        guard let used = lastUsed[site] else { return "Not used yet" }
+        if site == current { return String(localized: "In use") }
+        guard let used = lastUsed[site] else { return String(localized: "Not used yet") }
         let days = Calendar.current.dateComponents([.day], from: used, to: now).day ?? 0
-        return days == 1 ? "1 day" : "\(days) days"
+        return days == 1 ? String(localized: "1 day") : String(localized: "\(days) days")
     }
 
     private func edit(_ change: SiteChange) {
@@ -164,10 +164,10 @@ private struct SiteHistoryRow: View {
     private var wornText: String {
         let days = wear.wornDays(now: now)
         let worn = days < 1
-            ? "\(max(1, Int((days * 24).rounded()))) h"
-            : "\(days.formatted(.number.precision(.fractionLength(0...1)))) d"
-        let due = "change every \(wear.change.location.rotationDays) d"
-        return wear.endedAt == nil ? "In use \(worn), \(due)" : "Worn \(worn), \(due)"
+            ? String(localized: "\(max(1, Int((days * 24).rounded()))) h")
+            : String(localized: "\(days.formatted(.number.precision(.fractionLength(0...1)))) d")
+        let due = String(localized: "change every \(wear.change.location.rotationDays) d")
+        return wear.endedAt == nil ? String(localized: "In use \(worn), \(due)") : String(localized: "Worn \(worn), \(due)")
     }
 }
 

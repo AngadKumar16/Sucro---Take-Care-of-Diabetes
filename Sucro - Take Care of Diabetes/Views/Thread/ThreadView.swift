@@ -20,21 +20,21 @@ enum ThreadZoom: Int, CaseIterable, Identifiable, Comparable {
 
     var label: String {
         switch self {
-        case .sixHours: return "6H"
-        case .day: return "1D"
-        case .threeDays: return "3D"
-        case .week: return "1W"
-        case .twoWeeks: return "2W"
+        case .sixHours: return String(localized: "6H")
+        case .day: return String(localized: "1D")
+        case .threeDays: return String(localized: "3D")
+        case .week: return String(localized: "1W")
+        case .twoWeeks: return String(localized: "2W")
         }
     }
 
     var spokenLabel: String {
         switch self {
-        case .sixHours: return "6 hours"
-        case .day: return "1 day"
-        case .threeDays: return "3 days"
-        case .week: return "1 week"
-        case .twoWeeks: return "2 weeks"
+        case .sixHours: return String(localized: "6 hours")
+        case .day: return String(localized: "1 day")
+        case .threeDays: return String(localized: "3 days")
+        case .week: return String(localized: "1 week")
+        case .twoWeeks: return String(localized: "2 weeks")
         }
     }
 

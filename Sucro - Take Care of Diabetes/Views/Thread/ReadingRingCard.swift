@@ -93,7 +93,7 @@ struct ReadingRingCard: View {
     }
 
     private func age(of timestamp: Date) -> String {
-        if now.timeIntervalSince(timestamp) < 60 { return "Just now" }
+        if now.timeIntervalSince(timestamp) < 60 { return String(localized: "Just now") }
         return timestamp.formatted(.relative(presentation: .named, unitsStyle: .abbreviated))
     }
 }

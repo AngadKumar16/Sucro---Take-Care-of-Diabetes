@@ -62,7 +62,7 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: MealType(stored: entry.mealType)?.rawValue ?? entry.mealType ?? "Meal",
-                    subtitle: "\(entry.grams.formatted(.number.precision(.fractionLength(0...1))))g carbs",
+                    subtitle: String(localized: "\(entry.grams.formatted(.number.precision(.fractionLength(0...1))))g carbs"),
                     notes: entry.notes,
                     objectID: entry.objectID
                 )
@@ -87,8 +87,8 @@ class TimelineService {
                     type: .bolus,
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
-                    title: "Bolus",
-                    subtitle: "\(entry.units.formatted(.number.precision(.fractionLength(0...1)))) units",
+                    title: String(localized: "Bolus"),
+                    subtitle: String(localized: "\(entry.units.formatted(.number.precision(.fractionLength(0...1)))) units"),
                     notes: entry.notes,
                     objectID: entry.objectID
                 )
@@ -112,7 +112,7 @@ class TimelineService {
                     type: .siteChange,
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
-                    title: "Site Change",
+                    title: String(localized: "Site Change"),
                     subtitle: entry.location ?? "Unknown location",
                     notes: entry.notes,
                     objectID: entry.objectID
@@ -138,7 +138,7 @@ class TimelineService {
                     timestamp: entry.timestamp ?? Date(),
                     glucoseValue: glucose,
                     title: entry.type ?? "Activity",
-                    subtitle: "\(entry.duration) min",
+                    subtitle: String(localized: "\(entry.duration) min"),
                     notes: entry.notes,
                     objectID: entry.objectID
                 )

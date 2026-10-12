@@ -125,11 +125,11 @@ struct NumberField: View {
 /// The message shown under an amount that's empty or out of range.
 func rangeMessage(_ text: String, in range: ClosedRange<Double>, unit: String) -> String? {
     guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
-    guard let value = parseNumber(text) else { return "Enter a number." }
+    guard let value = parseNumber(text) else { return String(localized: "Enter a number.") }
     guard range.contains(value) else {
         let low = range.lowerBound.formatted(.number.precision(.fractionLength(0...2)))
         let high = range.upperBound.formatted(.number.precision(.fractionLength(0...2)))
-        return "Enter a value from \(low) to \(high) \(unit)."
+        return String(localized: "Enter a value from \(low) to \(high) \(unit).")
     }
     return nil
 }

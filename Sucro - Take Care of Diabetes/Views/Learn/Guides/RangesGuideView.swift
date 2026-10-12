@@ -120,21 +120,21 @@ private struct ZoneRow: View {
 private extension GlucoseZone {
     var meaning: String {
         switch self {
-        case .urgentHigh: return "Well above your target. Staying here for hours raises the risk of ketones."
-        case .high: return "Above target but not an emergency. Common for a while after meals."
-        case .inRange: return "Where you aim to spend most of the day. It's the green band on Trends."
-        case .low: return "Below target. Your body is running short on glucose."
-        case .urgentLow: return "A serious low. Thinking and coordination can quickly get worse."
+        case .urgentHigh: return String(localized: "Well above your target. Staying here for hours raises the risk of ketones.")
+        case .high: return String(localized: "Above target but not an emergency. Common for a while after meals.")
+        case .inRange: return String(localized: "Where you aim to spend most of the day. It's the green band on Trends.")
+        case .low: return String(localized: "Below target. Your body is running short on glucose.")
+        case .urgentLow: return String(localized: "A serious low. Thinking and coordination can quickly get worse.")
         }
     }
 
     var action: String {
         switch self {
-        case .urgentHigh: return "Follow your care team's plan for highs. Check ketones if you have type 1 or feel sick. DiabetesCare alerts you here."
-        case .high: return "If it stays high for hours, look for a reason: a missed dose, illness, stress or a pump site problem."
-        case .inRange: return "Nothing to do. Keep logging so Trends can show your patterns."
-        case .low: return "Treat right away with fast-acting carbs, then check again. DiabetesCare alerts you here."
-        case .urgentLow: return "Treat straight away and don't drive. If someone can't swallow safely, they need glucagon and emergency help."
+        case .urgentHigh: return String(localized: "Follow your care team's plan for highs. Check ketones if you have type 1 or feel sick. DiabetesCare alerts you here.")
+        case .high: return String(localized: "If it stays high for hours, look for a reason: a missed dose, illness, stress or a pump site problem.")
+        case .inRange: return String(localized: "Nothing to do. Keep logging so Trends can show your patterns.")
+        case .low: return String(localized: "Treat right away with fast-acting carbs, then check again. DiabetesCare alerts you here.")
+        case .urgentLow: return String(localized: "Treat straight away and don't drive. If someone can't swallow safely, they need glucagon and emergency help.")
         }
     }
 }

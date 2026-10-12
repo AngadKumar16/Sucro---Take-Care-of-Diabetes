@@ -18,19 +18,19 @@ enum Guide: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .ranges: return "Glucose Ranges"
-        case .timeInRange: return "Time in Range"
-        case .units: return "mg/dL and mmol/L"
-        case .treatingLows: return "Treating a Low"
+        case .ranges: return String(localized: "Glucose Ranges")
+        case .timeInRange: return String(localized: "Time in Range")
+        case .units: return String(localized: "mg/dL and mmol/L")
+        case .treatingLows: return String(localized: "Treating a Low")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .ranges: return "What each line means and what to do"
-        case .timeInRange: return "The daily goal many people aim for"
-        case .units: return "Two units, one number"
-        case .treatingLows: return "The rule of 15, step by step"
+        case .ranges: return String(localized: "What each line means and what to do")
+        case .timeInRange: return String(localized: "The daily goal many people aim for")
+        case .units: return String(localized: "Two units, one number")
+        case .treatingLows: return String(localized: "The rule of 15, step by step")
         }
     }
 

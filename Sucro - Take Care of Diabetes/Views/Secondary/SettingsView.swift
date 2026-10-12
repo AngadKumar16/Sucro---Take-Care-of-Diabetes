@@ -252,12 +252,12 @@ struct SettingsView: View {
     // MARK: - Actions
 
     private var backupFooter: String {
-        let export = "Export saves your last 90 days of glucose readings as a spreadsheet."
+        let export = String(localized: "Export saves your last 90 days of glucose readings as a spreadsheet.")
         guard settings.autoBackupEnabled else {
-            return "Back Up Now saves everything you've logged, with your settings, as one file. \(export)"
+            return String(localized: "Back Up Now saves everything you've logged, with your settings, as one file. \(export)")
         }
-        let last = settings.lastBackupDate.map { "Last backup \($0.formatted(date: .abbreviated, time: .shortened))." } ?? "No backup yet."
-        return "Saves everything you've logged once a day, in Files › On My iPhone › \(AppInfo.name) › Backups. Move a copy to iCloud Drive to keep it if this phone is lost. \(last) \(export)"
+        let last = settings.lastBackupDate.map { String(localized: "Last backup \($0.formatted(date: .abbreviated, time: .shortened)).") } ?? String(localized: "No backup yet.")
+        return String(localized: "Saves everything you've logged once a day, in Files › On My iPhone › \(AppInfo.name) › Backups. Move a copy to iCloud Drive to keep it if this phone is lost. \(last) \(export)")
     }
 
     private func resetThresholds() {

@@ -259,9 +259,9 @@ struct HomeView: View {
 
     private func greeting(at date: Date) -> String {
         switch Calendar.current.component(.hour, from: date) {
-        case 5..<12: "Good morning"
-        case 12..<17: "Good afternoon"
-        default: "Good evening"
+        case 5..<12: String(localized: "Good morning")
+        case 12..<17: String(localized: "Good afternoon")
+        default: String(localized: "Good evening")
         }
     }
 
