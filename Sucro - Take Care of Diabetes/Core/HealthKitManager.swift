@@ -24,11 +24,10 @@ final class HealthKitManager {
     }
 
     // MARK: - Authorization
+    /// Only glucose is read back (`HealthGlucoseImporter`). App Review asks
+    /// for no more access than the app uses.
     private let typesToRead: Set<HKObjectType> = [
         HKQuantityType(.bloodGlucose),
-        HKQuantityType(.insulinDelivery),
-        HKQuantityType(.dietaryCarbohydrates),
-        HKObjectType.workoutType(),
     ]
 
     private let typesToWrite: Set<HKSampleType> = [
