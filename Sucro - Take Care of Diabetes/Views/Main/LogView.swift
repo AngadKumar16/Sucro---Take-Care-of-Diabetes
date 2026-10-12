@@ -12,6 +12,7 @@ struct LogView: View {
     @Environment(LogViewModel.self) private var viewModel
     @Environment(SettingsStore.self) private var settings
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var filter: Filter = .all
     @State private var pendingDelete: LogRow?
 
@@ -89,6 +90,9 @@ struct LogView: View {
             }
         }
         .listStyle(.insetGrouped)
+        // Keep the receipt a readable width on iPad instead of edge to edge.
+        .frame(maxWidth: horizontalSizeClass == .regular ? 720 : .infinity)
+        .frame(maxWidth: .infinity)
         .instrumentBackground()
         .navigationTitle("Log")
         .toolbar {

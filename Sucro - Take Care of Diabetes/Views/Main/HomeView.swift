@@ -15,6 +15,7 @@ struct HomeView: View {
     @Environment(HealthGlucoseImporter.self) private var healthImporter
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     /// Switches to the Log tab.
     let onShowAllActivity: () -> Void
@@ -119,100 +120,125 @@ struct HomeView: View {
         let visibleEvents = viewModel.threadEvents.filter { window.contains($0.timestamp) }
 
         return VStack(spacing: 16) {
-            if case .lowGlucose(let mgdl) = viewModel.criticalAlert {
-                LowTreatmentCard(
-                    mgdl: mgdl,
-                    recheckAt: viewModel.lowRecheckAt,
-                    treatedGrams: viewModel.lowTreatmentGrams,
-                    onLogTreatment: viewModel.logFastCarbs(grams:),
-                    onLogCarbs: viewModel.handleCriticalAlertAction,
-                    onLogGlucose: viewModel.logGlucose,
-                    onDismiss: viewModel.dismissCriticalAlert
-                )
-            } else if let criticalAlert = viewModel.criticalAlert {
-                CriticalAlertBanner(
-                    alert: criticalAlert,
-                    onDismiss: viewModel.dismissCriticalAlert,
-                    onAction: viewModel.handleCriticalAlertAction
-                )
-            }
-
+            alerts
             dateline(now: now)
-
-            if let reading = viewModel.latestGlucoseReading {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Tapping the latest reading brings the thread back to now.
-                    Button {
-                        withAnimation(.smooth) { scrollStart = ThreadView.start(showing: zoom, at: now) }
-                    } label: {
-                        ReadingRingCard(reading: reading, insulinOnBoard: viewModel.insulinOnBoard, now: now)
-                            .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Shows now on the thread")
-                    ThreadView(
-                        samples: viewModel.threadSamples,
-                        events: viewModel.threadEvents,
-                        reminders: viewModel.upcomingReminders,
-                        now: now,
-                        zoom: $zoom,
-                        scrollStart: $scrollStart
-                    )
+            // On a wide screen (iPad, Mac) the glucose and actions sit beside
+            // what's coming up, instead of one long column.
+            if horizontalSizeClass == .regular {
+                HStack(alignment: .top, spacing: 20) {
+                    VStack(spacing: 16) { glucoseColumn(now: now, window: window) }
+                        .frame(maxWidth: .infinity)
+                    VStack(spacing: 16) { activityColumn(visibleEvents: visibleEvents) }
+                        .frame(maxWidth: .infinity)
                 }
-                .card()
-
-                InViewSummary(window: window, samples: viewModel.threadSamples, events: viewModel.threadEvents)
             } else {
-                // An empty chart says nothing; a meter to set says what to do.
-                FirstReadingCard(onLog: logFirstReading, onMoreDetails: viewModel.logGlucose)
-                    .overlay(alignment: .topLeading) {
-                        // A dose can be logged before any reading.
-                        if viewModel.insulinOnBoard > 0 {
-                            InsulinOnBoardLabel(units: viewModel.insulinOnBoard)
-                                .padding(12)
-                        }
-                    }
+                glucoseColumn(now: now, window: window)
+                activityColumn(visibleEvents: visibleEvents)
             }
+        }
+    }
 
-            QuickActionButtonsView(
-                onLogMeal: viewModel.logMeal,
-                onQuickBolus: viewModel.quickBolus,
-                onChangeSite: viewModel.changeSite,
-                onLogPreset: viewModel.logMeal(preset:),
-                todayCarbs: viewModel.todayCarbTotal,
-                todayInsulin: viewModel.todayInsulinTotal,
-                nextSite: SiteLocation.suggested(
-                    current: SiteLocation(stored: viewModel.lastSiteChange?.location),
-                    history: viewModel.siteHistory
-                )
+    @ViewBuilder
+    private var alerts: some View {
+        if case .lowGlucose(let mgdl) = viewModel.criticalAlert {
+            LowTreatmentCard(
+                mgdl: mgdl,
+                recheckAt: viewModel.lowRecheckAt,
+                treatedGrams: viewModel.lowTreatmentGrams,
+                onLogTreatment: viewModel.logFastCarbs(grams:),
+                onLogCarbs: viewModel.handleCriticalAlertAction,
+                onLogGlucose: viewModel.logGlucose,
+                onDismiss: viewModel.dismissCriticalAlert
             )
-
-            // The events list follows the thread: it shows what's in view.
-            // Before anything is logged it would only be an empty box.
-            if viewModel.latestGlucoseReading != nil || !visibleEvents.isEmpty {
-                RecentTimelineCardsView(
-                    events: Array(visibleEvents.prefix(20)),
-                    onShowAll: onShowAllActivity,
-                    onEventTap: viewModel.showEventDetails,
-                    onEventEdit: viewModel.editEvent,
-                    onEventDelete: viewModel.deleteEvent,
-                    onAddNote: viewModel.showAddNote(for:)
-                )
-            }
-
-            RemindersView(
-                reminders: viewModel.upcomingReminders,
-                suggestion: viewModel.smartSuggestion,
-                onSnooze: viewModel.snoozeReminder,
-                onComplete: viewModel.completeReminder
-            )
-
-            SiteSnapshotView(
-                lastSiteChange: viewModel.lastSiteChange,
-                history: viewModel.siteHistory,
-                onChangeSite: viewModel.changeSite
+        } else if let criticalAlert = viewModel.criticalAlert {
+            CriticalAlertBanner(
+                alert: criticalAlert,
+                onDismiss: viewModel.dismissCriticalAlert,
+                onAction: viewModel.handleCriticalAlertAction
             )
         }
+    }
+
+    /// The latest reading, the thread and the quick actions.
+    @ViewBuilder
+    private func glucoseColumn(now: Date, window: ThreadWindow) -> some View {
+        if let reading = viewModel.latestGlucoseReading {
+            VStack(alignment: .leading, spacing: 12) {
+                // Tapping the latest reading brings the thread back to now.
+                Button {
+                    withAnimation(.smooth) { scrollStart = ThreadView.start(showing: zoom, at: now) }
+                } label: {
+                    ReadingRingCard(reading: reading, insulinOnBoard: viewModel.insulinOnBoard, now: now)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Shows now on the thread")
+                ThreadView(
+                    samples: viewModel.threadSamples,
+                    events: viewModel.threadEvents,
+                    reminders: viewModel.upcomingReminders,
+                    now: now,
+                    zoom: $zoom,
+                    scrollStart: $scrollStart
+                )
+            }
+            .card()
+
+            InViewSummary(window: window, samples: viewModel.threadSamples, events: viewModel.threadEvents)
+        } else {
+            // An empty chart says nothing; a meter to set says what to do.
+            FirstReadingCard(onLog: logFirstReading, onMoreDetails: viewModel.logGlucose)
+                .overlay(alignment: .topLeading) {
+                    // A dose can be logged before any reading.
+                    if viewModel.insulinOnBoard > 0 {
+                        InsulinOnBoardLabel(units: viewModel.insulinOnBoard)
+                            .padding(12)
+                    }
+                }
+        }
+
+        QuickActionButtonsView(
+            onLogMeal: viewModel.logMeal,
+            onQuickBolus: viewModel.quickBolus,
+            onChangeSite: viewModel.changeSite,
+            onLogPreset: viewModel.logMeal(preset:),
+            todayCarbs: viewModel.todayCarbTotal,
+            todayInsulin: viewModel.todayInsulinTotal,
+            nextSite: SiteLocation.suggested(
+                current: SiteLocation(stored: viewModel.lastSiteChange?.location),
+                history: viewModel.siteHistory
+            )
+        )
+    }
+
+    /// What's in view on the thread, what's coming up, and sites.
+    @ViewBuilder
+    private func activityColumn(visibleEvents: [TimelineEvent]) -> some View {
+        // The events list follows the thread: it shows what's in view.
+        // Before anything is logged it would only be an empty box.
+        if viewModel.latestGlucoseReading != nil || !visibleEvents.isEmpty {
+            RecentTimelineCardsView(
+                events: Array(visibleEvents.prefix(20)),
+                onShowAll: onShowAllActivity,
+                onEventTap: viewModel.showEventDetails,
+                onEventEdit: viewModel.editEvent,
+                onEventDelete: viewModel.deleteEvent,
+                onAddNote: viewModel.showAddNote(for:)
+            )
+        }
+
+        RemindersView(
+            reminders: viewModel.upcomingReminders,
+            suggestion: viewModel.smartSuggestion,
+            onSnooze: viewModel.snoozeReminder,
+            onComplete: viewModel.completeReminder
+        )
+
+        SiteSnapshotView(
+            lastSiteChange: viewModel.lastSiteChange,
+            history: viewModel.siteHistory,
+            onChangeSite: viewModel.changeSite
+        )
     }
 
     /// A hello with the person's name when they've given one, and the date.

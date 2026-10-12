@@ -16,6 +16,7 @@ struct TrendsView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(HealthGlucoseImporter.self) private var healthImporter
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var range: TimeRange = .day
     @State private var showingReport = false
@@ -33,27 +34,38 @@ struct TrendsView: View {
                 }
                 .pickerStyle(.segmented)
 
-                if monitor.trendData.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Readings", systemImage: "chart.xyaxis.line")
-                    } description: {
-                        Text("Glucose you log in this period will show up here.")
+                // Side by side on a wide screen, stacked on a phone.
+                columns {
+                    VStack(spacing: 16) {
+                        if monitor.trendData.isEmpty {
+                            ContentUnavailableView {
+                                Label("No Readings", systemImage: "chart.xyaxis.line")
+                            } description: {
+                                Text("Glucose you log in this period will show up here.")
+                            }
+                            .card()
+                        } else {
+                            statTiles
+                            GlucoseTrendChart(points: monitor.trendData, range: range)
+                                .card()
+                        }
                     }
-                    .card()
-                } else {
-                    statTiles
-                    GlucoseTrendChart(points: monitor.trendData, range: range)
-                        .card()
+                    .frame(maxWidth: .infinity)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        CardHeader("Time in range")
+                        TimeInRangeTubes(samples: weekSamples)
+                            .card()
+                    }
+                    .frame(maxWidth: .infinity)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    CardHeader("Time in range")
-                    TimeInRangeTubes(samples: weekSamples)
-                        .card()
+                columns {
+                    insightsSection
+                        .frame(maxWidth: .infinity)
+                    weekdaySection
+                        .frame(maxWidth: .infinity)
                 }
-
-                insightsSection
-                weekdaySection
             }
             .padding(.horizontal)
             .padding(.bottom)
@@ -90,6 +102,13 @@ struct TrendsView: View {
             }
         }
         .sheet(item: $explainedTerm, content: GlossaryTermSheet.init)
+    }
+
+    private func columns(@ViewBuilder _ content: () -> some View) -> some View {
+        let layout = horizontalSizeClass == .regular
+            ? AnyLayout(HStackLayout(alignment: .top, spacing: 20))
+            : AnyLayout(VStackLayout(spacing: 16))
+        return layout(content)
     }
 
     private func explain(_ termID: String) {
