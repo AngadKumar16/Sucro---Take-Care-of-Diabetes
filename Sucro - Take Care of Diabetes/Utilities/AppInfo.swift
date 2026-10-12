@@ -6,7 +6,7 @@
 import Foundation
 
 /// App-wide constants shown to the user.
-enum AppInfo {
+nonisolated enum AppInfo {
     static let name = "DiabetesCare"
     static let supportEmail = "support@sucroapp.com"
 

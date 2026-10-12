@@ -8,12 +8,14 @@
 import SwiftUI
 import CoreData
 import UserNotifications
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
     @Environment(SettingsStore.self) private var settings
+    @Environment(PersistenceController.self) private var persistence
 
     // Export / clear state
     @State private var exportURL: URL?
@@ -23,6 +25,12 @@ struct SettingsView: View {
     @State private var statusMessage: String?
     @State private var showStatusAlert = false
     @State private var isExporting = false
+    // Backup / restore state
+    @State private var backupDocument: BackupDocument?
+    @State private var showBackupExporter = false
+    @State private var showRestoreImporter = false
+    @State private var pendingRestore: BackupArchive?
+    @State private var isWorkingOnBackup = false
     /// The user turned notifications off for the app in iOS Settings.
     @State private var notificationsDenied = false
 
@@ -64,6 +72,32 @@ struct SettingsView: View {
             Button("Delete Everything", role: .destructive) { clearAllData() }
         } message: {
             Text("This permanently deletes all glucose readings, insulin, carbs, activity, and site changes on this phone. This can't be undone. Anything saved to Apple Health stays there, and glucose from Apple Health for the last 30 days is read in again.")
+        }
+        .fileExporter(
+            isPresented: $showBackupExporter,
+            document: backupDocument,
+            contentType: .json,
+            defaultFilename: BackupService.fileName(for: Date())
+        ) { result in
+            if case .failure(let error) = result {
+                showStatus("Couldn't Save Backup", error.localizedDescription)
+            }
+            backupDocument = nil
+        }
+        .fileImporter(isPresented: $showRestoreImporter, allowedContentTypes: [.json]) { result in
+            readBackup(result)
+        }
+        .confirmationDialog(
+            "Restore Backup?",
+            isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingRestore
+        ) { archive in
+            Button("Add Missing Entries") { restore(archive, mode: .merge) }
+            Button("Replace All Data", role: .destructive) { restore(archive, mode: .replace) }
+            Button("Cancel", role: .cancel) {}
+        } message: { archive in
+            Text("Backup from \(archive.exportedAt.formatted(date: .abbreviated, time: .shortened)) with \(archive.entryCount) entries. Add Missing Entries keeps everything on this phone. Replace All Data deletes what's here first and restores the backup's settings.")
         }
         .alert(statusTitle, isPresented: $showStatusAlert) {
             Button("OK", role: .cancel) {}
@@ -167,6 +201,18 @@ struct SettingsView: View {
                 .onChange(of: settings.autoBackupEnabled) { _, enabled in
                     if enabled { runBackup() }
                 }
+            Button(action: backUpNow) {
+                HStack {
+                    Label("Back Up Now", systemImage: "externaldrive.badge.plus")
+                    Spacer()
+                    if isWorkingOnBackup { ProgressView() }
+                }
+            }
+            .disabled(isWorkingOnBackup)
+            Button("Restore from Backup…", systemImage: "arrow.down.doc") {
+                showRestoreImporter = true
+            }
+            .disabled(isWorkingOnBackup)
             Button(action: exportData) {
                 HStack {
                     Label("Export Glucose (CSV)", systemImage: "square.and.arrow.up")
@@ -206,11 +252,12 @@ struct SettingsView: View {
     // MARK: - Actions
 
     private var backupFooter: String {
+        let export = "Export saves your last 90 days of glucose readings as a spreadsheet."
         guard settings.autoBackupEnabled else {
-            return "Export saves your last 90 days of glucose readings as a spreadsheet."
+            return "Back Up Now saves everything you've logged, with your settings, as one file. \(export)"
         }
         let last = settings.lastBackupDate.map { "Last backup \($0.formatted(date: .abbreviated, time: .shortened))." } ?? "No backup yet."
-        return "Saves your glucose readings on this phone once a day. \(last) Export saves your last 90 days as a spreadsheet."
+        return "Saves everything you've logged once a day, in Files › On My iPhone › \(AppInfo.name) › Backups. Move a copy to iCloud Drive to keep it if this phone is lost. \(last) \(export)"
     }
 
     private func resetThresholds() {
@@ -248,7 +295,50 @@ struct SettingsView: View {
 
     private func runBackup() {
         // Force a backup now so enabling the toggle has an immediate effect.
-        _ = BackupService.shared.performBackup(context: viewContext)
+        Task { await BackupService.shared.performBackup(container: persistence.container) }
+    }
+
+    private func backUpNow() {
+        isWorkingOnBackup = true
+        Task {
+            defer { isWorkingOnBackup = false }
+            do {
+                let archive = try await BackupService.shared.makeArchive(container: persistence.container)
+                guard archive.entryCount > 0 else {
+                    showStatus("Nothing to Back Up", "Log something first.")
+                    return
+                }
+                backupDocument = BackupDocument(data: try archive.encoded())
+                showBackupExporter = true
+            } catch {
+                showStatus("Couldn't Back Up", error.localizedDescription)
+            }
+        }
+    }
+
+    private func readBackup(_ result: Result<URL, Error>) {
+        do {
+            let url = try result.get()
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            pendingRestore = try BackupArchive.decode(Data(contentsOf: url))
+        } catch {
+            showStatus("Couldn't Open Backup", error.localizedDescription)
+        }
+    }
+
+    private func restore(_ archive: BackupArchive, mode: BackupStore.Mode) {
+        isWorkingOnBackup = true
+        Task {
+            defer { isWorkingOnBackup = false }
+            do {
+                let result = try await BackupService.shared.restore(archive, mode: mode, container: persistence.container)
+                let skipped = result.skipped > 0 ? " \(result.skipped) were already on this phone." : ""
+                showStatus("Backup Restored", "Added \(result.added) entries.\(skipped)")
+            } catch {
+                showStatus("Couldn't Restore", error.localizedDescription)
+            }
+        }
     }
 
     private func notificationsToggled(_ enabled: Bool) {
@@ -291,4 +381,5 @@ struct SettingsView: View {
     }
     .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     .environment(SettingsStore())
+    .environment(PersistenceController.preview)
 }

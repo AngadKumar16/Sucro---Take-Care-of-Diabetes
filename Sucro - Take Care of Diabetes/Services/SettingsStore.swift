@@ -285,4 +285,34 @@ final class SettingsStore {
     }
 
     static let insulinActionBounds: ClosedRange<Double> = 3...6
+
+    // MARK: - Backup
+
+    /// The settings a backup carries: the ones that change how entries read.
+    var backupSettings: BackupArchive.Settings {
+        BackupArchive.Settings(
+            userName: userName,
+            diabetesType: diabetesType,
+            glucoseUnit: glucoseUnit,
+            urgentLow: urgentLow,
+            targetLow: targetLow,
+            targetHigh: targetHigh,
+            urgentHigh: urgentHigh,
+            insulinActionHours: insulinActionHours,
+            appearance: appearance.rawValue
+        )
+    }
+
+    func apply(_ backup: BackupArchive.Settings) {
+        userName = backup.userName
+        diabetesType = backup.diabetesType
+        if ["mg/dL", "mmol/L"].contains(backup.glucoseUnit) { glucoseUnit = backup.glucoseUnit }
+        urgentLow = backup.urgentLow
+        targetLow = backup.targetLow
+        targetHigh = backup.targetHigh
+        urgentHigh = backup.urgentHigh
+        normalizeThresholds()
+        insulinActionHours = min(max(backup.insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)
+        appearance = Appearance(rawValue: backup.appearance) ?? appearance
+    }
 }

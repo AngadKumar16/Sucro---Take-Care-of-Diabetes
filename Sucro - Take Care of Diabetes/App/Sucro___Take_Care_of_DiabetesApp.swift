@@ -65,7 +65,7 @@ struct SucroApp: App {
                 .task {
                     // Run a daily backup if the user has Auto Backup enabled.
                     if persistence.loadError == nil {
-                        BackupService.shared.performBackupIfNeeded(context: persistence.container.viewContext)
+                        await BackupService.shared.performBackupIfNeeded(container: persistence.container)
                     }
 
                     // Permission prompts are skipped during UI tests so system
