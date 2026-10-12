@@ -196,6 +196,41 @@ final class FeatureFlowUITests: XCTestCase {
         XCTAssertTrue(inserted.exists, "Today should show the new site")
     }
 
+    func testSiteHistoryListsChangesAndEditsWithTheBodyMap() {
+        openTab("Today")
+        let change = app.buttons["Change Site"]
+        scrollTo(change)
+        change.tap()
+        XCTAssertTrue(app.navigationBars["Change Site"].waitForExistence(timeout: 5))
+        let leftThigh = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Left thigh'")).firstMatch
+        XCTAssertTrue(leftThigh.waitForExistence(timeout: 5), "The body map should list the left thigh")
+        leftThigh.tap()
+        save()
+
+        let history = app.buttons["siteHistory"]
+        scrollTo(history)
+        history.tap()
+        XCTAssertTrue(app.navigationBars["Site History"].waitForExistence(timeout: 5))
+        let row = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Left thigh'")).firstMatch
+        scrollTo(row)
+        XCTAssertTrue(row.exists, "History should list the new site change")
+
+        row.tap()
+        XCTAssertTrue(app.navigationBars["Edit Site Change"].waitForExistence(timeout: 5))
+        let rightArm = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Right arm'")).firstMatch
+        XCTAssertTrue(rightArm.waitForExistence(timeout: 5), "Editing should show the body map")
+        rightArm.tap()
+        save()
+        let edited = app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Right arm'")).firstMatch
+        scrollTo(edited)
+        XCTAssertTrue(edited.exists, "History should show the edited site")
+
+        openTab("Log")
+        app.buttons["Sites"].tap()
+        XCTAssertTrue(app.buttons.containing(NSPredicate(format: "label BEGINSWITH 'Right arm'")).firstMatch.waitForExistence(timeout: 5),
+                      "Log should list site changes under Sites")
+    }
+
     /// Picks the first photo in the system photo picker. The picker runs out
     /// of process but its grid shows up in the app's tree. Relies on the
     /// sample photos every simulator ships with.

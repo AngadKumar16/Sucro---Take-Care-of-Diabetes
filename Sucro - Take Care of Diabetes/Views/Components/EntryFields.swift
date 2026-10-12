@@ -200,24 +200,3 @@ struct ActivityFields: View {
         base.contains(current) || current.isEmpty ? base : base + [current]
     }
 }
-
-struct SiteFields: View {
-    @Binding var location: SiteLocation
-    @Binding var timestamp: Date
-    @Binding var notes: String
-
-    var body: some View {
-        Section {
-            Picker("Location", selection: $location) {
-                ForEach(SiteLocation.allCases, id: \.self) { location in
-                    Text(location.rawValue).tag(location)
-                }
-            }
-            LabeledContent("Change Every", value: "\(location.rotationDays) days")
-        } footer: {
-            Text("You'll get a reminder when this site is due.")
-        }
-        .listRowBackground(Theme.card)
-        TimeAndNotesSections(timestamp: $timestamp, notes: $notes, timeLabel: "Changed")
-    }
-}

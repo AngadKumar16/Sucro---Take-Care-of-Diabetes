@@ -15,6 +15,7 @@ class LogViewModel: BaseViewModel {
     var carbEntries: [CarbEntry] = []
     var insulinEntries: [InsulinEntry] = []
     var activityEntries: [ActivityEntry] = []
+    var siteChanges: [SiteChange] = []
     var selectedDate: Date = Date()
     /// Bumped on every fetch. A refetch usually returns the same managed
     /// objects, which Observation treats as "no change", so views read this
@@ -40,6 +41,7 @@ class LogViewModel: BaseViewModel {
         fetchCarbEntries(from: startOfDay, to: endOfDay)
         fetchInsulinEntries(from: startOfDay, to: endOfDay)
         fetchActivityEntries(from: startOfDay, to: endOfDay)
+        fetchSiteChanges(from: startOfDay, to: endOfDay)
         revision += 1
     }
     
@@ -91,6 +93,18 @@ class LogViewModel: BaseViewModel {
         }
     }
     
+    private func fetchSiteChanges(from start: Date, to end: Date) {
+        let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", start as NSDate, end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]
+
+        do {
+            siteChanges = try viewContext.fetch(request)
+        } catch {
+            print("Error fetching site changes: \(error)")
+        }
+    }
+
     func addGlucoseReading(value: Double, unit: String, context: String?, notes: String?, timestamp: Date = Date()) {
         let reading = GlucoseReading(context: viewContext)
         reading.id = UUID()

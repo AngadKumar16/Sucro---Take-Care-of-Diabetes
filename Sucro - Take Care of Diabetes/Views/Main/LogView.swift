@@ -21,6 +21,7 @@ struct LogView: View {
         case carbs = "Carbs"
         case insulin = "Insulin"
         case activity = "Activity"
+        case sites = "Sites"
     }
 
     var body: some View {
@@ -208,6 +209,20 @@ struct LogView: View {
                 )
             }
         }
+        if filter == .all || filter == .sites {
+            rows += viewModel.siteChanges.map { change in
+                let location = SiteLocation(stored: change.location)
+                return LogRow(
+                    object: change,
+                    timestamp: change.timestamp,
+                    icon: "bandage.fill",
+                    color: Theme.vermilion,
+                    title: location?.spokenName ?? change.location ?? "Site change",
+                    detail: location.map { "Change every \($0.rotationDays) days" },
+                    notes: change.notes
+                )
+            }
+        }
         return rows.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
     }
 
@@ -252,6 +267,7 @@ private struct LogRowView: View {
         case "fork.knife": "CARBS"
         case "syringe.fill": "INSULIN"
         case "figure.walk": "ACTIVITY"
+        case "bandage.fill": "SITE"
         default: "ENTRY"
         }
     }

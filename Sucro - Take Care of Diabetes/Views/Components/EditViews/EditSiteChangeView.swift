@@ -16,6 +16,9 @@ struct EditSiteChangeView: View {
     @State private var photo: Data?
     @State private var original: [AnyHashable] = []
 
+    @FetchRequest(sortDescriptors: [SortDescriptor(\SiteChange.timestamp, order: .reverse)])
+    private var siteChanges: FetchedResults<SiteChange>
+
     private var current: [AnyHashable] { [location, timestamp, notes, photo] }
 
     var body: some View {
@@ -26,10 +29,16 @@ struct EditSiteChangeView: View {
             onSave: save,
             onCancel: operation.cancel
         ) {
-            SiteFields(location: $location, timestamp: $timestamp, notes: $notes)
+            SitePicker(location: $location, current: nil, history: otherSitesLastUsed)
+            TimeAndNotesSections(timestamp: $timestamp, notes: $notes, timeLabel: "Changed")
             SitePhotoSection(photo: $photo)
         }
         .onAppear(perform: load)
+    }
+
+    /// When each site was last used, not counting the change being edited.
+    private var otherSitesLastUsed: [SiteLocation: Date] {
+        SiteRotation.lastUsed(siteChanges.filter { $0.objectID != entry.objectID }.compactMap(\.rotationChange))
     }
 
     private func load() {

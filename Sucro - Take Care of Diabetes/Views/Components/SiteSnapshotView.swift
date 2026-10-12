@@ -10,7 +10,7 @@ import CoreData
 
 /// Your sites on a body map: where the current site is, how old it is,
 /// when it's due, and which site has rested longest. Tapping it logs a
-/// new site change.
+/// new site change; History opens the rotation history.
 struct SiteSnapshotView: View {
     let lastSiteChange: SiteChange?
     var history: [SiteLocation: Date] = [:]
@@ -21,7 +21,14 @@ struct SiteSnapshotView: View {
         let next = SiteLocation.suggested(current: current, history: history)
 
         VStack(alignment: .leading, spacing: 8) {
-            CardHeader("Your sites")
+            CardHeader("Your sites") {
+                NavigationLink("History") {
+                    SiteHistoryView()
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.green)
+                .accessibilityIdentifier("siteHistory")
+            }
 
             Button(action: onChangeSite) {
                 HStack(alignment: .center, spacing: 16) {
@@ -75,11 +82,11 @@ struct SiteSnapshotView: View {
     let siteChange = SiteChange(context: context)
     siteChange.location = "Abdomen Left"
     siteChange.timestamp = Date().addingTimeInterval(-86400)
-    return VStack(spacing: 20) {
+    return NavigationStack { VStack(spacing: 20) {
         SiteSnapshotView(lastSiteChange: siteChange, history: [.abdomenLeft: .now, .armLeft: .now.addingTimeInterval(-3 * 86400)], onChangeSite: {})
         SiteSnapshotView(lastSiteChange: nil, onChangeSite: {})
     }
-    .padding()
+    .padding() }
     .instrumentBackground()
     .environment(SettingsStore())
 }

@@ -15,7 +15,6 @@ struct AddSiteChangeView: View {
     @State private var timestamp = Date()
     @State private var notes = ""
     @State private var photoData: Data?
-    @State private var side: BodySide = .front
 
     var body: some View {
         EntryForm(
@@ -24,31 +23,17 @@ struct AddSiteChangeView: View {
             hasChanges: !notes.isEmpty || photoData != nil,
             onSave: save
         ) {
-            Section {
-                VStack(spacing: 12) {
-                    Picker("Side", selection: $side) {
-                        ForEach(BodySide.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    BodyMap(side: side, current: SiteLocation(stored: viewModel.lastSiteChange?.location),
-                            history: viewModel.siteHistory, suggested: suggestedLocation, selection: $location)
-                        .frame(height: 250)
-                    BodyMapKey()
-                }
-                .padding(.vertical, 6)
-            } footer: {
-                Text("Tap a site. Green is the one that has rested longest.")
-            }
-            .listRowBackground(Theme.card)
-            SiteFields(location: $location, timestamp: $timestamp, notes: $notes)
+            SitePicker(
+                location: $location,
+                current: SiteLocation(stored: viewModel.lastSiteChange?.location),
+                history: viewModel.siteHistory,
+                suggested: suggestedLocation
+            )
+            TimeAndNotesSections(timestamp: $timestamp, notes: $notes, timeLabel: "Changed")
             SitePhotoSection(photo: $photoData)
         }
         .onAppear {
             location = suggestedLocation
-            side = BodySide.showing(location)
-        }
-        .onChange(of: location) { _, new in
-            if new.point(on: side) == nil { side = BodySide.showing(new) }
         }
     }
 
