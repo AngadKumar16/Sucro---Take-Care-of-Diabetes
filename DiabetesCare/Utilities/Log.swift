@@ -17,4 +17,5 @@ nonisolated enum Log {
     static let notifications = Logger(subsystem: subsystem, category: "notifications")
     static let backup = Logger(subsystem: subsystem, category: "backup")
     static let export = Logger(subsystem: subsystem, category: "export")
+    static let family = Logger(subsystem: subsystem, category: "family")
 }

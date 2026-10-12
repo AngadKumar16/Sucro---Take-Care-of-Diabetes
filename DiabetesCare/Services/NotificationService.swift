@@ -22,6 +22,7 @@ final class NotificationService: NSObject {
         static let staleData = "alert.cgmStale"
         static let reminderPrefix = "reminder."
         static let lowRecheck = "alert.lowRecheck"
+        static let familyPrefix = "family."
 
         static func glucose(_ kind: GlucoseAlertKind) -> String { glucosePrefix + kind.rawValue }
     }
@@ -86,6 +87,47 @@ final class NotificationService: NSObject {
         center.removeDeliveredNotifications(withIdentifiers: others)
 
         add(UNNotificationRequest(identifier: Identifier.glucose(kind), content: content, trigger: nil))
+    }
+
+    // MARK: - Family
+
+    /// An alert about someone this phone follows. One identifier per person
+    /// and kind, so a newer alert replaces the older one.
+    func deliverFamilyAlert(_ alert: CaregiverAlert, name: String, personID: String) {
+        guard notificationsEnabled else { return }
+        let content = UNMutableNotificationContent()
+        let id: String
+        switch alert {
+        case .glucose(let kind, let mgdl):
+            let formatted = SettingsStore.shared.formattedGlucose(mgdl)
+            switch kind {
+            case .urgentLow:
+                content.title = String(localized: "\(name): Urgent Low")
+                content.body = String(localized: "Glucose is \(formatted). Check on \(name) now.")
+            case .low:
+                content.title = String(localized: "\(name): Low")
+                content.body = String(localized: "Glucose is \(formatted).")
+            case .urgentHigh:
+                content.title = String(localized: "\(name): High")
+                content.body = String(localized: "Glucose is \(formatted). Ketones may need checking.")
+            }
+            id = "\(Identifier.familyPrefix)\(personID).glucose"
+        case .noRecentData(let lastReading):
+            content.title = String(localized: "\(name): No Recent Readings")
+            content.body = String(localized: "The last reading was at \(lastReading.formatted(date: .omitted, time: .shortened)).")
+            id = "\(Identifier.familyPrefix)\(personID).stale"
+        case .helpRequested(let request):
+            content.title = String(localized: "\(name) Asked for Help")
+            if let mgdl = request.mgdl {
+                content.body = String(localized: "Sent at \(request.sentAt.formatted(date: .omitted, time: .shortened)). Last glucose \(SettingsStore.shared.formattedGlucose(mgdl)).")
+            } else {
+                content.body = String(localized: "Sent at \(request.sentAt.formatted(date: .omitted, time: .shortened)).")
+            }
+            id = "\(Identifier.familyPrefix)\(personID).help"
+        }
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
     }
 
     // MARK: - Missing CGM data

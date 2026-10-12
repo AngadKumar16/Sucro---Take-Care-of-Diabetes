@@ -8,6 +8,9 @@ import SwiftUI
 /// Settings section for the insulin action time used by the IOB estimate.
 struct InsulinSettingsSection: View {
     @Environment(SettingsStore.self) private var settings
+    /// A kid's insulin settings need a grown-up.
+    var locked = false
+    var onUnlock: () -> Void = {}
 
     var body: some View {
         Section {
@@ -18,6 +21,10 @@ struct InsulinSettingsSection: View {
                 }
             }
             .accessibilityIdentifier("insulinActionTime")
+            .disabled(locked)
+            if locked {
+                Button("Unlock to Change", systemImage: "lock.fill", action: onUnlock)
+            }
         } header: {
             Text("Insulin")
         } footer: {

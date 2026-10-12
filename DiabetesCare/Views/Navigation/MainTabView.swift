@@ -67,6 +67,31 @@ struct MainTabView: View {
     }
 }
 
+/// The tabs on a parent's or caregiver's phone: the people they follow,
+/// Learn and Settings.
+struct CaregiverTabView: View {
+    var body: some View {
+        TabView {
+            Tab("Family", systemImage: "person.2.fill") {
+                NavigationStack {
+                    FamilyHomeView()
+                }
+            }
+            Tab("Learn", systemImage: "book") {
+                NavigationStack {
+                    LearnView()
+                }
+            }
+            Tab("Settings", systemImage: "gearshape") {
+                NavigationStack {
+                    SettingsView()
+                }
+            }
+        }
+        .tabViewStyle(.sidebarAdaptable)
+    }
+}
+
 #Preview {
     let context = PersistenceController.preview.container.viewContext
     MainTabView()

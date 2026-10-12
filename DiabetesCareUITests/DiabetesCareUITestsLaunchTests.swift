@@ -12,6 +12,13 @@ final class DiabetesCareUITestsLaunchTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    // The landscape configuration rotates the simulator and leaves it that
+    // way, which breaks every test that runs after this one.
+    override func tearDown() {
+        XCUIDevice.shared.orientation = .portrait
+        super.tearDown()
+    }
+
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()

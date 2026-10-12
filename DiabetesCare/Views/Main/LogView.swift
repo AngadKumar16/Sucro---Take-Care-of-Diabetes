@@ -13,6 +13,7 @@ struct LogView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(ParentGate.self) private var gate
     @State private var filter: Filter = .all
     @State private var pendingDelete: LogRow?
 
@@ -100,7 +101,11 @@ struct LogView: View {
                 Menu("Add Entry", systemImage: "plus") {
                     Button("Add Glucose", systemImage: "drop") { viewModel.showAddGlucose = true }
                     Button("Add Carbs", systemImage: "fork.knife") { viewModel.showAddCarbs = true }
-                    Button("Add Insulin", systemImage: "syringe") { viewModel.showAddInsulin = true }
+                    if gate.isAvailable(.logInsulin) {
+                        Button("Add Insulin", systemImage: gate.needsApproval(.logInsulin) ? "lock.fill" : "syringe") {
+                            gate.run(.logInsulin) { viewModel.showAddInsulin = true }
+                        }
+                    }
                     Button("Add Activity", systemImage: "figure.walk") { viewModel.showAddActivity = true }
                 }
                 .accessibilityIdentifier("addEntryMenu")
@@ -445,4 +450,5 @@ private struct DayPicker: View {
     .environment(LogViewModel(context: PersistenceController.preview.container.viewContext))
     .environment(SettingsStore())
     .environment(HealthGlucoseImporter())
+    .environment(ParentGate())
 }

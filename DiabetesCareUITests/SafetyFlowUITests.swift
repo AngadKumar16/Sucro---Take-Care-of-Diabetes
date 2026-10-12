@@ -67,8 +67,12 @@ final class SafetyFlowUITests: XCTestCase {
         // Each threshold is a ruler tape. Dragging the scale left moves
         // higher values under the needle; the value reads in the user's unit.
         let low = app.sliders["threshold.Low"]
-        // Bring it clear of the floating tab bar before dragging.
-        if low.frame.maxY > app.frame.maxY - 140 { app.swipeUp() }
+        // Bring it clear of the floating tab bar before dragging, in small
+        // steps so it doesn't end up under the navigation bar instead.
+        for _ in 0..<6 where low.frame.maxY > app.frame.maxY - 140 {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.55)))
+        }
         let before = low.value as? String
         low.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
             .press(forDuration: 0.05, thenDragTo: low.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.5)))

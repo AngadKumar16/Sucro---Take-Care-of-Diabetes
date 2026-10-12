@@ -44,10 +44,36 @@ struct LearnView: View {
         .navigationTitle("Learn")
         .searchable(text: $query, prompt: "Search \(glossary.terms.count) terms")
         .glossaryDestinations()
+        .growthDestinations()
     }
 
     @ViewBuilder
     private var browseSections: some View {
+        if settings.appRole == .selfCare {
+            Section {
+                NavigationLink(value: GrowthDestination.path) {
+                    LabeledContent {
+                        Text("\(settings.completedSkills.count) of \(Skill.allCases.count)")
+                            .monospacedDigit()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Your Path")
+                                Text("\(settings.stage.title) stage · skills that open new features")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.soft)
+                            }
+                        } icon: {
+                            Image(systemName: settings.stage.symbol)
+                                .foregroundStyle(Theme.green)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("learnYourPath")
+            }
+            .listRowBackground(Theme.card)
+        }
+
         Section("Guides") {
             GuideCarousel()
                 .listRowInsets(EdgeInsets())

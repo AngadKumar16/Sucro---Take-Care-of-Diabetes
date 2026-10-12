@@ -1,12 +1,13 @@
 # DiabetesCare — Planning Guide
 
-Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; every phase below is now done (2026-10-12). What's left needs a person or Apple: see `docs/release-checklist.md`.
+Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; Phases 0–4 are done (2026-10-12). Phase 5 ("Grows with you", for the Congressional App Challenge) is in progress: weeks 1–2 are built, week 3 is next. What's left that needs a person or Apple: see `docs/release-checklist.md`.
 
 ## Snapshot
 
 - iOS 26, SwiftUI + Core Data (`SucroDataModel`, name kept so existing stores open), Swift 5, Xcode 16 synchronized folders (new files in the source tree are added to the target automatically).
 - Architecture: `Views/` → `ViewModels/` (ObservableObject) → `Services/` singletons (`DataService`, `NotificationService`, ...) → Core Data.
-- Navigation: 5 tabs (Today, Log, Trends, Learn, Settings), `sidebarAdaptable` on iPad. Reports opens from the Share Report button on Trends. Devices, Help and Safety Information are pushed from Settings.
+- Navigation: 5 tabs (Today, Log, Trends, Learn, Settings), `sidebarAdaptable` on iPad. Reports opens from the Share Report button on Trends. Devices, Help and Safety Information are pushed from Settings. A caregiver's phone gets 3 tabs instead (Family, Learn, Settings).
+- First launch: safety notice → "Who's using DiabetesCare?" (Kid / Teen / Adult / Parent or caregiver) → app. `RootView` routes; `SettingsStore.careStage` + `appRole` hold the answer.
 - Name: **DiabetesCare** everywhere — `DiabetesCare.xcodeproj`, scheme/target/module `DiabetesCare`, folders `DiabetesCare/`, `DiabetesCareTests/`, `DiabetesCareUITests/`, bundle ID `com.AngadKumar16.DiabetesCare` (renamed 2026-10-12; the old ID's installs don't carry over). Only the repo folder and `SucroDataModel` still say Sucro.
 - `Resources/Glossary.json`: 134 curated glossary terms (`id`, `name`, `aliases`, `category`, `summary`, `details`, `related`, `inApp`) behind the Learn tab. Replaced the prototype's `MedicalTerms.json` (216 terms, about half off-topic, fake URLs, unused `isPremium`). Content is general information, written in plain language, and should get a clinician review before release.
 
@@ -111,6 +112,63 @@ Covered: add/edit/delete carbs, insulin, activity, glucose; Log filters and day 
 - [x] Drafts in `docs/`: privacy policy, App Review notes, App Privacy answers ("Data Not Collected"), critical-alerts request text, release checklist.
 - [ ] **Manual** (see `docs/release-checklist.md`): check App Store name availability, register the bundle ID, host the privacy policy, confirm the support email, submit the critical-alerts request (bug 4), clinician review of the glossary and advice text, screenshots.
 
+
+## Phase 5 — "Grows with you" (Congressional App Challenge 2026)
+
+### Why
+Entry for the Congressional App Challenge (deadline ~late Oct / early Nov 2026; check congressionalappchallenge.us for the exact date, video length cap and rules). Team: Angad & Abhay. Story: Angad's mom has type 1 diabetes. Without a differentiator the app reads as "another diabetes logger" (mySugr, Glucose Buddy). The business canvas defines it: **the app grows with the user**. Kid (parent in charge, everything goes to the parent) → Teen (teen logs, parent sees, fewer alerts) → Adult (full control, share with family or doctor). Vision: every kid with diabetes grows confident caring for themselves. Values: privacy (nothing comes to us; COPPA), simplicity, free.
+
+Judges are mostly non-technical and mostly watch the demo video, so the order of work is story → video → real users → README → polish. No paid Apple Developer account yet, so iCloud is built but switched off, and everything else must be demoable and honest without it.
+
+### Week 1 — Stages, parent lock, skills (done 2026-10-12)
+- [x] `Models/Domain/CareStage.swift`: `CareStage` (kid/teen/adult), `Feature` (logInsulin, quickBolus, changeSite, editThresholds, editInsulinSettings, turnOffNotifications, clearData, restoreBackup, changeStage, stopSharing), `FeatureAccess` (open / parent / hidden), `AppRole` (selfCare / caregiver). `CareStage.access(to:completed:)` is the only place the rules live:
+  - Kid: Quick Bolus hidden; insulin, site change, insulin settings, ranges, notifications off, clear, restore, stage, stop sharing need the grown-up passcode.
+  - Teen: logs everything alone; ranges, notifications off, clear, restore, stage, stop sharing need the passcode.
+  - Adult: all open.
+  - Safety info (low card, ketone advice, Help, Safety) is never gated.
+- [x] `SettingsStore`: `careStage` (nil until chosen; unset counts as Adult), `appRole`, `completedSkills`, `familySharingEnabled`, `stage`, `hasChosenSetup`, `access(to:)`, `complete(_:)`.
+- [x] `Services/ParentLock.swift`: 4-digit grown-up passcode, salted SHA-256 in the Keychain (`WhenUnlockedThisDeviceOnly`), unlocks for 5 min, locks when the app goes to the background, 30 s lockout after 5 wrong tries. A speed bump for a kid, not real security.
+- [x] `Views/Growth/ParentGate.swift`: one gate at the root; `gate.run(feature) { … }` runs, asks for the passcode, or does nothing. `PasscodeView` (friendly keypad; create twice / approve).
+- [x] `Views/Growth/SetupView.swift`: first-launch "Who's using DiabetesCare?" with optional first name; Kid/Teen create the passcode. Also from Settings › Growing Up › Change Who It's For (gated).
+- [x] Kid Today: `KidHelpCard` ("Feeling off?" → Check Glucose / Get Help). `KidHelpView`: find a grown-up, 15 g fast sugar (logs it and starts the 15-min recheck), check again, emergency line, **Tell My Grown-Up** (help request to family when sharing is on). No Quick Bolus key; Change Site gated.
+- [x] Gates wired: Today quick actions and site card, Log › Add Insulin (lock icon when it'll ask), Settings ranges + insulin action time ("Unlock to Change"), notifications off, Restore, Clear All Data, Change Who It's For, Stop Sharing.
+- [x] `Models/Domain/Skill.swift`: 6 skills. 4 quizzes tied to the Learn guides (Know Your Ranges, Treat a Low, Read the Numbers, Time in Range), 3 questions each, all right to pass, wording matches the guides. 2 habits read from the log (`SkillHabits`): Steady Logger (7 days in a row of entries you logged; CGM imports don't count) and Low, Treated, Checked (low → carbs within 20 min → back above Low within 40 min). `Services/SkillProgress.swift` marks habits done (on Your Path and when the app becomes active).
+- [x] Skill unlocks (kid): Know Your Ranges + Treat a Low → log insulin without the passcode; Steady Logger → log site changes. Skills never open Quick Bolus or the risky settings.
+- [x] Moving up: kid → teen needs the 4 quizzes; teen → adult needs all 6; the grown-up approves with the passcode. Reaching Adult removes the passcode.
+- [x] `Views/Growth/SkillPathView.swift` ("Your Path"): Kid → Teen → Adult ladder, next-stage card with progress and Move Up, skill rows with what each opens. Reached from Learn (top row) and Settings › Growing Up. `SkillQuizView` one question at a time with the reason after each answer, link to the guide, retake any time. No dosing content anywhere.
+
+### Week 2 — Family sharing (built 2026-10-12; iCloud part untested until enrollment)
+- [x] Design: **one-way, read-only**. The person with diabetes publishes; family follows. Not `NSPersistentCloudKitContainer`: the local store and model stay as they are, and a follower's data never mixes with their own log.
+- [x] `Services/Family/FamilyModels.swift`: `FamilyChangeSet` (profile, entries as `BackupArchive`, deleted ids, help requests), `FamilyProfile` (name, stage, ranges, unit, skills), `FamilyHelpRequest`, `FamilyPerson`.
+- [x] `FamilyDiff`: what's shared (last 30 days; never photos; notes only at Kid) and what changed since the last publish, by a SHA-256 fingerprint per entry. Fingerprints are saved only after a successful send.
+- [x] `FamilyStore`: builds the shareable archive; applies a change set to a follower's store (edits replace, deletions go) with batch requests; one SQLite store per followed person in Application Support/Family.
+- [x] `FamilyTransport` protocol. `LoopbackFamilyTransport` (in memory, ordered log, tokens) for tests and the preview. `CloudKitFamilyTransport`: zone "Family" in the private DB, records `Entry` (kind + JSON payload), `Profile`, `Help`; zone-wide `CKShare` (read only, private); follower reads the shared DB with `recordZoneChanges` and change tokens; `CKDatabaseSubscription` (silent push) wakes the parent's phone.
+- [x] `FamilyService`: publishes 3 s after any save to the main store (debounced, so a CGM import goes as one batch) and on becoming active; follower refresh pulls every followed person, applies, and runs `CaregiverAlertPolicy`; help requests; start/stop sharing; unfollow; `makePreview()` runs the real publish → fetch → apply path through the loopback into a temp store.
+- [x] `CaregiverAlertPolicy`: kid → low, urgent low, urgent high, no recent CGM data, help requests; teen → urgent low/high only; adult → urgent low only. Reuses `GlucoseAlertPolicy` crossing + cooldown, so one low is one alert. `NotificationService.deliverFamilyAlert` ("Maya: Urgent Low"), one identifier per person and kind.
+- [x] `AppDelegate` (`App/AppDelegate.swift`): scene delegate accepts iCloud invitations; silent pushes refresh followed people.
+- [x] Views: `FamilySettingsView` (Share with Family / Invite / Stop Sharing, what's shared, **See What Family Sees**, people you follow), `CaregiverView` (latest reading in their ranges, last 12 h chart, today's time in range / lows / carbs / insulin, what was logged, their path), `FamilyHomeView` + `CaregiverTabView` for a caregiver's phone, `CloudSharingSheet` (`UICloudSharingController`).
+- [x] Switched off until enrollment: `FamilyCloud.containerID = nil` → no `CKContainer` is ever made (it crashes without the entitlement). Family settings say so plainly; the preview works. `DiabetesCare/DiabetesCare-CloudKit.entitlements` is ready. Steps in `docs/release-checklist.md` › Turn on iCloud family sharing.
+- [x] Docs: privacy policy (family sharing, children), App Review notes (stages, passcode, family sharing, background modes), App Privacy (still "Data Not Collected": the user's own iCloud).
+- [ ] **After enrollment:** turn it on and run the two-device test in the checklist (teen + parent Apple Accounts, urgent-low alert with the app closed, help request, stop sharing).
+
+### Week 3 — Submission (next)
+- [ ] `-demoData`: a teen profile with 2 weeks of data and some skills done, so the video and screenshots show the path half-way.
+- [ ] Demo video (under the cap): mom's story (first 20 s) → the problem (new kids don't know the warning signs; teens take over alone) → Kid stage: Today, Get Help → a skill quiz unlocks insulin logging → move up to Teen with the grown-up passcode → See What Family Sees, urgent-low alert → Adult, doctor report from Trends → privacy and free → what's next (iCloud sharing live once enrolled, Android). Simulator recording, voice-over, captions; readable on mute.
+- [ ] README with screenshots: story, what it does, how stages work, privacy, how to build, safety note, what's honest about iCloud.
+- [ ] Business canvas blanks: target customer, MVP, value proposition, branding, research findings, marketing, KPIs, competitors (mySugr, Glucose Buddy, Dexcom Follow: none change with age), pricing (free; grants/donations), startup costs.
+- [ ] Interviews: 3–5 families or teens with T1D (mom first; diabetes camp, school nurse, Breakthrough T1D chapter) → quotes for the video and the canvas's research findings. TestFlight once enrolled.
+- [ ] Clinician review of the quiz questions along with the glossary and guides.
+
+### Later
+- [ ] Multiple caregivers see one person (works already through the share; test it). Caregiver acknowledges a help request back to the kid (needs a write path).
+- [ ] Android version (business canvas).
+- [ ] Doctor sharing beyond the PDF report.
+
+### Testing Phase 5
+- Unit (`GrowthTests`, `FamilySharingTests`): stage × feature table, skill unlocks, readiness, quizzes well-formed, settings persistence, passcode (hash only, lockout, relaunch), gate, habit rules, publish → fetch → apply round trip with edit and delete, 30-day window, photos/notes stripping, diff, caregiver alerts per stage, help requests once, stale data for kids only.
+- UI (`GrowthFlowUITests`): setup as kid sets the passcode and simplifies Today; kid needs the passcode for ranges (wrong code rejected); two quizzes open insulin logging; See What Family Sees shows shared readings (`-demoData`); caregiver phone shows the Family tab.
+- Launch arguments: `-stage kid|teen` (grown-up passcode 1234, locked), `-resetSetup` (shows the setup screen). Plain `-uiTesting` starts as Adult with no passcode, so older tests are unchanged.
+
 ## Key files
 
 Paths are relative to `DiabetesCare/`.
@@ -128,4 +186,6 @@ Paths are relative to `DiabetesCare/`.
 - Backup: `Services/BackupArchive.swift` (format + Core Data), `Services/BackupService.swift` (daily file, restore), `Services/BackupDocument.swift`
 - Sites: `Views/Components/BodyMap.swift`, `Views/Components/SitePicker.swift`, `Views/Secondary/SiteHistoryView.swift`, `Models/Domain/SiteRotation.swift`
 - Logging: `Utilities/Log.swift`
+- Stages and skills: `Models/Domain/CareStage.swift`, `Models/Domain/Skill.swift`, `Services/ParentLock.swift`, `Services/SkillProgress.swift`, `Views/Growth/` (setup, passcode, gate, path, quiz, kid help)
+- Family sharing: `Services/Family/` (models, diff, store, transports, alert policy, `FamilyService`), `Views/Family/`, `App/AppDelegate.swift`, `DiabetesCare-CloudKit.entitlements`
 - Ship docs: `docs/`

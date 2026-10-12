@@ -16,6 +16,7 @@ struct SettingsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(SettingsStore.self) private var settings
     @Environment(PersistenceController.self) private var persistence
+    @Environment(ParentGate.self) private var gate
 
     // Export / clear state
     @State private var exportURL: URL?
@@ -33,6 +34,7 @@ struct SettingsView: View {
     @State private var isWorkingOnBackup = false
     /// The user turned notifications off for the app in iOS Settings.
     @State private var notificationsDenied = false
+    @State private var showSetup = false
 
     private let dataService = DataService.shared
     private let exportService = ExportService.shared
@@ -40,13 +42,23 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            profileSection
-            glucoseSection
-            guidesSection
-            InsulinSettingsSection()
-            notificationsSection
-            appearanceSection
-            dataSection
+            if settings.appRole == .caregiver {
+                caregiverSection
+                unitSection
+                notificationsSection
+                appearanceSection
+            } else {
+                growingSection
+                profileSection
+                glucoseSection
+                guidesSection
+                InsulinSettingsSection(locked: gate.needsApproval(.editInsulinSettings)) {
+                    gate.run(.editInsulinSettings) {}
+                }
+                notificationsSection
+                appearanceSection
+                dataSection
+            }
             moreSection
             Section {
                 LabeledContent("Version", value: AppInfo.version)
@@ -57,6 +69,7 @@ struct SettingsView: View {
         .instrumentBackground()
         .navigationTitle("Settings")
         .helpDestinations()
+        .growthDestinations()
         .task { await checkNotificationPermission() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await checkNotificationPermission() } }
@@ -99,6 +112,16 @@ struct SettingsView: View {
         } message: { archive in
             Text("Backup from \(archive.exportedAt.formatted(date: .abbreviated, time: .shortened)) with \(archive.entryCount) entries. Add Missing Entries keeps everything on this phone. Replace All Data deletes what's here first and restores the backup's settings.")
         }
+        .sheet(isPresented: $showSetup) {
+            NavigationStack {
+                SetupView { showSetup = false }
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showSetup = false }
+                        }
+                    }
+            }
+        }
         .alert(statusTitle, isPresented: $showStatusAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -107,6 +130,63 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    private var growingSection: some View {
+        Section {
+            NavigationLink(value: GrowthDestination.path) {
+                LabeledContent {
+                    Text("\(settings.completedSkills.count) of \(Skill.allCases.count) skills")
+                } label: {
+                    Label("Your Path: \(settings.stage.title)", systemImage: settings.stage.symbol)
+                }
+            }
+            .accessibilityIdentifier("yourPath")
+            NavigationLink(value: GrowthDestination.family) {
+                LabeledContent {
+                    Text(settings.familySharingEnabled ? "Sharing" : "Off")
+                } label: {
+                    Label("Family", systemImage: "person.2.fill")
+                }
+            }
+            .accessibilityIdentifier("familySettings")
+            Button("Change Who It's For", systemImage: "person.crop.circle.badge.questionmark") {
+                gate.run(.changeStage) { showSetup = true }
+            }
+            .parentLockBadge(gate.needsApproval(.changeStage))
+        } header: {
+            Text("Growing Up")
+        } footer: {
+            Text(settings.stage.summary)
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var caregiverSection: some View {
+        Section {
+            NavigationLink(value: GrowthDestination.family) {
+                Label("People You Follow", systemImage: "person.2.fill")
+            }
+            Button("Change Who It's For", systemImage: "person.crop.circle.badge.questionmark") {
+                showSetup = true
+            }
+        } header: {
+            Text("Family")
+        } footer: {
+            Text("This phone follows family members. To log your own diabetes, change who it's for.")
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var unitSection: some View {
+        Section("Glucose") {
+            Picker("Unit", selection: Bindable(settings).glucoseUnit) {
+                Text("mg/dL").tag("mg/dL")
+                Text("mmol/L").tag("mmol/L")
+            }
+            .pickerStyle(.segmented)
+        }
+        .listRowBackground(Theme.card)
+    }
 
     private var profileSection: some View {
         Section("Profile") {
@@ -131,14 +211,24 @@ struct SettingsView: View {
             .pickerStyle(.segmented)
             .listRowSeparator(.hidden)
             GlucoseRangeBar(thresholds: settings.thresholds)
-            ThresholdRow(title: "Urgent High", zone: .urgentHigh, value: Bindable(settings).urgentHigh, bounds: settings.urgentHighBounds)
-            ThresholdRow(title: "High", zone: .high, value: Bindable(settings).targetHigh, bounds: settings.targetHighBounds)
-            ThresholdRow(title: "Low", zone: .low, value: Bindable(settings).targetLow, bounds: settings.targetLowBounds)
-            ThresholdRow(title: "Urgent Low", zone: .urgentLow, value: Bindable(settings).urgentLow, bounds: settings.urgentLowBounds)
-            Button("Reset to Common Defaults", systemImage: "arrow.counterclockwise") {
-                resetThresholds()
+            Group {
+                ThresholdRow(title: "Urgent High", zone: .urgentHigh, value: Bindable(settings).urgentHigh, bounds: settings.urgentHighBounds)
+                ThresholdRow(title: "High", zone: .high, value: Bindable(settings).targetHigh, bounds: settings.targetHighBounds)
+                ThresholdRow(title: "Low", zone: .low, value: Bindable(settings).targetLow, bounds: settings.targetLowBounds)
+                ThresholdRow(title: "Urgent Low", zone: .urgentLow, value: Bindable(settings).urgentLow, bounds: settings.urgentLowBounds)
             }
-            .disabled(settings.thresholds == .standard)
+            .disabled(thresholdsLocked)
+            if thresholdsLocked {
+                Button("Unlock to Change", systemImage: "lock.fill") {
+                    gate.run(.editThresholds) {}
+                }
+                .accessibilityIdentifier("unlockThresholds")
+            } else {
+                Button("Reset to Common Defaults", systemImage: "arrow.counterclockwise") {
+                    resetThresholds()
+                }
+                .disabled(settings.thresholds == .standard)
+            }
         } header: {
             Text("Glucose")
         } footer: {
@@ -146,6 +236,8 @@ struct SettingsView: View {
         }
         .listRowBackground(Theme.card)
     }
+
+    private var thresholdsLocked: Bool { gate.needsApproval(.editThresholds) }
 
     private var guidesSection: some View {
         Section("Learn About Glucose") {
@@ -158,7 +250,7 @@ struct SettingsView: View {
 
     private var notificationsSection: some View {
         Section {
-            Toggle("Notifications", isOn: Bindable(settings).notificationsEnabled)
+            Toggle("Notifications", isOn: notificationsBinding)
                 .accessibilityIdentifier("Enable Notifications")
                 .onChange(of: settings.notificationsEnabled) { _, enabled in
                     notificationsToggled(enabled)
@@ -180,6 +272,20 @@ struct SettingsView: View {
             }
         }
         .listRowBackground(Theme.card)
+    }
+
+    /// Turning notifications off may need a grown-up; turning on never does.
+    private var notificationsBinding: Binding<Bool> {
+        Binding(
+            get: { settings.notificationsEnabled },
+            set: { enabled in
+                if enabled {
+                    settings.notificationsEnabled = true
+                } else {
+                    gate.run(.turnOffNotifications) { settings.notificationsEnabled = false }
+                }
+            }
+        )
     }
 
     private var appearanceSection: some View {
@@ -210,8 +316,9 @@ struct SettingsView: View {
             }
             .disabled(isWorkingOnBackup)
             Button("Restore from Backup…", systemImage: "arrow.down.doc") {
-                showRestoreImporter = true
+                gate.run(.restoreBackup) { showRestoreImporter = true }
             }
+            .parentLockBadge(gate.needsApproval(.restoreBackup))
             .disabled(isWorkingOnBackup)
             Button(action: exportData) {
                 HStack {
@@ -223,9 +330,10 @@ struct SettingsView: View {
             .disabled(isExporting)
             .accessibilityIdentifier("Export Data")
             Button("Clear All Data", systemImage: "trash", role: .destructive) {
-                showClearConfirm = true
+                gate.run(.clearData) { showClearConfirm = true }
             }
             .foregroundStyle(.red)
+            .parentLockBadge(gate.needsApproval(.clearData))
         } header: {
             Text("Data")
         } footer: {
@@ -382,4 +490,5 @@ struct SettingsView: View {
     .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     .environment(SettingsStore())
     .environment(PersistenceController.preview)
+    .environment(ParentGate())
 }

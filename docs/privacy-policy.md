@@ -7,9 +7,21 @@ DiabetesCare is a logbook for people living with diabetes. It is built so that y
 ## What the app stores
 
 - **Entries you log.** Glucose readings, carbs, insulin doses, activity, infusion site changes, notes and optional site photos.
-- **Settings.** Your name (optional), diabetes type, glucose unit, target range and alert thresholds, insulin action time and appearance.
+- **Settings.** Your name (optional), diabetes type, glucose unit, target range and alert thresholds, insulin action time, appearance, who the app is set up for (kid, teen, adult or caregiver) and which skills have been learned.
+- **Grown-up passcode.** On a kid's or teen's phone, a 4-digit passcode a parent sets. Only a salted hash is kept, in the device Keychain.
 
-All of this is stored **only on your device**, in the app's private storage. We have no servers and no account system, and we never receive a copy.
+All of this is stored **only on your device**, in the app's private storage, unless you turn on Family sharing (below). We have no servers and no account system, and we never receive a copy.
+
+## Family sharing (optional, off by default)
+
+If you choose **Settings › Family › Share with Family**, DiabetesCare uses Apple's iCloud (CloudKit) to share your log with the family members you invite:
+
+- **What's shared:** glucose, carbs, insulin, activity and site changes from the last 30 days; your first name, stage (kid, teen, adult), glucose ranges and learned skills; and "I need help" taps from a kid's phone. Notes are shared only at the Kid stage. **Photos are never shared.**
+- **Where it goes:** from your private iCloud database to the iCloud accounts of the people you invite, read only. It does not pass through any server of ours, and we cannot see it.
+- **Who sees it:** only the people you invite in the iCloud sharing screen. You can see exactly what they see with **See What Family Sees**.
+- **Stopping:** **Stop Sharing** removes the shared data from iCloud. On a kid's or teen's phone, stopping needs the grown-up passcode.
+
+A parent's phone that follows someone keeps that person's shared data in a separate store on the parent's device and uses it only to show it and to send alerts there.
 
 ## Apple Health
 
@@ -41,7 +53,7 @@ Settings › Clear All Data deletes everything the app stores on this device. De
 
 ## Children
 
-DiabetesCare can be used by families. It collects nothing, from adults or children.
+DiabetesCare is built to be used by families, including children under 13. We collect nothing, from adults or children. A kid's data stays on the kid's device, and is shared only with family members a parent invites through iCloud, never with us or anyone else. Risky settings and stopping family sharing on a kid's phone need the grown-up passcode.
 
 ## Contact
 

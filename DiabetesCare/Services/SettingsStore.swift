@@ -36,6 +36,10 @@ final class SettingsStore {
         static let savedGlossaryTerms = "settings.savedGlossaryTerms"
         static let autoBackupEnabled = "settings.autoBackupEnabled"
         static let lastBackupDate = "settings.lastBackupDate"
+        static let careStage = "settings.careStage"
+        static let appRole = "settings.appRole"
+        static let completedSkills = "settings.completedSkills"
+        static let familySharingEnabled = "settings.familySharingEnabled"
     }
 
     // MARK: - Profile
@@ -126,6 +130,40 @@ final class SettingsStore {
         }
     }
 
+    // MARK: - Growing up
+
+    /// Who the app is set up for. `nil` until chosen on first launch.
+    var careStage: CareStage? {
+        didSet { defaults.set(careStage?.rawValue, forKey: Key.careStage) }
+    }
+    /// Whether this phone logs for someone, or follows someone else.
+    var appRole: AppRole {
+        didSet { defaults.set(appRole.rawValue, forKey: Key.appRole) }
+    }
+    var completedSkills: Set<Skill> {
+        didSet { defaults.set(completedSkills.map(\.rawValue).sorted(), forKey: Key.completedSkills) }
+    }
+    /// The person chose to share their log with family over iCloud.
+    var familySharingEnabled: Bool {
+        didSet { defaults.set(familySharingEnabled, forKey: Key.familySharingEnabled) }
+    }
+
+    /// The stage that applies. Unset counts as Adult, so nothing is locked
+    /// before the setup screen has been answered.
+    var stage: CareStage { careStage ?? .adult }
+
+    var hasChosenSetup: Bool {
+        careStage != nil || appRole == .caregiver
+    }
+
+    func access(to feature: Feature) -> FeatureAccess {
+        stage.access(to: feature, completed: completedSkills)
+    }
+
+    func complete(_ skill: Skill) {
+        completedSkills.insert(skill)
+    }
+
     // MARK: - Init
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -160,6 +198,10 @@ final class SettingsStore {
         self.savedGlossaryTermIDs = defaults.stringArray(forKey: Key.savedGlossaryTerms) ?? []
         self.lastDeliveryMethod = DeliveryMethod(stored: defaults.string(forKey: Key.lastDeliveryMethod)) ?? .pen
         self.lastBackupDate = defaults.object(forKey: Key.lastBackupDate) as? Date
+        self.careStage = defaults.string(forKey: Key.careStage).flatMap(CareStage.init(rawValue:))
+        self.appRole = defaults.string(forKey: Key.appRole).flatMap(AppRole.init(rawValue:)) ?? .selfCare
+        self.completedSkills = Set((defaults.stringArray(forKey: Key.completedSkills) ?? []).compactMap(Skill.init(rawValue:)))
+        self.familySharingEnabled = defaults.bool(forKey: Key.familySharingEnabled)
 
         normalizeThresholds()
         insulinActionHours = min(max(insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)

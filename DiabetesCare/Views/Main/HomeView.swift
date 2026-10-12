@@ -16,6 +16,7 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(SettingsStore.self) private var settings
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(ParentGate.self) private var gate
 
     /// Switches to the Log tab.
     let onShowAllActivity: () -> Void
@@ -31,6 +32,7 @@ struct HomeView: View {
     /// How much of the thread is on screen, and where it starts.
     @State private var zoom: ThreadZoom = .day
     @State private var scrollStart = ThreadView.start(showing: .day, at: Date())
+    @State private var showKidHelp = false
 
     var body: some View {
         ScrollView {
@@ -108,6 +110,13 @@ struct HomeView: View {
         .sheet(isPresented: Bindable(viewModel).showTroubleshootingSheet) {
             DeviceTroubleshootingView()
         }
+        .sheet(isPresented: $showKidHelp) {
+            KidHelpView(
+                latestMgdl: viewModel.latestGlucoseReading?.value,
+                onHadCarbs: viewModel.logFastCarbs(grams:),
+                onCheckGlucose: viewModel.logGlucose
+            )
+        }
     }
 
     private func content(now: Date) -> some View {
@@ -123,6 +132,9 @@ struct HomeView: View {
         return VStack(spacing: 16) {
             alerts
             dateline(now: now)
+            if settings.stage == .kid {
+                KidHelpCard(onCheckGlucose: viewModel.logGlucose, onHelp: { showKidHelp = true })
+            }
             // On a wide screen (iPad, Mac) the glucose and actions sit beside
             // what's coming up, instead of one long column.
             if horizontalSizeClass == .regular {
@@ -200,15 +212,16 @@ struct HomeView: View {
 
         QuickActionButtonsView(
             onLogMeal: viewModel.logMeal,
-            onQuickBolus: viewModel.quickBolus,
-            onChangeSite: viewModel.changeSite,
+            onQuickBolus: { gate.run(.quickBolus, action: viewModel.quickBolus) },
+            onChangeSite: { gate.run(.changeSite, action: viewModel.changeSite) },
             onLogPreset: viewModel.logMeal(preset:),
             todayCarbs: viewModel.todayCarbTotal,
             todayInsulin: viewModel.todayInsulinTotal,
             nextSite: SiteLocation.suggested(
                 current: SiteLocation(stored: viewModel.lastSiteChange?.location),
                 history: viewModel.siteHistory
-            )
+            ),
+            showsBolus: gate.isAvailable(.quickBolus)
         )
     }
 
@@ -238,7 +251,7 @@ struct HomeView: View {
         SiteSnapshotView(
             lastSiteChange: viewModel.lastSiteChange,
             history: viewModel.siteHistory,
-            onChangeSite: viewModel.changeSite
+            onChangeSite: { gate.run(.changeSite, action: viewModel.changeSite) }
         )
     }
 
@@ -286,4 +299,5 @@ struct HomeView: View {
     .environment(HomeViewModel(context: context))
     .environment(SettingsStore())
     .environment(HealthGlucoseImporter())
+    .environment(ParentGate())
 }

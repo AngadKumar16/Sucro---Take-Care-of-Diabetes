@@ -19,6 +19,8 @@ struct QuickActionButtonsView: View {
     var todayCarbs: Double = 0
     var todayInsulin: Double = 0
     var nextSite: SiteLocation? = nil
+    /// Kids don't get the bolus key; a grown-up handles doses.
+    var showsBolus = true
 
     @State private var loggedPreset = 0
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -50,15 +52,17 @@ struct QuickActionButtonsView: View {
             .accessibilityLabel("Log Meal")
             .accessibilityHint("Touch and hold for saved meals")
 
-            Button(action: onQuickBolus) {
-                QuickActionLabel(title: "Quick Bolus", shown: "Insulin", tint: Theme.green, detail: "\(todayInsulin.formatted(.number.precision(.fractionLength(0...1)))) U today") {
-                    InsulinPen(units: todayInsulin)
-                        .frame(width: 92)
-                        .rotationEffect(.degrees(-28))
-                        .accessibilityHidden(true)
+            if showsBolus {
+                Button(action: onQuickBolus) {
+                    QuickActionLabel(title: "Quick Bolus", shown: "Insulin", tint: Theme.green, detail: "\(todayInsulin.formatted(.number.precision(.fractionLength(0...1)))) U today") {
+                        InsulinPen(units: todayInsulin)
+                            .frame(width: 92)
+                            .rotationEffect(.degrees(-28))
+                            .accessibilityHidden(true)
+                    }
                 }
+                .buttonStyle(QuickActionButtonStyle())
             }
-            .buttonStyle(QuickActionButtonStyle())
 
             Button(action: onChangeSite) {
                 QuickActionLabel(title: "Change Site", shown: "Site", tint: Theme.vermilion, detail: nextSite.map { "Next: \($0.shortName)" } ?? " ") {
