@@ -150,3 +150,52 @@ final class GrowthFlowUITests: XCTestCase {
         XCTAssertFalse(app.tabBars.buttons["Log"].exists, "A caregiver's phone doesn't log for itself")
     }
 }
+
+final class GrowthWeek3UITests: XCTestCase {
+
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-resetData"]
+    }
+
+    func testKidGetHelpCallsTheGrownUpSetInFamily() {
+        app.launchArguments += ["-stage", "kid"]
+        app.launch()
+
+        app.tabBars.buttons["Settings"].tap()
+        let family = app.buttons["familySettings"]
+        XCTAssertTrue(family.waitForExistence(timeout: 5))
+        family.tap()
+
+        let unlock = app.buttons["unlockGrownUp"]
+        XCTAssertTrue(unlock.waitForExistence(timeout: 5), "Changing who to call needs a grown-up")
+        unlock.tap()
+        for digit in "1234" { app.buttons[String(digit)].tap() }
+
+        let phone = app.textFields["grownUpPhone"]
+        XCTAssertTrue(phone.waitForExistence(timeout: 5))
+        for _ in 0..<10 where !phone.isEnabled { usleep(200_000) }
+        phone.tap()
+        phone.typeText("5550100")
+        app.toolbars.buttons["Done"].tap()
+
+        app.tabBars.buttons["Today"].tap()
+        let help = app.buttons["kidGetHelp"]
+        XCTAssertTrue(help.waitForExistence(timeout: 5))
+        help.tap()
+        XCTAssertTrue(app.buttons["kidCallGrownUp"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["kidTextGrownUp"].exists)
+    }
+
+    func testDemoFamilyShowsMayaOnAParentsPhone() {
+        app.launchArguments.append("-demoFamily")
+        app.launch()
+
+        XCTAssertTrue(app.tabBars.buttons["Family"].waitForExistence(timeout: 15), "Demo turns the phone into a parent's")
+        XCTAssertTrue(app.navigationBars["Maya"].waitForExistence(timeout: 15), "The demo person opens straight away")
+        XCTAssertTrue(app.staticTexts["Last 12 Hours"].waitForExistence(timeout: 5))
+    }
+}

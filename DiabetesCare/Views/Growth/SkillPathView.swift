@@ -110,36 +110,52 @@ struct StageLadder: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 0) {
-                ForEach(Array(CareStage.allCases.enumerated()), id: \.element) { index, stage in
-                    if index > 0 {
-                        Rectangle()
-                            .fill(isReached(stage) ? Theme.green : Theme.rule)
-                            .frame(height: 3)
+            // At the largest text sizes the three steps stack instead.
+            ViewThatFits(in: .horizontal) {
+                ladder
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(CareStage.allCases, id: \.self) { stage in
+                        Label(stage.title, systemImage: isReached(stage) ? "checkmark.circle.fill" : "circle")
+                            .font(.headline.weight(stage == current ? .bold : .regular))
+                            .foregroundStyle(stage == current ? Theme.green : (isReached(stage) ? Theme.ink : Theme.soft))
                     }
-                    VStack(spacing: 6) {
-                        Image(systemName: stage.symbol)
-                            .font(.title3)
-                            .foregroundStyle(isReached(stage) ? Theme.onAccent : Theme.soft)
-                            .frame(width: 48, height: 48)
-                            .background(isReached(stage) ? Theme.green : Theme.card, in: .circle)
-                            .overlay(Circle().strokeBorder(stage == current ? Theme.ink : Theme.rule, lineWidth: stage == current ? 2 : 1))
-                        Text(stage.title)
-                            .font(.caption.weight(stage == current ? .bold : .regular))
-                            .foregroundStyle(stage == current ? Theme.ink : Theme.soft)
-                    }
-                    .fixedSize()
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Stage: \(current.title)")
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Stage: \(current.title)")
-            .accessibilityValue("\(CareStage.allCases.firstIndex(of: current).map { $0 + 1 } ?? 1) of \(CareStage.allCases.count)")
 
             Text(current.summary)
                 .font(.subheadline)
                 .foregroundStyle(Theme.soft)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var ladder: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(CareStage.allCases.enumerated()), id: \.element) { index, stage in
+                if index > 0 {
+                    Rectangle()
+                        .fill(isReached(stage) ? Theme.green : Theme.rule)
+                        .frame(height: 3)
+                }
+                VStack(spacing: 6) {
+                    Image(systemName: stage.symbol)
+                        .font(.title3)
+                        .foregroundStyle(isReached(stage) ? Theme.onAccent : Theme.soft)
+                        .frame(width: 48, height: 48)
+                        .background(isReached(stage) ? Theme.green : Theme.card, in: .circle)
+                        .overlay(Circle().strokeBorder(stage == current ? Theme.ink : Theme.rule, lineWidth: stage == current ? 2 : 1))
+                    Text(stage.title)
+                        .font(.caption.weight(stage == current ? .bold : .regular))
+                        .foregroundStyle(stage == current ? Theme.ink : Theme.soft)
+                }
+                .fixedSize()
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Stage: \(current.title)")
+        .accessibilityValue("\(CareStage.allCases.firstIndex(of: current).map { $0 + 1 } ?? 1) of \(CareStage.allCases.count)")
     }
 
     private func isReached(_ stage: CareStage) -> Bool {

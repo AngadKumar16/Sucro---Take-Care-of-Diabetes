@@ -307,6 +307,12 @@ final class FamilyService {
         saveFollowed()
     }
 
+    private func addFollowed(_ person: FamilyPerson) {
+        followed.removeAll { $0.id == person.id }
+        followed.insert(person, at: 0)
+        saveFollowed()
+    }
+
     private func saveFollowed() {
         defaults.set(try? JSONEncoder().encode(followed), forKey: Key.followed)
     }
@@ -331,6 +337,24 @@ final class FamilyService {
         return (person, store)
     }
 }
+
+#if DEBUG
+extension FamilyService {
+    /// Follows a made-up person whose data is run through the real
+    /// publish → fetch → apply path. For `-demoFamily` only.
+    func installDemoPerson(from source: NSPersistentContainer, profile: FamilyProfile) async throws {
+        let id = DemoData.demoPersonID
+        unfollow(FamilyPerson(id: id))
+        let loopback = LoopbackFamilyTransport()
+        let scratch = FileManager.default.temporaryDirectory.appending(path: "demo-prints-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        try await Self.publish(from: source, profile: profile, previousProfile: nil, fingerprintsURL: scratch, to: loopback)
+        let (changes, _) = try await loopback.fetchChanges(for: LoopbackFamilyTransport.personID, since: nil)
+        try await Self.apply(changes, to: store(for: id).container)
+        addFollowed(FamilyPerson(id: id, profile: profile, lastSync: Date()))
+    }
+}
+#endif
 
 extension FamilyProfile {
     /// Equal apart from when it was made.

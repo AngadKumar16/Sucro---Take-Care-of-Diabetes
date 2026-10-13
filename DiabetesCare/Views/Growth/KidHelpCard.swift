@@ -42,6 +42,7 @@ struct KidHelpCard: View {
 }
 
 struct KidHelpView: View {
+    /// The latest reading if it's recent enough to send, mg/dL.
     let latestMgdl: Double?
     let onHadCarbs: (Double) -> Void
     let onCheckGlucose: () -> Void
@@ -49,6 +50,7 @@ struct KidHelpView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settings
     @Environment(FamilyService.self) private var family
+    @Environment(\.openURL) private var openURL
     @State private var sendState: SendState = .idle
     @State private var hadCarbs = false
 
@@ -59,6 +61,9 @@ struct KidHelpView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     step(1, String(localized: "Find a grown-up now."), symbol: "person.2.fill", tint: Theme.vermilion)
+                    if let contact = settings.grownUpContact {
+                        contactButtons(contact)
+                    }
                     if settings.familySharingEnabled {
                         tellFamily
                     }
@@ -115,6 +120,30 @@ struct KidHelpView: View {
                 .foregroundStyle(Theme.green)
                 .font(.headline)
         }
+    }
+
+    private func contactButtons(_ contact: GrownUpContact) -> some View {
+        let message = GrownUpContact.helpMessage(glucose: latestMgdl.map(settings.formattedGlucose))
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) { callButton(contact); textButton(contact, message: message) }
+            VStack(spacing: 12) { callButton(contact); textButton(contact, message: message) }
+        }
+    }
+
+    private func callButton(_ contact: GrownUpContact) -> some View {
+        Button("Call \(contact.name)", systemImage: "phone.fill") {
+            if let url = contact.callURL { openURL(url) }
+        }
+        .buttonStyle(.soft)
+        .accessibilityIdentifier("kidCallGrownUp")
+    }
+
+    private func textButton(_ contact: GrownUpContact, message: String) -> some View {
+        Button("Text \(contact.name)", systemImage: "message.fill") {
+            if let url = contact.textURL(message: message) { openURL(url) }
+        }
+        .buttonStyle(.soft)
+        .accessibilityIdentifier("kidTextGrownUp")
     }
 
     private func send() {

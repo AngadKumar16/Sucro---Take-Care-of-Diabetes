@@ -16,10 +16,12 @@ struct FamilySettingsView: View {
     @State private var invite: SharingInvite?
     @State private var preview: FamilyPreview?
     @State private var showStopConfirm = false
+    @FocusState private var editingContact: Bool
 
     var body: some View {
         Form {
             if settings.appRole == .selfCare {
+                if settings.stage != .adult { grownUpSection }
                 shareSection
                 whatSection
             }
@@ -35,6 +37,13 @@ struct FamilySettingsView: View {
         .instrumentBackground()
         .navigationTitle("Family")
         .refreshable { await family.refreshFollowed() }
+        // The phone pad has no return key.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { editingContact = false }
+            }
+        }
         .sheet(item: $invite) { invite in
             CloudSharingSheet(share: invite.share, container: invite.container)
                 .ignoresSafeArea()
@@ -42,6 +51,35 @@ struct FamilySettingsView: View {
         .navigationDestination(item: $preview) { preview in
             CaregiverView(person: preview.person, store: preview.store, isPreview: true)
         }
+    }
+
+    // MARK: - Grown-up
+
+    private var grownUpSection: some View {
+        let locked = gate.needsApproval(.editGrownUpContact)
+        return Section {
+            TextField("Name", text: Bindable(settings).grownUpName)
+                .textContentType(.name)
+                .disabled(locked)
+                .focused($editingContact)
+            TextField("Phone Number", text: Bindable(settings).grownUpPhone)
+                .textContentType(.telephoneNumber)
+                .keyboardType(.phonePad)
+                .disabled(locked)
+                .focused($editingContact)
+                .accessibilityIdentifier("grownUpPhone")
+            if locked {
+                Button("Unlock to Change", systemImage: "lock.fill") {
+                    gate.run(.editGrownUpContact) {}
+                }
+                .accessibilityIdentifier("unlockGrownUp")
+            }
+        } header: {
+            Text("Grown-Up to Call")
+        } footer: {
+            Text("Get Help on Today shows Call and Text buttons for this person. Works without iCloud.")
+        }
+        .listRowBackground(Theme.card)
     }
 
     // MARK: - Sharing

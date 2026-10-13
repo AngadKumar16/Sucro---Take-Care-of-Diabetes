@@ -1,6 +1,6 @@
 # DiabetesCare — Planning Guide
 
-Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; Phases 0–4 are done (2026-10-12). Phase 5 ("Grows with you", for the Congressional App Challenge) is in progress: weeks 1–2 are built, week 3 is next. What's left that needs a person or Apple: see `docs/release-checklist.md`.
+Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; Phases 0–4 are done (2026-10-12). Phase 5 ("Grows with you", for the Congressional App Challenge): weeks 1–3 of app work are done; iCloud family sharing is built and waits only on the paid developer account. What's left that needs a person or Apple: see `docs/release-checklist.md`.
 
 ## Snapshot
 
@@ -151,23 +151,31 @@ Judges are mostly non-technical and mostly watch the demo video, so the order of
 - [x] Docs: privacy policy (family sharing, children), App Review notes (stages, passcode, family sharing, background modes), App Privacy (still "Data Not Collected": the user's own iCloud).
 - [ ] **After enrollment:** turn it on and run the two-device test in the checklist (teen + parent Apple Accounts, urgent-low alert with the app closed, help request, stop sharing).
 
-### Week 3 — Submission (next)
-- [ ] `-demoData`: a teen profile with 2 weeks of data and some skills done, so the video and screenshots show the path half-way.
-- [ ] Demo video (under the cap): mom's story (first 20 s) → the problem (new kids don't know the warning signs; teens take over alone) → Kid stage: Today, Get Help → a skill quiz unlocks insulin logging → move up to Teen with the grown-up passcode → See What Family Sees, urgent-low alert → Adult, doctor report from Trends → privacy and free → what's next (iCloud sharing live once enrolled, Android). Simulator recording, voice-over, captions; readable on mute.
-- [ ] README with screenshots: story, what it does, how stages work, privacy, how to build, safety note, what's honest about iCloud.
-- [ ] Business canvas blanks: target customer, MVP, value proposition, branding, research findings, marketing, KPIs, competitors (mySugr, Glucose Buddy, Dexcom Follow: none change with age), pricing (free; grants/donations), startup costs.
-- [ ] Interviews: 3–5 families or teens with T1D (mom first; diabetes camp, school nurse, Breakthrough T1D chapter) → quotes for the video and the canvas's research findings. TestFlight once enrolled.
-- [ ] Clinician review of the quiz questions along with the glossary and guides.
+### Week 3 — App work without the developer account (done 2026-10-12)
+- [x] **CloudKit layout tested without iCloud.** `Services/Family/FamilyRecordCodec.swift` (pure) turns change sets into `CKRecord`s and back; `CloudKitFamilyTransport` only does I/O. Tests caught a real bug: batches capped saves and deletes separately, so one request could carry 700 items (CloudKit allows 400). Batches now cap both together at 350. A failed record now fails the publish, so the fingerprints aren't saved and everything is resent next time.
+- [x] **Get Help works without iCloud.** Settings › Family › Grown-Up to Call (name and phone; changing it needs the passcode, `Feature.editGrownUpContact`). Get Help shows Call and Text buttons (`tel:` / `sms:` with "I need help. My glucose is …", the reading only if under 30 minutes old). `Models/Domain/GrownUpContact.swift`. The phone pad got a keyboard Done button.
+- [x] **Gaps closed.** The overdue-site banner went straight to Change Site; it now goes through the gate. A kid could edit or delete insulin and site entries from Log or Today details without the passcode; `ParentGate.runEditing` now gates them (the details sheet closes first so the passcode can show). A habit skill earned shows a "Skill Learned" toast with a haptic and a VoiceOver announcement (`SkillProgress.Snapshot.newlyEarned`, checked by Today on appear and when the app becomes active). A "Ready for Teen/Adult" card on Today links to Your Path, and can be dismissed once per stage.
+- [x] **Accessibility.** The passcode keypad scales with Dynamic Type (`@ScaledMetric`, capped so 3 keys fit) and scrolls; the stage ladder stacks into a list at large text sizes.
+- [x] **Demo mode (Debug only).** `-demoData` now also sets up Maya (teen, 3 quiz skills, grown-up contact "Mom", passcode 1234); add `-stage kid` to show her as a kid. `-demoFamily` turns the phone into her parent's: demo data goes through the real publish → loopback → apply path into a followed store, and a sample "Maya: Urgent Low" notification fires 10 s after launch. The parent screen says "Sample data for a demo".
+- [x] **App icon.** The `AppIcon` set was empty, which would block any upload. A green field with a cream glucose drop growing a sprout (grows with you), light/dark/tinted at 1024 px with no alpha. Drawn by `scripts/make-app-icon.swift`.
+- [x] **Screenshots.** `ScreenshotUITests` (skipped unless `SCREENSHOTS=1`) + `scripts/screenshots.sh`: status bar set to 9:41, a wait out of first-boot banners, and export to `docs/screenshots/iPhone-17-Pro-Max/` and `docs/screenshots/iPad-Pro-13-inch-M4/`: Today, Your Path, Quiz, Kid Today, Get Help, Trends, What Family Sees, Parent's phone.
+- [x] **Turning iCloud on is one command.** `sh scripts/enable-icloud.sh`: switches the app target to `DiabetesCare-CloudKit.entitlements`, merges `Config/DiabetesCare-iCloud-Info.plist` (`CKSharingSupported`, remote-notification background mode) and sets `FamilyCloud.containerID`. It's idempotent and undone with `git checkout`. Checked on a copy of the repo: it builds (unsigned) and the merged Info.plist has both keys. Signing and running need the paid team.
+- [ ] **After enrollment:** `sh scripts/enable-icloud.sh` → pick the team → the two-device test in `docs/release-checklist.md`.
 
-### Later
-- [ ] Multiple caregivers see one person (works already through the share; test it). Caregiver acknowledges a help request back to the kid (needs a write path).
-- [ ] Android version (business canvas).
-- [ ] Doctor sharing beyond the PDF report.
+### Later (not app work)
+- [ ] Demo video (under the CAC cap): mom's story → Kid → skill unlock → Teen → What Family Sees / parent alert (`-demoFamily`) → privacy, free → next steps. Say plainly in the video if iCloud sharing isn't live yet.
+- [ ] README with screenshots from `docs/screenshots/`.
+- [ ] Interviews with families or teens with T1D; TestFlight once enrolled.
+- [ ] Clinician review of the quiz questions, glossary and guides.
+- [ ] A caregiver acknowledging a help request back to the kid (needs a write path); Android; doctor sharing beyond the PDF.
 
 ### Testing Phase 5
 - Unit (`GrowthTests`, `FamilySharingTests`): stage × feature table, skill unlocks, readiness, quizzes well-formed, settings persistence, passcode (hash only, lockout, relaunch), gate, habit rules, publish → fetch → apply round trip with edit and delete, 30-day window, photos/notes stripping, diff, caregiver alerts per stage, help requests once, stale data for kids only.
+- Unit (`FamilyRecordCodecTests`): CloudKit records round trip for every kind, naming, batching ≤ 350 combined, bad records skipped. `GrowthTests` also covers the grown-up contact (number cleanup, tel/sms links, gate) and `runEditing`.
+- UI (`GrowthWeek3UITests`): a kid sets the grown-up contact (passcode) and Get Help shows Call/Text; `-demoFamily` shows Maya on a parent's phone.
 - UI (`GrowthFlowUITests`): setup as kid sets the passcode and simplifies Today; kid needs the passcode for ranges (wrong code rejected); two quizzes open insulin logging; See What Family Sees shows shared readings (`-demoData`); caregiver phone shows the Family tab.
-- Launch arguments: `-stage kid|teen` (grown-up passcode 1234, locked), `-resetSetup` (shows the setup screen). Plain `-uiTesting` starts as Adult with no passcode, so older tests are unchanged.
+- Launch arguments: `-stage kid|teen` (grown-up passcode 1234, locked), `-resetSetup` (shows the setup screen), `-demoData` (Maya, teen), `-demoFamily` (parent's phone).
+- The template launch test rotates the simulator to landscape; its tearDown now puts it back, which was breaking later tests in full runs. `HealthImportUITests` drives the Health app and is sometimes flaky in a full run; rerun it alone. Plain `-uiTesting` starts as Adult with no passcode, so older tests are unchanged.
 
 ## Key files
 
@@ -187,5 +195,6 @@ Paths are relative to `DiabetesCare/`.
 - Sites: `Views/Components/BodyMap.swift`, `Views/Components/SitePicker.swift`, `Views/Secondary/SiteHistoryView.swift`, `Models/Domain/SiteRotation.swift`
 - Logging: `Utilities/Log.swift`
 - Stages and skills: `Models/Domain/CareStage.swift`, `Models/Domain/Skill.swift`, `Services/ParentLock.swift`, `Services/SkillProgress.swift`, `Views/Growth/` (setup, passcode, gate, path, quiz, kid help)
-- Family sharing: `Services/Family/` (models, diff, store, transports, alert policy, `FamilyService`), `Views/Family/`, `App/AppDelegate.swift`, `DiabetesCare-CloudKit.entitlements`
+- Family sharing: `Services/Family/` (models, diff, store, record codec, transports, alert policy, `FamilyService`), `Views/Family/`, `App/AppDelegate.swift`, `DiabetesCare-CloudKit.entitlements`, `Config/DiabetesCare-iCloud-Info.plist`
+- Scripts: `scripts/enable-icloud.sh`, `scripts/screenshots.sh`, `scripts/make-app-icon.swift`
 - Ship docs: `docs/`

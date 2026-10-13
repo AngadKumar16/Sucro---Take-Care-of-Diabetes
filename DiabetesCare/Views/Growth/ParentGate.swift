@@ -6,6 +6,7 @@
 //  passcode first. One gate lives at the root so any screen can ask.
 //
 
+import CoreData
 import SwiftUI
 
 @MainActor
@@ -50,6 +51,24 @@ final class ParentGate {
             } else {
                 request = Request(feature: feature, action: action)
             }
+        }
+    }
+
+    /// Editing or deleting an entry needs the same approval as logging it:
+    /// a kid can't quietly change a dose a grown-up logged.
+    func runEditing(_ object: NSManagedObject, action: @escaping () -> Void) {
+        switch object {
+        case is InsulinEntry: run(.logInsulin, action: action)
+        case is SiteChange: run(.changeSite, action: action)
+        default: action()
+        }
+    }
+
+    func runEditing(_ event: TimelineEvent, action: @escaping () -> Void) {
+        switch event.type {
+        case .bolus: run(.logInsulin, action: action)
+        case .siteChange: run(.changeSite, action: action)
+        case .meal, .activity: action()
         }
     }
 

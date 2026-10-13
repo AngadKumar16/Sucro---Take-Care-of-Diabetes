@@ -14,6 +14,8 @@ enum SkillProgress {
     struct Snapshot: Equatable {
         var streak = 0
         var recoveredFromLow = false
+        /// Habit skills this refresh marked done for the first time.
+        var newlyEarned: [Skill] = []
     }
 
     /// Looks at the last 30 days, marks any habit skill earned, and returns
@@ -31,7 +33,7 @@ enum SkillProgress {
         let carbDates = carbs.compactMap(\.timestamp)
         let insulinDates = data.fetchInsulinEntries(context: context, in: range).compactMap(\.timestamp)
 
-        let snapshot = Snapshot(
+        var snapshot = Snapshot(
             streak: SkillHabits.loggingStreak(entryDates: manualDates + carbDates + insulinDates, now: now),
             recoveredFromLow: SkillHabits.hasRecoveredFromLow(
                 readings: readings.compactMap(\.sample),
@@ -39,8 +41,10 @@ enum SkillProgress {
                 thresholds: settings.thresholds
             )
         )
+        let before = settings.completedSkills
         if snapshot.streak >= SkillHabits.streakGoal { settings.complete(.steadyLogger) }
         if snapshot.recoveredFromLow { settings.complete(.lowRecovery) }
+        snapshot.newlyEarned = Skill.allCases.filter { settings.completedSkills.contains($0) && !before.contains($0) }
         return snapshot
     }
 }

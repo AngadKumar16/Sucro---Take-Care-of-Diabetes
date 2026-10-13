@@ -33,9 +33,7 @@ struct CaregiverView: View {
                     today
                     recent
                     if let profile { path(profile) }
-                    Text(isPreview
-                         ? String(localized: "Preview built on this phone. Nothing was sent.")
-                         : String(localized: "Read only. Comes from \(person.displayName)'s phone through iCloud."))
+                    Text(footer)
                         .font(.footnote)
                         .foregroundStyle(Theme.soft)
                 }
@@ -51,6 +49,14 @@ struct CaregiverView: View {
         .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextObjectsDidChange, object: store.container.viewContext)) { _ in
             model.load(from: store.container.viewContext, thresholds: thresholds)
         }
+    }
+
+    private var footer: String {
+        if isPreview { return String(localized: "Preview built on this phone. Nothing was sent.") }
+        #if DEBUG
+        if person.id == DemoData.demoPersonID { return String(localized: "Sample data for a demo. Nothing came from another phone.") }
+        #endif
+        return String(localized: "Read only. Comes from \(person.displayName)'s phone through iCloud.")
     }
 
     private var previewNote: some View {

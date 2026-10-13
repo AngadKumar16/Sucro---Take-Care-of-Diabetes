@@ -51,39 +51,27 @@ actor CloudKitFamilyTransport: FamilyTransport {
 
     // MARK: - Publisher
 
+    /// Sends a change set. Throws if any record failed, so the caller keeps
+    /// its old fingerprints and the whole set is retried next time (saves
+    /// overwrite, so resending is harmless).
     func publish(_ changes: FamilyChangeSet) async throws {
         let database = container.privateCloudDatabase
         try await ensureZone()
-
-        var records: [CKRecord] = []
-        if let profile = changes.profile {
-            records.append(try record(type: FamilyCloud.RecordType.profile, name: FamilyCloud.profileRecordName, payload: profile, date: profile.updatedAt))
-        }
-        let e = changes.entries
-        records += try e.glucose.map { try entryRecord("glucose", $0.id, $0, $0.timestamp) }
-        records += try e.carbs.map { try entryRecord("carbs", $0.id, $0, $0.timestamp) }
-        records += try e.insulin.map { try entryRecord("insulin", $0.id, $0, $0.timestamp) }
-        records += try e.activity.map { try entryRecord("activity", $0.id, $0, $0.timestamp) }
-        records += try e.sites.map { try entryRecord("site", $0.id, $0, $0.timestamp) }
-        records += try changes.helpRequests.map {
-            try record(type: FamilyCloud.RecordType.help, name: $0.id.uuidString, payload: $0, date: $0.sentAt)
-        }
-        let deletions = changes.deletedIDs.map { CKRecord.ID(recordName: $0.uuidString, zoneID: zoneID) }
-
-        // CloudKit takes at most 400 items per request.
-        let batch = 350
-        for start in stride(from: 0, to: max(records.count, deletions.count), by: batch) {
-            let saving = Array(records.dropFirst(start).prefix(batch))
-            let deleting = Array(deletions.dropFirst(start).prefix(batch))
-            guard !saving.isEmpty || !deleting.isEmpty else { continue }
-            let (saved, deleted) = try await database.modifyRecords(saving: saving, deleting: deleting, savePolicy: .allKeys, atomically: false)
+        let (records, deletions) = try FamilyRecordCodec.records(for: changes, zoneID: zoneID)
+        var firstError: Error?
+        for batch in FamilyRecordCodec.batches(save: records, delete: deletions) {
+            let (saved, deleted) = try await database.modifyRecords(saving: batch.save, deleting: batch.delete, savePolicy: .allKeys, atomically: false)
             for case (let id, .failure(let error)) in saved {
                 Log.family.error("Couldn't share \(id.recordName, privacy: .private): \(error.localizedDescription, privacy: .public)")
+                firstError = firstError ?? error
             }
+            // Deleting something already gone is fine.
             for case (_, .failure(let error)) in deleted where (error as? CKError)?.code != .unknownItem {
                 Log.family.error("Couldn't unshare an entry: \(error.localizedDescription, privacy: .public)")
+                firstError = firstError ?? error
             }
         }
+        if let firstError { throw firstError }
     }
 
     /// The zone-wide share family members are invited to. Made on first use.
@@ -115,19 +103,6 @@ actor CloudKitFamilyTransport: FamilyTransport {
         zoneReady = true
     }
 
-    private func entryRecord<T: Encodable>(_ kind: String, _ id: UUID, _ entry: T, _ date: Date?) throws -> CKRecord {
-        let record = try record(type: FamilyCloud.RecordType.entry, name: id.uuidString, payload: entry, date: date)
-        record["kind"] = kind as CKRecordValue
-        return record
-    }
-
-    private func record<T: Encodable>(type: String, name: String, payload: T, date: Date?) throws -> CKRecord {
-        let record = CKRecord(recordType: type, recordID: CKRecord.ID(recordName: name, zoneID: zoneID))
-        record["payload"] = try Self.encoder.encode(payload) as CKRecordValue
-        if let date { record["timestamp"] = date as CKRecordValue }
-        return record
-    }
-
     // MARK: - Follower
 
     /// Accepts an invitation the system handed to the app.
@@ -155,60 +130,20 @@ actor CloudKitFamilyTransport: FamilyTransport {
         let database = container.sharedCloudDatabase
         let zone = CKRecordZone.ID(zoneName: FamilyCloud.zoneName, ownerName: personID)
         var serverToken = token.flatMap { try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: $0) }
-        var changes = FamilyChangeSet()
+        var records: [CKRecord] = []
+        var deleted: [CKRecord.ID] = []
 
         while true {
             let result = try await database.recordZoneChanges(inZoneWith: zone, since: serverToken)
             for case (_, .success(let modification)) in result.modificationResultsByID {
-                add(modification.record, to: &changes)
+                records.append(modification.record)
             }
-            for deletion in result.deletions {
-                if let id = UUID(uuidString: deletion.recordID.recordName) {
-                    changes.deletedIDs.append(id)
-                }
-            }
+            deleted += result.deletions.map(\.recordID)
             serverToken = result.changeToken
             if !result.moreComing { break }
         }
+        let changes = FamilyRecordCodec.changeSet(from: records, deleted: deleted)
         let data = serverToken.flatMap { try? NSKeyedArchiver.archivedData(withRootObject: $0, requiringSecureCoding: true) }
         return (changes, data)
     }
-
-    private func add(_ record: CKRecord, to changes: inout FamilyChangeSet) {
-        guard let payload = record["payload"] as? Data else { return }
-        let decoder = Self.decoder
-        do {
-            switch record.recordType {
-            case FamilyCloud.RecordType.profile:
-                changes.profile = try decoder.decode(FamilyProfile.self, from: payload)
-            case FamilyCloud.RecordType.help:
-                changes.helpRequests.append(try decoder.decode(FamilyHelpRequest.self, from: payload))
-            case FamilyCloud.RecordType.entry:
-                switch record["kind"] as? String {
-                case "glucose": changes.entries.glucose.append(try decoder.decode(BackupArchive.Glucose.self, from: payload))
-                case "carbs": changes.entries.carbs.append(try decoder.decode(BackupArchive.Carb.self, from: payload))
-                case "insulin": changes.entries.insulin.append(try decoder.decode(BackupArchive.Insulin.self, from: payload))
-                case "activity": changes.entries.activity.append(try decoder.decode(BackupArchive.Activity.self, from: payload))
-                case "site": changes.entries.sites.append(try decoder.decode(BackupArchive.Site.self, from: payload))
-                default: break
-                }
-            default:
-                break
-            }
-        } catch {
-            Log.family.error("Couldn't read a shared record: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private static let encoder: JSONEncoder = {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        return encoder
-    }()
-
-    private static let decoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }()
 }

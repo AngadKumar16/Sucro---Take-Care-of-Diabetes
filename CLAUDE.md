@@ -9,5 +9,6 @@ iOS 26 SwiftUI + Core Data diabetes logging app. Project, target, module and bun
 - Glucose is stored in mg/dL everywhere; convert only for display via `SettingsStore`.
 - Stage rules (kid/teen/adult) live only in `CareStage.access(to:completed:)`; views gate actions with `ParentGate.run(_:)`. Never gate safety info.
 - iCloud family sharing stays off until `FamilyCloud.containerID` is set (needs the paid account; see `docs/release-checklist.md`). Never create a `CKContainer` outside `CloudKitFamilyTransport`.
-- UI test launch args: `-uiTesting` (Adult, no passcode), `-stage kid|teen` (passcode 1234), `-resetSetup`, `-resetData`, `-demoData`.
+- UI test launch args: `-uiTesting` (Adult, no passcode), `-stage kid|teen` (passcode 1234), `-resetSetup`, `-resetData`, `-demoData` (Maya, teen), `-demoFamily` (parent's phone, Debug only).
+- Scripts: `sh scripts/enable-icloud.sh` (after enrollment), `sh scripts/screenshots.sh`, `swift scripts/make-app-icon.swift <appiconset>`.
 - Do not add Co-Authored-By or Claude-Session trailers to commits.

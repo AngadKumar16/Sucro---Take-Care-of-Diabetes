@@ -9,6 +9,7 @@
 
 import Testing
 import Foundation
+import CoreData
 @testable import DiabetesCare
 
 private let t0 = Date(timeIntervalSince1970: 1_800_000_000)
@@ -165,6 +166,62 @@ struct ParentLockTests {
         lock.verify("2468")
         gate.run(.clearData) { ran += 1 }
         #expect(ran == 2)
+    }
+}
+
+@Suite("Grown-up contact")
+struct GrownUpContactTests {
+    @Test func needsARealNumber() {
+        #expect(GrownUpContact(name: "Mom", phone: "") == nil)
+        #expect(GrownUpContact(name: "Mom", phone: "12") == nil)
+        #expect(GrownUpContact(name: "Mom", phone: "(555) 010-0100")?.phone == "5550100100")
+        #expect(GrownUpContact(name: "Mom", phone: "+44 20 7946 0000")?.phone == "+442079460000")
+        #expect(GrownUpContact(name: "  ", phone: "5550100")?.name == "My Grown-Up")
+    }
+
+    @Test func callAndTextLinks() throws {
+        let contact = try #require(GrownUpContact(name: "Mom", phone: "555-0100"))
+        #expect(contact.callURL?.absoluteString == "tel:5550100")
+        let text = try #require(contact.textURL(message: "I need help. My glucose is 64 mg/dL & falling"))
+        #expect(text.absoluteString.hasPrefix("sms:5550100&body=I%20need%20help."))
+        #expect(!text.absoluteString.contains(" & "), "An & in the message must not end the body")
+        #expect(GrownUpContact.helpMessage(glucose: "64 mg/dL").contains("64 mg/dL"))
+    }
+
+    @Test func changingItNeedsAGrownUp() {
+        #expect(CareStage.kid.access(to: .editGrownUpContact) == .parent)
+        #expect(CareStage.teen.access(to: .editGrownUpContact) == .parent)
+        #expect(CareStage.adult.access(to: .editGrownUpContact) == .open)
+    }
+}
+
+@MainActor
+@Suite("Editing gated entries")
+struct EditingGateTests {
+    @Test func kidCantQuietlyChangeADose() throws {
+        let name = "EditGate-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let settings = SettingsStore(defaults: defaults)
+        settings.careStage = .kid
+        let lock = ParentLock(storage: MemoryParentLockStorage())
+        lock.setPasscode("2468")
+        lock.lock()
+        let gate = ParentGate(settings: settings, lock: lock)
+        let context = PersistenceController(inMemory: true).container.viewContext
+
+        var ran = 0
+        gate.runEditing(InsulinEntry(context: context)) { ran += 1 }
+        #expect(ran == 0)
+        #expect(gate.request?.feature == .logInsulin)
+        gate.request = nil
+
+        gate.runEditing(SiteChange(context: context)) { ran += 1 }
+        #expect(gate.request?.feature == .changeSite)
+        gate.request = nil
+
+        gate.runEditing(CarbEntry(context: context)) { ran += 1 }
+        #expect(ran == 1, "Meals stay open")
     }
 }
 

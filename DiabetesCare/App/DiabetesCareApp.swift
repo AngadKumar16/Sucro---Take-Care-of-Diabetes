@@ -44,6 +44,10 @@ struct DiabetesCareApp: App {
             settings.appRole = .selfCare
             settings.completedSkills = []
             settings.familySharingEnabled = false
+            settings.grownUpName = ""
+            settings.grownUpPhone = ""
+            // Nobody followed, so a demo-family test can't leak into the next.
+            for person in FamilyService.shared.followed { FamilyService.shared.unfollow(person) }
             if arguments.contains("-resetSetup") {
                 settings.careStage = nil
                 ParentLock.shared.removePasscode()
@@ -74,6 +78,15 @@ struct DiabetesCareApp: App {
         #if DEBUG
         if arguments.contains("-demoData"), PersistenceController.shared.loadError == nil {
             DemoData.install(context: PersistenceController.shared.container.viewContext)
+            DemoData.installProfile(settings: SettingsStore.shared, lock: ParentLock.shared)
+            // `-stage kid` with `-demoData` shows Maya as a kid instead.
+            if let index = arguments.firstIndex(of: "-stage"), index + 1 < arguments.count,
+               let stage = CareStage(rawValue: arguments[index + 1]) {
+                SettingsStore.shared.careStage = stage
+            }
+        }
+        if arguments.contains("-demoFamily") {
+            Task { await DemoData.installFamily(settings: SettingsStore.shared, family: FamilyService.shared) }
         }
         #endif
 
@@ -128,7 +141,6 @@ struct DiabetesCareApp: App {
                         Task { await healthImporter.refresh() }
                     }
                     if phase == .active, persistence.loadError == nil {
-                        SkillProgress.refresh(context: persistence.container.viewContext, settings: settings)
                         family.schedulePublish(after: .zero)
                         if !family.followed.isEmpty {
                             Task { await family.refreshFollowed() }

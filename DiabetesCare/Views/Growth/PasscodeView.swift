@@ -27,25 +27,29 @@ struct PasscodeView: View {
     @State private var message: String?
     @State private var shakes = 0
     @State private var successes = 0
+    /// Keys grow with Dynamic Type, up to a size three still fit across.
+    @ScaledMetric(relativeTo: .title) private var scaledKey: CGFloat = 72
+    private var keySize: CGFloat { min(scaledKey, 104) }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 28) {
-                Spacer(minLength: 0)
-                header
-                dots
-                    .modifier(Shake(animatableData: CGFloat(shakes)))
-                Text(message ?? " ")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.vermilion)
-                    .multilineTextAlignment(.center)
-                    .accessibilityHidden(message == nil)
-                keypad
-                Spacer(minLength: 0)
+            ScrollView {
+                VStack(spacing: 28) {
+                    header
+                    dots
+                        .modifier(Shake(animatableData: CGFloat(shakes)))
+                    Text(message ?? " ")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.vermilion)
+                        .multilineTextAlignment(.center)
+                        .accessibilityHidden(message == nil)
+                    keypad
+                }
+                .padding(24)
+                .frame(maxWidth: 420)
+                .frame(maxWidth: .infinity)
             }
-            .padding(24)
-            .frame(maxWidth: 420)
-            .frame(maxWidth: .infinity)
+            .scrollBounceBehavior(.basedOnSize)
             .fontDesign(.rounded)
             .instrumentBackground()
             .toolbar {
@@ -107,7 +111,7 @@ struct PasscodeView: View {
 
     private var keypad: some View {
         let rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["", "0", "⌫"]]
-        return Grid(horizontalSpacing: 20, verticalSpacing: 14) {
+        return Grid(horizontalSpacing: 16, verticalSpacing: 12) {
             ForEach(rows, id: \.self) { row in
                 GridRow {
                     ForEach(row, id: \.self) { key in
@@ -122,14 +126,14 @@ struct PasscodeView: View {
     @ViewBuilder
     private func keyButton(_ key: String) -> some View {
         if key.isEmpty {
-            Color.clear.frame(width: 72, height: 72)
+            Color.clear.frame(width: keySize, height: keySize)
         } else if key == "⌫" {
             Button {
                 if !code.isEmpty { code.removeLast() }
             } label: {
                 Image(systemName: "delete.left")
                     .font(.title2)
-                    .frame(width: 72, height: 72)
+                    .frame(width: keySize, height: keySize)
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.ink)
@@ -140,7 +144,8 @@ struct PasscodeView: View {
             } label: {
                 Text(key)
                     .font(.title.weight(.semibold))
-                    .frame(width: 72, height: 72)
+                    .minimumScaleFactor(0.6)
+                    .frame(width: keySize, height: keySize)
                     .background(Theme.card, in: .circle)
                     .overlay(Circle().strokeBorder(Theme.rule, lineWidth: 1))
             }

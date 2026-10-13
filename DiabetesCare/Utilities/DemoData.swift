@@ -6,11 +6,54 @@
 //  weeks of made-up CGM readings, meals and doses, for design work and
 //  screenshots. Never written to Apple Health.
 //
+//  `-demoData` also sets up "Maya", a teen part-way along her path
+//  (grown-up passcode 1234). `-demoFamily` turns the phone into her
+//  parent's: it follows a made-up Maya through the same publish → fetch →
+//  apply path family sharing uses, and sends one sample urgent-low alert.
+//
 
 #if DEBUG
 import CoreData
+import OSLog
 
 enum DemoData {
+    static let name = "Maya"
+    static let skills: Set<Skill> = [.ranges, .treatingLows, .units]
+
+    /// Maya, teen, three skills done, a grown-up contact and passcode.
+    static func installProfile(settings: SettingsStore, lock: ParentLock) {
+        settings.userName = name
+        settings.appRole = .selfCare
+        settings.careStage = .teen
+        settings.completedSkills = skills
+        settings.grownUpName = "Mom"
+        settings.grownUpPhone = "555-0100"
+        lock.setPasscode("1234")
+        lock.lock()
+    }
+
+    /// Turns this phone into Maya's parent's.
+    static func installFamily(settings: SettingsStore, family: FamilyService) async {
+        settings.appRole = .caregiver
+        let scratch = FileManager.default.temporaryDirectory.appending(path: "demo-maya-\(UUID().uuidString).sqlite")
+        let maya = PersistenceController(storeURL: scratch)
+        install(context: maya.container.viewContext)
+        let profile = FamilyProfile(
+            name: name, stage: .teen, urgentLow: 55, targetLow: 70, targetHigh: 180, urgentHigh: 250,
+            glucoseUnit: "mg/dL", completedSkills: skills.sorted { $0.rawValue < $1.rawValue }, updatedAt: Date()
+        )
+        do {
+            try await family.installDemoPerson(from: maya.container, profile: profile)
+        } catch {
+            Log.family.error("Demo family failed: \(error.localizedDescription, privacy: .public)")
+        }
+        // One sample alert, a little after launch, to show what a parent gets.
+        try? await Task.sleep(for: .seconds(10))
+        NotificationService.shared.deliverFamilyAlert(.glucose(.urgentLow, mgdl: 52), name: name, personID: demoPersonID)
+    }
+
+    static let demoPersonID = "demo-maya"
+
     static func install(context: NSManagedObjectContext, days: Int = 14, now: Date = Date()) {
         _ = DataService.shared.clearAllData(context: context)
 

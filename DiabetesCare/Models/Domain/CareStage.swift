@@ -83,7 +83,7 @@ nonisolated enum CareStage: String, Codable, CaseIterable, Sendable {
         case (.teen, .logInsulin), (.teen, .changeSite), (.teen, .quickBolus), (.teen, .editInsulinSettings):
             base = .open
         case (_, .editThresholds), (_, .turnOffNotifications), (_, .clearData),
-             (_, .restoreBackup), (_, .changeStage), (_, .stopSharing):
+             (_, .restoreBackup), (_, .changeStage), (_, .stopSharing), (_, .editGrownUpContact):
             base = .parent
         }
         if base == .parent, let skills = Skill.unlocking(feature, at: self), Set(skills).isSubset(of: completed) {
@@ -105,6 +105,7 @@ nonisolated enum Feature: String, CaseIterable, Sendable {
     case restoreBackup
     case changeStage
     case stopSharing
+    case editGrownUpContact
 
     /// Shown on the passcode screen: what the grown-up is approving.
     var approvalReason: String {
@@ -119,6 +120,7 @@ nonisolated enum Feature: String, CaseIterable, Sendable {
         case .restoreBackup: String(localized: "Restore a backup")
         case .changeStage: String(localized: "Change who the app is set up for")
         case .stopSharing: String(localized: "Stop sharing with family")
+        case .editGrownUpContact: String(localized: "Change who to call for help")
         }
     }
 }

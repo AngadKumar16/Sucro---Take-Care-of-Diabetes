@@ -40,6 +40,8 @@ final class SettingsStore {
         static let appRole = "settings.appRole"
         static let completedSkills = "settings.completedSkills"
         static let familySharingEnabled = "settings.familySharingEnabled"
+        static let grownUpName = "settings.grownUpName"
+        static let grownUpPhone = "settings.grownUpPhone"
     }
 
     // MARK: - Profile
@@ -148,6 +150,18 @@ final class SettingsStore {
         didSet { defaults.set(familySharingEnabled, forKey: Key.familySharingEnabled) }
     }
 
+    /// Who a kid or teen calls or texts from Get Help.
+    var grownUpName: String {
+        didSet { defaults.set(grownUpName, forKey: Key.grownUpName) }
+    }
+    var grownUpPhone: String {
+        didSet { defaults.set(grownUpPhone, forKey: Key.grownUpPhone) }
+    }
+
+    var grownUpContact: GrownUpContact? {
+        GrownUpContact(name: grownUpName, phone: grownUpPhone)
+    }
+
     /// The stage that applies. Unset counts as Adult, so nothing is locked
     /// before the setup screen has been answered.
     var stage: CareStage { careStage ?? .adult }
@@ -202,6 +216,8 @@ final class SettingsStore {
         self.appRole = defaults.string(forKey: Key.appRole).flatMap(AppRole.init(rawValue:)) ?? .selfCare
         self.completedSkills = Set((defaults.stringArray(forKey: Key.completedSkills) ?? []).compactMap(Skill.init(rawValue:)))
         self.familySharingEnabled = defaults.bool(forKey: Key.familySharingEnabled)
+        self.grownUpName = defaults.string(forKey: Key.grownUpName) ?? ""
+        self.grownUpPhone = defaults.string(forKey: Key.grownUpPhone) ?? ""
 
         normalizeThresholds()
         insulinActionHours = min(max(insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)

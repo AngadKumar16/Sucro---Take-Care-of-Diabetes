@@ -63,22 +63,22 @@ struct LogView: View {
                     ReceiptHeader(date: viewModel.selectedDate)
                     ForEach(rows) { row in
                         Button {
-                            viewModel.edit(row.object)
+                            gate.runEditing(row.object) { viewModel.edit(row.object) }
                         } label: {
                             LogRowView(row: row)
                         }
                         .foregroundStyle(.primary)
                         .swipeActions(edge: .trailing) {
                             Button("Delete", systemImage: "trash", role: .destructive) {
-                                pendingDelete = row
+                                gate.runEditing(row.object) { pendingDelete = row }
                             }
                         }
                         .contextMenu {
-                            Button("Edit", systemImage: "pencil") { viewModel.edit(row.object) }
-                            Button("Delete", systemImage: "trash", role: .destructive) { pendingDelete = row }
+                            Button("Edit", systemImage: "pencil") { gate.runEditing(row.object) { viewModel.edit(row.object) } }
+                            Button("Delete", systemImage: "trash", role: .destructive) { gate.runEditing(row.object) { pendingDelete = row } }
                         }
                         .accessibilityHint("Edits this entry")
-                        .accessibilityAction(named: "Delete") { pendingDelete = row }
+                        .accessibilityAction(named: "Delete") { gate.runEditing(row.object) { pendingDelete = row } }
                     }
                     ReceiptTotals(
                         carbs: viewModel.carbEntries.reduce(0) { $0 + $1.grams },

@@ -33,6 +33,10 @@ struct HomeView: View {
     @State private var zoom: ThreadZoom = .day
     @State private var scrollStart = ThreadView.start(showing: .day, at: Date())
     @State private var showKidHelp = false
+    @State private var earnedSkill: Skill?
+    /// The stage whose "ready to move up" card was dismissed.
+    @AppStorage("growth.readyCardDismissedFor") private var readyCardDismissedFor = ""
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -47,6 +51,20 @@ struct HomeView: View {
         .instrumentBackground()
         .navigationTitle("Today")
         .onAppear(perform: viewModel.fetchLatestData)
+        .onAppear(perform: checkSkills)
+        .overlay(alignment: .top) {
+            if let earnedSkill {
+                SkillLearnedToast(skill: earnedSkill)
+                    .padding(.horizontal)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    .task {
+                        AccessibilityNotification.Announcement(String(localized: "Skill learned: \(earnedSkill.title)")).post()
+                        try? await Task.sleep(for: .seconds(4))
+                        withAnimation(.smooth) { self.earnedSkill = nil }
+                    }
+            }
+        }
+        .sensoryFeedback(.success, trigger: earnedSkill) { _, new in new != nil }
         // A new reading moves the thread along if it was showing now.
         .onChange(of: viewModel.latestGlucoseReading?.timestamp) { _, _ in
             let now = Date()
@@ -59,7 +77,10 @@ struct HomeView: View {
             viewModel.fetchLatestData()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { viewModel.fetchLatestData() }
+            if phase == .active {
+                viewModel.fetchLatestData()
+                checkSkills()
+            }
         }
         // Entries also change from Log, the edit sheets and Health imports.
         .onReceive(NotificationCenter.default.publisher(for: .NSManagedObjectContextObjectsDidChange, object: viewContext)) { _ in
@@ -88,8 +109,8 @@ struct HomeView: View {
         .sheet(item: Bindable(viewModel).detailEvent) { event in
             EventDetailView(
                 event: event,
-                onEdit: { viewModel.editEvent(event) },
-                onDelete: { viewModel.deleteEvent(event) },
+                onEdit: { fromDetails(event) { viewModel.editEvent(event) } },
+                onDelete: { fromDetails(event) { viewModel.deleteEvent(event) } },
                 onAddNote: {
                     viewModel.detailEvent = nil
                     viewModel.showAddNote(for: event)
@@ -112,7 +133,7 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showKidHelp) {
             KidHelpView(
-                latestMgdl: viewModel.latestGlucoseReading?.value,
+                latestMgdl: recentMgdl,
                 onHadCarbs: viewModel.logFastCarbs(grams:),
                 onCheckGlucose: viewModel.logGlucose
             )
@@ -134,6 +155,13 @@ struct HomeView: View {
             dateline(now: now)
             if settings.stage == .kid {
                 KidHelpCard(onCheckGlucose: viewModel.logGlucose, onHelp: { showKidHelp = true })
+            }
+            if let next = settings.stage.next,
+               settings.stage.isReadyToMoveUp(completed: settings.completedSkills),
+               readyCardDismissedFor != settings.stage.rawValue {
+                ReadyToMoveUpCard(next: next) {
+                    withAnimation(.smooth) { readyCardDismissedFor = settings.stage.rawValue }
+                }
             }
             // On a wide screen (iPad, Mac) the glucose and actions sit beside
             // what's coming up, instead of one long column.
@@ -167,7 +195,14 @@ struct HomeView: View {
             CriticalAlertBanner(
                 alert: criticalAlert,
                 onDismiss: viewModel.dismissCriticalAlert,
-                onAction: viewModel.handleCriticalAlertAction
+                onAction: {
+                    // An overdue site opens Change Site, which may need a grown-up.
+                    if case .siteChangeOverdue = criticalAlert {
+                        gate.run(.changeSite, action: viewModel.handleCriticalAlertAction)
+                    } else {
+                        viewModel.handleCriticalAlertAction()
+                    }
+                }
             )
         }
     }
@@ -235,8 +270,8 @@ struct HomeView: View {
                 events: Array(visibleEvents.prefix(20)),
                 onShowAll: onShowAllActivity,
                 onEventTap: viewModel.showEventDetails,
-                onEventEdit: viewModel.editEvent,
-                onEventDelete: viewModel.deleteEvent,
+                onEventEdit: { event in gate.runEditing(event) { viewModel.editEvent(event) } },
+                onEventDelete: { event in gate.runEditing(event) { viewModel.deleteEvent(event) } },
                 onAddNote: viewModel.showAddNote(for:)
             )
         }
@@ -276,6 +311,38 @@ struct HomeView: View {
         case 12..<17: String(localized: "Good afternoon")
         default: String(localized: "Good evening")
         }
+    }
+
+    /// Marks habit skills earned since last time and celebrates the first.
+    private func checkSkills() {
+        guard settings.appRole == .selfCare, settings.stage != .adult else { return }
+        let earned = SkillProgress.refresh(context: viewContext, settings: settings).newlyEarned
+        if let first = earned.first {
+            withAnimation(.smooth) { earnedSkill = first }
+        }
+    }
+
+    /// Runs an edit or delete chosen in the details sheet. If it needs a
+    /// grown-up, the sheet closes first so the passcode can show.
+    private func fromDetails(_ event: TimelineEvent, action: @escaping () -> Void) {
+        let needsApproval = switch event.type {
+        case .bolus: gate.needsApproval(.logInsulin)
+        case .siteChange: gate.needsApproval(.changeSite)
+        case .meal, .activity: false
+        }
+        guard needsApproval else { return action() }
+        viewModel.detailEvent = nil
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            gate.runEditing(event, action: action)
+        }
+    }
+
+    /// The latest reading if it's under 30 minutes old, for help messages.
+    private var recentMgdl: Double? {
+        guard let reading = viewModel.latestGlucoseReading, let time = reading.timestamp,
+              Date().timeIntervalSince(time) < 30 * 60 else { return nil }
+        return reading.value
     }
 
     private func logFirstReading(_ mgdl: Double) {

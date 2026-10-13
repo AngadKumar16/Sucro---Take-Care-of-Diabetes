@@ -23,6 +23,7 @@ struct MainTabView: View {
                 NavigationStack {
                     HomeView(onShowAllActivity: showLog, onShowTrends: showTrends)
                         .environment(homeViewModel)
+                        .growthDestinations()
                 }
             }
 
