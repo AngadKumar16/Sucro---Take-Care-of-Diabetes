@@ -37,6 +37,16 @@ Kids move up by learning. Your Path has six skills: four short quizzes tied to t
 
 Your health data is never sold, never used for ads and never sent to us. There is no account and no server. It stays on your phone, and the only people who ever see it are the family members you invite. Family sharing is end-to-end encrypted in your own iCloud (CloudKit `encryptedValues`), so not even Apple can read it. App Store privacy label: Data Not Collected. See [docs/privacy-policy.md](docs/privacy-policy.md).
 
+## Security
+
+- No server, no account, no password database: nothing of ours to breach. No analytics, ads or tracking SDKs.
+- Data on the phone is encrypted at rest by iOS. Family sharing is end-to-end encrypted, private (`publicPermission = .none`) and read-only.
+- The grown-up passcode is kept only as a salted SHA-256 hash in the Keychain (this device only), with a lockout after 5 wrong tries.
+- Every permission rule lives in one function, `CareStage.access(to:completed:)`, behind one gate, covered by unit tests.
+- Only two optional network paths, both HTTPS: family sharing and a barcode lookup that sends nothing but the barcode digits.
+
+Details and honest limits: [docs/security.md](docs/security.md).
+
 **Not for dosing.** DiabetesCare is a log and a learning tool. It doesn't calculate insulin doses or replace advice from your care team.
 
 ## Honest status
