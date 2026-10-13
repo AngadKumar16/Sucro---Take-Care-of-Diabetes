@@ -33,10 +33,11 @@ struct AddCarbView: View {
             hasChanges: !gramsText.isEmpty || !foodItems.isEmpty || !notes.isEmpty || photo != nil,
             onSave: save
         ) {
+            KitchenScaleSection(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems)
             Section {
                 Button("Look Up Carbs", systemImage: "magnifyingglass") { showFoodSearch = true }
                     .accessibilityIdentifier("lookUpCarbs")
-                ForEach(Array(picks.enumerated()), id: \.offset) { _, pick in
+                ForEach(picks.enumerated(), id: \.offset) { _, pick in
                     LabeledContent(pick.name, value: "\(Int(pick.carbs)) g")
                         .font(.subheadline)
                 }
@@ -46,7 +47,6 @@ struct AddCarbView: View {
                 }
             }
             .listRowBackground(Theme.card)
-            KitchenScaleSection(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems)
             CarbFields(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems, timestamp: $timestamp, notes: $notes, focus: $gramsFocused)
             SitePhotoSection(photo: $photo, subject: String(localized: "Meal photo"), identifier: "mealPhoto")
         }

@@ -96,7 +96,7 @@ struct RecapCard: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(Int(week.inRangePercent.rounded()))%")
-                    .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
+                    .font(.system(.largeTitle, design: .rounded, weight: .bold).scaled(by: 1.4).monospacedDigit())
                     .foregroundStyle(Theme.green)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("in range")

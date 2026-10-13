@@ -8,6 +8,7 @@
 //
 
 import AppIntents
+import CoreData
 import SwiftUI
 
 struct CheckGlucoseIntent: AppIntent {
@@ -54,7 +55,7 @@ struct LogGlucoseIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let settings = await SettingsStore.shared
         let mgdl = await settings.mgdl(fromDisplay: value)
-        guard SettingsStore.plausibleGlucose.contains(mgdl) else {
+        guard await MainActor.run(body: { SettingsStore.plausibleGlucose.contains(mgdl) }) else {
             throw $value.needsValueError("That doesn't look like a glucose reading. What was the number?")
         }
         await IntentActions.logGlucose(mgdl: mgdl)

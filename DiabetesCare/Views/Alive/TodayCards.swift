@@ -85,6 +85,7 @@ struct StreakChips: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("streakChips")
     }
 
@@ -147,6 +148,10 @@ struct DayStoryCard: View {
     let title: String
     let day: Story.Day
     var onOpenRecap: (() -> Void)?
+    /// The on-device model's warmer wording, once it's ready and checked.
+    @State private var reworded: String?
+
+    private var template: String { Story.sentence(for: day, glucose: settings.formattedGlucose) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -160,14 +165,26 @@ struct DayStoryCard: View {
                         .accessibilityIdentifier("openWeeklyRecap")
                 }
             }
-            Text(Story.sentence(for: day, glucose: settings.formattedGlucose))
+            Text(reworded ?? template)
                 .font(.body)
                 .foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+                .animation(.smooth, value: reworded)
             InRangeBar(percent: day.inRangePercent)
+            if reworded != nil {
+                Label("Worded on this iPhone", systemImage: "apple.intelligence")
+                    .font(.caption)
+                    .foregroundStyle(Theme.soft)
+            }
+        }
+        .task(id: template) {
+            reworded = nil
+            guard settings.aiStoriesEnabled else { return }
+            reworded = await StoryWriter.reword(template, stage: settings.stage)
         }
         .card()
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("dayStory")
     }
 }
@@ -176,19 +193,26 @@ struct DayStoryCard: View {
 struct InRangeBar: View {
     let percent: Double
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var shown = 0.0
+    /// Starts full, so a still render (the shared recap image) shows the
+    /// real value; on screen it grows in from empty.
+    @State private var shown: Double
+
+    init(percent: Double) {
+        self.percent = percent
+        _shown = State(initialValue: percent)
+    }
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Theme.rule)
+        Capsule().fill(Theme.rule)
+            .overlay(alignment: .leading) {
                 Capsule().fill(Theme.green)
-                    .frame(width: proxy.size.width * shown / 100)
+                    .scaleEffect(x: max(0.001, shown / 100), anchor: .leading)
             }
-        }
-        .frame(height: 8)
+            .frame(height: 8)
         .onAppear {
-            if reduceMotion { shown = percent } else { withAnimation(.smooth(duration: 0.8).delay(0.1)) { shown = percent } }
+            guard !reduceMotion else { return }
+            shown = 0
+            withAnimation(.smooth(duration: 0.8).delay(0.1)) { shown = percent }
         }
         .onChange(of: percent) { _, value in withAnimation(.smooth) { shown = value } }
         .accessibilityLabel("\(Int(percent.rounded())) percent in range")

@@ -15,7 +15,7 @@ import Observation
 final class AppRouter {
     static let shared = AppRouter()
 
-    enum Route: Equatable, Hashable {
+    nonisolated enum Route: Equatable, Hashable, Sendable {
         case logGlucose
         case logCarbs
         case getHelp
@@ -30,9 +30,9 @@ final class AppRouter {
     var pending: Route?
 
     /// URLs widgets and notifications use: `diabetescare://<route>[/<id>]`.
-    static let scheme = "diabetescare"
+    nonisolated static let scheme = "diabetescare"
 
-    static func url(for route: Route) -> URL {
+    nonisolated static func url(for route: Route) -> URL {
         let path = switch route {
         case .logGlucose: "log-glucose"
         case .logCarbs: "log-carbs"
@@ -47,7 +47,7 @@ final class AppRouter {
         return URL(string: "\(scheme)://\(path)")!
     }
 
-    static func route(for url: URL) -> Route? {
+    nonisolated static func route(for url: URL) -> Route? {
         guard url.scheme == scheme, let host = url.host() else { return nil }
         switch host {
         case "log-glucose": return .logGlucose

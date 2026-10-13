@@ -160,7 +160,7 @@ struct FoodPortionView: View {
             Section {
                 VStack(spacing: 4) {
                     Text("\(Int(carbs))")
-                        .font(.system(size: 64, weight: .bold, design: .rounded).monospacedDigit())
+                        .font(.system(.largeTitle, design: .rounded, weight: .bold).scaled(by: 1.8).monospacedDigit())
                         .foregroundStyle(Theme.green)
                         .contentTransition(.numericText(value: carbs))
                     Text("grams of carbs (estimate)")

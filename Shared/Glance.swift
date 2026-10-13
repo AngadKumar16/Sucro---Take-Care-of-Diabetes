@@ -11,7 +11,13 @@ import Foundation
 import SwiftUI
 
 nonisolated enum AppGroup {
+    /// The watch keeps its own group: it can't share a container with the
+    /// phone, so the snapshot reaches it over WatchConnectivity instead.
+    #if os(watchOS)
+    static let id = "group.com.AngadKumar16.DiabetesCare.watch"
+    #else
     static let id = "group.com.AngadKumar16.DiabetesCare"
+    #endif
 
     static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }

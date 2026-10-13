@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		AB000000000000000000000D /* DiabetesCareWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000005 /* DiabetesCareWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AC0000000000000000000015 /* DiabetesCareWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000005 /* DiabetesCareWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AC0000000000000000000019 /* DiabetesCareWatchComplications.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000007 /* DiabetesCareWatchComplications.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +34,20 @@
 			remoteGlobalIDString = AB0000000000000000000004;
 			remoteInfo = DiabetesCareWidgetsExtension;
 		};
+		AC0000000000000000000016 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2FE786142F62060A00A04A50 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC0000000000000000000004;
+			remoteInfo = DiabetesCareWatch;
+		};
+		AC000000000000000000001A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2FE786142F62060A00A04A50 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC0000000000000000000006;
+			remoteInfo = DiabetesCareWatchComplications;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +62,28 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC0000000000000000000014 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				AC0000000000000000000015 /* DiabetesCareWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC0000000000000000000018 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AC0000000000000000000019 /* DiabetesCareWatchComplications.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +91,8 @@
 		2FE7862E2F62060E00A04A50 /* DiabetesCareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DiabetesCareTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FE786382F62060E00A04A50 /* DiabetesCareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DiabetesCareUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB0000000000000000000005 /* DiabetesCareWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DiabetesCareWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC0000000000000000000005 /* DiabetesCareWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiabetesCareWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC0000000000000000000007 /* DiabetesCareWatchComplications.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DiabetesCareWatchComplications.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -62,6 +102,13 @@
 				Info.plist,
 			);
 			target = AB0000000000000000000004 /* DiabetesCareWidgetsExtension */;
+		};
+		AC0000000000000000000003 /* Exceptions for "DiabetesCareWatchWidgets" folder in "DiabetesCareWatchComplications" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AC0000000000000000000006 /* DiabetesCareWatchComplications */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -92,6 +139,19 @@
 				AB0000000000000000000003 /* Exceptions for "DiabetesCareWidgets" folder in "DiabetesCareWidgetsExtension" target */,
 			);
 			path = DiabetesCareWidgets;
+			sourceTree = "<group>";
+		};
+		AC0000000000000000000001 /* DiabetesCareWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DiabetesCareWatch;
+			sourceTree = "<group>";
+		};
+		AC0000000000000000000002 /* DiabetesCareWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AC0000000000000000000003 /* Exceptions for "DiabetesCareWatchWidgets" folder in "DiabetesCareWatchComplications" target */,
+			);
+			path = DiabetesCareWatchWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -125,6 +185,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC0000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC000000000000000000000F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -136,6 +210,8 @@
 				2FE7863B2F62060E00A04A50 /* DiabetesCareUITests */,
 				AB0000000000000000000001 /* Shared */,
 				AB0000000000000000000002 /* DiabetesCareWidgets */,
+				AC0000000000000000000001 /* DiabetesCareWatch */,
+				AC0000000000000000000002 /* DiabetesCareWatchWidgets */,
 				2FE7861D2F62060A00A04A50 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -147,6 +223,8 @@
 				2FE7862E2F62060E00A04A50 /* DiabetesCareTests.xctest */,
 				2FE786382F62060E00A04A50 /* DiabetesCareUITests.xctest */,
 				AB0000000000000000000005 /* DiabetesCareWidgetsExtension.appex */,
+				AC0000000000000000000005 /* DiabetesCareWatch.app */,
+				AC0000000000000000000007 /* DiabetesCareWatchComplications.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -162,11 +240,13 @@
 				2FE786192F62060A00A04A50 /* Frameworks */,
 				2FE7861A2F62060A00A04A50 /* Resources */,
 				AB000000000000000000000C /* Embed Foundation Extensions */,
+				AC0000000000000000000014 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				AB000000000000000000000F /* PBXTargetDependency */,
+				AC0000000000000000000017 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2FE7861E2F62060A00A04A50 /* DiabetesCare */,
@@ -248,6 +328,54 @@
 			productReference = AB0000000000000000000005 /* DiabetesCareWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		AC0000000000000000000004 /* DiabetesCareWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC000000000000000000000B /* Build configuration list for PBXNativeTarget "DiabetesCareWatch" */;
+			buildPhases = (
+				AC0000000000000000000008 /* Sources */,
+				AC0000000000000000000009 /* Frameworks */,
+				AC000000000000000000000A /* Resources */,
+				AC0000000000000000000018 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC000000000000000000001B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AC0000000000000000000001 /* DiabetesCareWatch */,
+				AB0000000000000000000001 /* Shared */,
+			);
+			name = DiabetesCareWatch;
+			packageProductDependencies = (
+			);
+			productName = DiabetesCareWatch;
+			productReference = AC0000000000000000000005 /* DiabetesCareWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AC0000000000000000000006 /* DiabetesCareWatchComplications */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC0000000000000000000011 /* Build configuration list for PBXNativeTarget "DiabetesCareWatchComplications" */;
+			buildPhases = (
+				AC000000000000000000000E /* Sources */,
+				AC000000000000000000000F /* Frameworks */,
+				AC0000000000000000000010 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AC0000000000000000000002 /* DiabetesCareWatchWidgets */,
+				AB0000000000000000000001 /* Shared */,
+			);
+			name = DiabetesCareWatchComplications;
+			packageProductDependencies = (
+			);
+			productName = DiabetesCareWatchComplications;
+			productReference = AC0000000000000000000007 /* DiabetesCareWatchComplications.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -272,6 +400,12 @@
 					AB0000000000000000000004 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
+					AC0000000000000000000004 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					AC0000000000000000000006 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = 2FE786172F62060A00A04A50 /* Build configuration list for PBXProject "DiabetesCare" */;
@@ -292,6 +426,8 @@
 				2FE7862D2F62060E00A04A50 /* DiabetesCareTests */,
 				2FE786372F62060E00A04A50 /* DiabetesCareUITests */,
 				AB0000000000000000000004 /* DiabetesCareWidgetsExtension */,
+				AC0000000000000000000004 /* DiabetesCareWatch */,
+				AC0000000000000000000006 /* DiabetesCareWatchComplications */,
 			);
 		};
 /* End PBXProject section */
@@ -319,6 +455,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AB0000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC000000000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC0000000000000000000010 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -356,6 +506,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC0000000000000000000008 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC000000000000000000000E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -373,6 +537,16 @@
 			isa = PBXTargetDependency;
 			target = AB0000000000000000000004 /* DiabetesCareWidgetsExtension */;
 			targetProxy = AB000000000000000000000E /* PBXContainerItemProxy */;
+		};
+		AC0000000000000000000017 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC0000000000000000000004 /* DiabetesCareWatch */;
+			targetProxy = AC0000000000000000000016 /* PBXContainerItemProxy */;
+		};
+		AC000000000000000000001B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC0000000000000000000006 /* DiabetesCareWatchComplications */;
+			targetProxy = AC000000000000000000001A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -730,6 +904,138 @@
 			};
 			name = Release;
 		};
+		AC000000000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DiabetesCareWatch/DiabetesCareWatch.entitlements;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.AngadKumar16.DiabetesCare;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.AngadKumar16.DiabetesCare.watchkitapp;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		AC000000000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DiabetesCareWatch/DiabetesCareWatch.entitlements;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.AngadKumar16.DiabetesCare;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.AngadKumar16.DiabetesCare.watchkitapp;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		AC0000000000000000000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DiabetesCareWatchWidgets/DiabetesCareWatchWidgets.entitlements;
+				INFOPLIST_FILE = DiabetesCareWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.AngadKumar16.DiabetesCare.watchkitapp.Complications;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		AC0000000000000000000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DiabetesCareWatchWidgets/DiabetesCareWatchWidgets.entitlements;
+				INFOPLIST_FILE = DiabetesCareWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.AngadKumar16.DiabetesCare.watchkitapp.Complications;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5XTU3ZWHX9;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = DiabetesCare;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -774,6 +1080,24 @@
 			buildConfigurations = (
 				AB000000000000000000000A /* Debug */,
 				AB000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC000000000000000000000B /* Build configuration list for PBXNativeTarget "DiabetesCareWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC000000000000000000000C /* Debug */,
+				AC000000000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC0000000000000000000011 /* Build configuration list for PBXNativeTarget "DiabetesCareWatchComplications" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC0000000000000000000012 /* Debug */,
+				AC0000000000000000000013 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

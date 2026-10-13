@@ -7,6 +7,7 @@
 //  sugar, a glucose check, carbs). Nothing goes through a server.
 //
 
+import CoreData
 import Foundation
 import OSLog
 import WatchConnectivity
@@ -33,27 +34,40 @@ final class WatchBridge: NSObject {
         }
     }
 
-    /// Handles a message from the watch. Returns a reply for it.
-    func handle(_ message: [String: Any]) -> [String: Any] {
+    /// A message from the watch, read off WatchConnectivity's queue.
+    struct Request: Sendable {
+        var action: String
+        var grams: Double?
+        var mgdl: Double?
+
+        nonisolated init(_ message: [String: Any]) {
+            action = message["action"] as? String ?? ""
+            grams = message["grams"] as? Double
+            mgdl = message["mgdl"] as? Double
+        }
+    }
+
+    /// Handles a message from the watch. Returns whether it worked.
+    func handle(_ request: Request) -> Bool {
         let context = PersistenceController.shared.container.viewContext
-        switch WatchMessage(rawValue: message["action"] as? String ?? "") {
+        switch WatchMessage(rawValue: request.action) {
         case .logFastSugar:
-            let grams = message["grams"] as? Double ?? 15
+            let grams = request.grams ?? 15
             LowTreatmentService.logFastCarbs(grams: grams, context: context)
-            return ["ok": true]
+            return true
         case .logCarbs:
-            guard let grams = message["grams"] as? Double, (1...500).contains(grams) else { return ["ok": false] }
+            guard let grams = request.grams, (1...500).contains(grams) else { return false }
             IntentActions.logCarbs(grams: grams, context: context)
-            return ["ok": true]
+            return true
         case .logGlucose:
-            guard let mgdl = message["mgdl"] as? Double, SettingsStore.plausibleGlucose.contains(mgdl) else { return ["ok": false] }
+            guard let mgdl = request.mgdl, SettingsStore.plausibleGlucose.contains(mgdl) else { return false }
             IntentActions.logGlucose(mgdl: mgdl, context: context)
-            return ["ok": true]
+            return true
         case .refresh:
             GlanceWriter.shared.update()
-            return ["ok": true]
+            return true
         case nil:
-            return ["ok": false]
+            return false
         }
     }
 }
@@ -72,15 +86,21 @@ extension WatchBridge: WCSessionDelegate {
     }
 
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
-        let sendable = message.compactMapValues { $0 as? any Sendable }
+        let request = Request(message)
+        let reply = UncheckedReply(handler: replyHandler)
         Task { @MainActor in
-            let reply = WatchBridge.shared.handle(sendable)
-            replyHandler(reply)
+            let ok = WatchBridge.shared.handle(request)
+            reply.handler(["ok": ok])
         }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
-        let sendable = userInfo.compactMapValues { $0 as? any Sendable }
-        Task { @MainActor in _ = WatchBridge.shared.handle(sendable) }
+        let request = Request(userInfo)
+        Task { @MainActor in _ = WatchBridge.shared.handle(request) }
     }
+}
+
+/// WatchConnectivity's reply handler is safe to call from any queue.
+private struct UncheckedReply: @unchecked Sendable {
+    let handler: ([String: Any]) -> Void
 }

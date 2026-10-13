@@ -9,6 +9,7 @@
 //  target, behind `#if !WIDGET_EXTENSION`.
 //
 
+#if os(iOS)
 import AppIntents
 import Foundation
 
@@ -66,3 +67,4 @@ enum AppScreen: String, AppEnum {
         .trends: DisplayRepresentation(title: "Trends", image: .init(systemName: "chart.xyaxis.line")),
     ]
 }
+#endif

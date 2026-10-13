@@ -208,7 +208,8 @@ struct LogView: View {
                     title: "\(entry.grams.formatted(.number.precision(.fractionLength(0...1))))g carbs",
                     detail: [MealType(stored: entry.mealType)?.rawValue ?? entry.mealType, entry.foodItems]
                         .compactMap { $0 }.joined(separator: " · "),
-                    notes: entry.notes
+                    notes: entry.notes,
+                    photo: entry.photo
                 )
             }
         }
@@ -312,6 +313,8 @@ struct LogRow: Identifiable {
     let title: String
     let detail: String?
     let notes: String?
+    /// A meal photo, shown small beside the row.
+    var photo: Data? = nil
 
     var id: NSManagedObjectID { object.objectID }
 }
@@ -333,6 +336,20 @@ private struct LogRowView: View {
     }
 
     var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            details
+            if let photo = row.photo, let image = UIImage(data: photo) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 44, height: 44)
+                    .clipShape(.rect(cornerRadius: 8))
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 if let timestamp = row.timestamp {

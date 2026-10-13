@@ -40,7 +40,10 @@ struct SuppliesView: View {
                             }
                         }
                     } label: {
+                        // The whole row opens the menu, not just the words.
                         Label("Track a Supply", systemImage: "plus.circle.fill")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(.rect)
                     }
                     .accessibilityIdentifier("trackSupply")
                 }

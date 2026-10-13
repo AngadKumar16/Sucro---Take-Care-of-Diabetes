@@ -102,6 +102,7 @@ struct CaregiverView: View {
         }
         .softPanel(border: Theme.vermilion)
         .sensoryFeedback(.success, trigger: replySent)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("helpRequestCard")
     }
 

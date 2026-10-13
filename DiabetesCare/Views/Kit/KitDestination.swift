@@ -33,6 +33,7 @@ extension View {
 
 /// Links to the everyday screens, as a Settings section.
 struct EverydaySection: View {
+    @Environment(SettingsStore.self) private var settings
     @State private var kit = KitStore.shared
 
     var body: some View {
@@ -65,6 +66,19 @@ struct EverydaySection: View {
             NavigationLink(value: KitDestination.appIcon) {
                 Label("App Icon", systemImage: "app.badge")
             }
+            Toggle(isOn: Bindable(settings).aiStoriesEnabled) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Friendlier Day Stories")
+                        Text("Uses Apple Intelligence on this iPhone, when available. Facts are checked; nothing is sent.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.soft)
+                    }
+                } icon: {
+                    Image(systemName: "apple.intelligence")
+                }
+            }
+            .accessibilityIdentifier("aiStoriesToggle")
         }
         .listRowBackground(Theme.card)
     }

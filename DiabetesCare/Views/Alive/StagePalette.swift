@@ -32,16 +32,9 @@ extension CareStage {
     }
 }
 
-private struct StageWashKey: EnvironmentKey {
-    static let defaultValue: Color = .clear
-}
-
 extension EnvironmentValues {
     /// The current stage's wash, drawn by `instrumentBackground()`.
-    var stageWash: Color {
-        get { self[StageWashKey.self] }
-        set { self[StageWashKey.self] = newValue }
-    }
+    @Entry var stageWash: Color = .clear
 }
 
 extension View {

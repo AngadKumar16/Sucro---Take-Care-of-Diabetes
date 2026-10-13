@@ -1,6 +1,6 @@
 # DiabetesCare — Planning Guide
 
-Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; Phases 0–4 are done (2026-10-12). Phase 5 ("Grows with you", for the Congressional App Challenge): weeks 1–3 of app work are done; iCloud family sharing is built and waits only on the paid developer account. What's left that needs a person or Apple: see `docs/release-checklist.md`.
+Status of the codebase (repo folder still named `Sucro - Take Care of Diabetes`). First written 2026-10-07 as an audit; Phases 0–4 are done (2026-10-12); Phase 6 (widgets, Live Activity, Siri, watch, carb lookup, stories and more) on 2026-10-13. Phase 5 ("Grows with you", for the Congressional App Challenge): weeks 1–3 of app work are done; iCloud family sharing is built and waits only on the paid developer account. What's left that needs a person or Apple: see `docs/release-checklist.md`.
 
 ## Snapshot
 
@@ -177,6 +177,55 @@ Judges are mostly non-technical and mostly watch the demo video, so the order of
 - Launch arguments: `-stage kid|teen` (grown-up passcode 1234, locked), `-resetSetup` (shows the setup screen), `-demoData` (Maya, teen), `-demoFamily` (parent's phone).
 - The template launch test rotates the simulator to landscape; its tearDown now puts it back, which was breaking later tests in full runs. `HealthImportUITests` drives the Health app and is sometimes flaky in a full run; rerun it alone. Plain `-uiTesting` starts as Adult with no passcode, so older tests are unchanged.
 
+## Phase 6 — Alive and more functional (done 2026-10-13)
+
+33 features from the idea list in `~/.claude/plans/` (none needs dosing logic; safety info is never gated). All unit tests (`AliveFeatureTests`) and UI tests (`AliveFlowUITests`) pass on iPhone 17 / iOS 26.
+
+### Outside the app
+- [x] **Widgets** (`DiabetesCareWidgets/`, new extension target): Glucose (small, medium with a 3 h sparkline, Lock Screen circular/rectangular/inline) and "Feeling Off?" (kid) whose **+15 g button** logs fast sugar without opening the app. Both read `GlanceSnapshot` (`Shared/Glance.swift`) from the App Group `group.com.AngadKumar16.DiabetesCare`; `Services/GlanceWriter.swift` rewrites it after every store save (debounced) and reloads widgets.
+- [x] **Live Activity** for treating a low (`Shared/LowTreatmentAttributes.swift`, `Services/LowTreatmentService.swift`): 15-minute recheck countdown on the Lock Screen and Dynamic Island, updated with the next reading, ends when back above Low. Started from Today, Get Help, the widget, Siri or the watch.
+- [x] **Siri / Shortcuts** (`App/Intents/`): Check My Glucose (spoken + snippet), Log Carbs, Log Glucose, Log Insulin (confirms; refuses at Kid, same rule as `CareStage`), Get Help, Show My Week, Explain a Term (`GlossaryTermEntity`, indexed). `LogFastSugarIntent` and `OpenRouteIntent` live in `Shared/SharedIntents.swift` so the widget can name them; their work runs in the app (`#if !WIDGET_EXTENSION`).
+- [x] **Controls**: Log Carbs, Log Glucose, Get Help for Control Center / Lock Screen / Action button.
+- [x] **Spotlight** (`Services/SpotlightIndexer.swift`): glossary terms and guides, never the log.
+- [x] **Apple Watch** (`DiabetesCareWatch/`, `DiabetesCareWatchWidgets/`): glance with sparkline and recheck timer, log fast sugar / glucose / carbs with the Digital Crown, low steps; complications. Snapshot over WatchConnectivity (`Services/WatchBridge.swift`). Embedded in the iPhone app (`scripts/embed-watch.sh`, run 2026-10-13 after installing the watchOS 26 simulator runtime, which the scheme now needs). Watch icon in `DiabetesCareWatch/Assets.xcassets`. Launches on an Apple Watch Series 11 simulator; phone ↔ watch messaging needs a paired simulator or devices to check.
+- `App/AppRouter.swift`: one place for "open this" from widgets (`diabetescare://` URLs), notifications (`userInfo["route"]`), Spotlight, Siri and controls.
+
+### Feels alive
+- [x] Hero reading: number rolls, zone color animates, trend arrow bounces, a halo breathes while fresh and the color drains as it ages. Reduce Motion respected.
+- [x] Today: next-up line (recheck countdown, next reminder, site due, streak), streak chips (days logging, days without an urgent low, sites on time; a broken streak reads "Fresh start today"), last-night card (morning), day story (yesterday until 5 p.m., then today). Math in `Models/Domain/Story.swift`, fetches in `Services/StoryService.swift`.
+- [x] Milestone celebrations (3/7/14/30… days) with falling leaves (`Views/Alive/Celebration.swift`), once per milestone.
+- [x] **The plant** (`Views/Alive/SproutView.swift`): seed → bloom from skills, guide stickers and streaks; on Your Path and on a kid's/teen's Today.
+- [x] TipKit hints (`Views/Alive/Tips.swift`); hidden in UI tests.
+- [x] Weekly recap (`Views/Alive/WeeklyRecapView.swift`): time in range vs last week, steadiest day, days logged, each day in a sentence, shareable image; Sunday 6 p.m. notification.
+- [x] Undo toast after logging and deleting (`Views/Alive/Toast.swift`), with the haptic language: success saved, warning for a low/high or high ketones, light tap for delete/undo. Off in UI tests unless `-toasts`.
+- [x] Stage palette (`Views/Alive/StagePalette.swift`): brighter green and a warm wash for a kid, teal for a teen, calm for an adult.
+- [x] Alternate app icons (Garden, Sunrise, Ocean, Berry, Midnight): `swift scripts/make-app-icon.swift --alternates DiabetesCare/Resources/Assets.xcassets`; Settings › Everyday › App Icon.
+
+### Logging
+- [x] **Carb lookup** (`Models/Food/`, `Views/Food/`): 5,371 USDA FNDDS foods with household portions bundled as `Resources/Foods.json` (780 KB, built by `scripts/make-food-db.py`), recent and "My Foods", add your own. Optional **barcode scan** (VisionKit) → Open Food Facts, off until turned on; only the barcode is sent. Picks add up in Add Carbs.
+- [x] Meal photos on carb entries (add, edit, thumbnail in Log; never shared with family).
+- [x] **Core Data model version 2** (`SucroDataModel 2`, lightweight migration): `KetoneReading` and `ContextTag`. Both are in backups (optional fields, so older backups still read) and never shared with family.
+- [x] Ketones: blood (mmol/L) or urine strip, level explained (`KetoneZone`), Log filter, timeline. Log filters became scrolling chips (seven kinds).
+- [x] Day tags on Today (sick, stressed, sports, period, party, travel); **Sick** shows a sick-day checklist with the latest ketone check.
+- [x] Supplies, open-insulin expiry and doctor questions (`Services/KitStore.swift`, `Views/Kit/`): counts with reorder reminders, site changes use up sets/pods/reservoirs, expiry reminder at 9 a.m. on the day, questions added to the PDF report. In backups.
+
+### Trends
+- [x] Your Typical Day (AGP: median, 25–75 %, 5–95 % by half hour; `Models/Domain/AGP.swift`), also a PDF report page.
+- [x] After Meals: rise after each meal and by food (`MealImpact`).
+- [x] Chart scrub lists meals/doses within 45 minutes; event marks along the top.
+- [x] Your Days: glucose on tagged days vs the rest (`TagInsights`).
+- [x] Activity & Sleep (opt-in Health reads: steps, workouts, sleep, menstrual flow; `Services/HealthContextReader.swift`) with findings like lower nights after workouts.
+
+### Family and growth
+- [x] **Help replies**: a parent answers "I need help" with On my way / Calling you / Got it; the kid's Get Help shows it and a notification arrives. `FamilyTransport.sendReply/fetchReplies`, `Reply` records in the same zone. The CloudKit share now offers read-write (only replies are written; the app never edits entries from a follower). Loopback-tested; iCloud path untested until enrollment.
+- [x] School & sitter card (PDF): low signs, rule of 15, emergency, ranges, grown-up contact, notes.
+- [x] Guide stickers on Your Path.
+- [x] Doctor visit questions in the report.
+
+### Not done / limits
+- Day story: Apple's on-device model (Foundation Models) rewords the template warmly for the stage (`Services/StoryWriter.swift`), only where Apple Intelligence is available; the reworded text is kept only if every number survives and nothing reads like advice (`isFaithful`, tested), otherwise the template shows. Toggle: Settings › Everyday › Friendlier Day Stories; off in UI tests.
+- iCloud help replies untested on two devices (needs the paid account).
+
 ## Key files
 
 Paths are relative to `DiabetesCare/`.
@@ -196,5 +245,7 @@ Paths are relative to `DiabetesCare/`.
 - Logging: `Utilities/Log.swift`
 - Stages and skills: `Models/Domain/CareStage.swift`, `Models/Domain/Skill.swift`, `Services/ParentLock.swift`, `Services/SkillProgress.swift`, `Views/Growth/` (setup, passcode, gate, path, quiz, kid help)
 - Family sharing: `Services/Family/` (models, diff, store, record codec, transports, alert policy, `FamilyService`), `Views/Family/`, `App/AppDelegate.swift`, `DiabetesCare-CloudKit.entitlements`, `Config/DiabetesCare-iCloud-Info.plist`
-- Scripts: `scripts/enable-icloud.sh`, `scripts/screenshots.sh`, `scripts/make-app-icon.swift`
+- Scripts: `scripts/enable-icloud.sh`, `scripts/screenshots.sh`, `scripts/make-app-icon.swift` (`--alternates`), `scripts/make-food-db.py`, `scripts/embed-watch.sh`
 - Ship docs: `docs/`
+- Outside the app: `Shared/` (snapshot, Live Activity attributes, shared intents, watch messages; compiled into app, widgets and watch), `DiabetesCareWidgets/`, `DiabetesCareWatch/`, `DiabetesCareWatchWidgets/`, `App/AppRouter.swift`, `App/Intents/`, `Services/GlanceWriter.swift`, `Services/WatchBridge.swift`, `Services/LowTreatmentService.swift`, `Services/SpotlightIndexer.swift`
+- Alive and everyday: `Views/Alive/`, `Views/Kit/`, `Views/Food/`, `Views/Trends/`, `Models/Domain/Story.swift`, `Models/Domain/AGP.swift`, `Models/Food/`, `Services/StoryService.swift`, `Services/KitStore.swift`, `Services/HealthContextReader.swift`

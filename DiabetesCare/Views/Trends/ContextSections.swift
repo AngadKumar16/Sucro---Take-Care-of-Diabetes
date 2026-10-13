@@ -47,6 +47,7 @@ struct TagInsightsSection: View {
             }
             .card()
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("tagInsights")
     }
 }
@@ -114,6 +115,7 @@ struct HealthContextSection: View {
             .card()
         }
         .task(id: range) { await load() }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("healthContext")
     }
 

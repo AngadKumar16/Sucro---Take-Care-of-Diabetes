@@ -3,7 +3,8 @@
 DiabetesCare is a diabetes logbook. **It is not a medical device and gives no dosing advice.** A safety notice must be accepted before first use, and it can be read again in Settings › Safety Information.
 
 ## HealthKit
-- **Read:** Blood Glucose only. Readings that CGM apps (Dexcom, Libre and others) save to Apple Health show up in the app's Log and Trends. The app uses an observer query with background delivery so that low and high glucose alerts are timely.
+- **Read:** Blood Glucose. Readings that CGM apps (Dexcom, Libre and others) save to Apple Health show up in the app's Log and Trends. The app uses an observer query with background delivery so that low and high glucose alerts are timely.
+- **Read, only when the user turns on Trends › Activity & Sleep › Connect Apple Health:** Steps, Workouts, Sleep Analysis and Menstrual Flow, shown next to glucose (for example "lower nights after workouts"). Nothing is read for these before that tap.
 - **Write:** Blood Glucose, Dietary Carbohydrates, Insulin Delivery, Workouts and Active Energy, from the entries the user logs by hand. Samples the app wrote itself are skipped when reading, so nothing is counted twice.
 - Health data stays on the device. There is no server, no account and no analytics.
 
@@ -17,10 +18,20 @@ DiabetesCare is a diabetes logbook. **It is not a medical device and gives no do
 After the safety notice, the app asks who it's for: a kid (a grown-up is in charge), a teen, an adult, or a parent/caregiver who follows someone. Kids and teens need a 4-digit grown-up passcode for risky settings (glucose ranges, deleting data, restoring a backup, changing stage, stopping family sharing). Learn › Your Path has short quizzes that unlock some features early and show when someone is ready to move up a stage. To test without stages, choose **An Adult**.
 
 ## Family sharing (iCloud)
-Optional. Settings › Family › Share with Family creates a CloudKit zone-wide share in the user's private database and opens the system invitation sheet. Invited family members see the shared log read only and get alerts on their phone (kid: every low/high and help requests; teen: urgent only; adult: urgent lows only). **See What Family Sees** previews it on one device without sending anything. Testing needs two devices signed in to different Apple Accounts.
+Optional. Settings › Family › Share with Family creates a CloudKit zone-wide share in the user's private database and opens the system invitation sheet. Invited family members see the shared log (they can't change it; the share allows writing only so they can reply "On my way!" to a help request) and get alerts on their phone (kid: every low/high and help requests; teen: urgent only; adult: urgent lows only). **See What Family Sees** previews it on one device without sending anything. Testing needs two devices signed in to different Apple Accounts.
+
+## Food lookup and the camera
+Log › + › Add Carbs › Look Up Carbs searches a food list bundled in the app (USDA FoodData Central, public domain); no network. **Scan Barcode** is off until the user turns on "Look Up Barcodes Online"; it then uses the camera (VisionKit DataScanner) to read a barcode and sends only the barcode number to Open Food Facts to get carbs. A barcode can also be typed (for example 737628064502) to test without a camera.
+
+## Widgets, Live Activity, Siri, Apple Watch
+- Widgets: Glucose (Home and Lock Screen sizes) and "Feeling Off?" (a kid's widget whose button logs 15 g of fast-acting carbs and opens the steps for a low).
+- Live Activity: logging fast-acting carbs for a low shows a 15-minute recheck countdown on the Lock Screen and in the Dynamic Island; it updates with the next reading and ends once glucose is back in range.
+- Controls: Log Carbs, Log Glucose and Get Help for Control Center, the Lock Screen and the Action button.
+- Siri and Shortcuts: "Check my glucose in DiabetesCare", "Log carbs in DiabetesCare", "I need help in DiabetesCare". The Log Insulin shortcut only records a dose the user already took, asks for confirmation, and on a kid's phone refuses and asks for a grown-up. Nothing suggests a dose.
+- Apple Watch: shows the latest reading and logs fast sugar, a glucose check or carbs through the iPhone.
 
 ## Notifications
-Time-sensitive notifications are used for glucose alerts (crossing below Low, below Urgent Low, or above Urgent High). Each alert fires once per crossing, with a 30-minute cooldown. Reminders cover site changes and a glucose check 2 hours after a rapid-acting dose.
+Time-sensitive notifications are used for glucose alerts (crossing below Low, below Urgent Low, or above Urgent High). Each alert fires once per crossing, with a 30-minute cooldown. Reminders cover site changes, a glucose check 2 hours after a rapid-acting dose, open insulin expiring, supplies running low, and a weekly recap (Sundays, 6 p.m.).
 
 ## Background modes
 HealthKit background delivery, and remote notifications (silent CloudKit pushes) so a parent's phone can raise an alert when shared data changes.

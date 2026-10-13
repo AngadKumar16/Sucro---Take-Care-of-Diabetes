@@ -45,6 +45,7 @@ final class SettingsStore {
         static let guideStickers = "settings.guideStickers"
         static let barcodeLookupEnabled = "settings.barcodeLookupEnabled"
         static let healthContextEnabled = "settings.healthContextEnabled"
+        static let aiStoriesEnabled = "settings.aiStoriesEnabled"
     }
 
     // MARK: - Profile
@@ -173,6 +174,12 @@ final class SettingsStore {
         didSet { defaults.set(healthContextEnabled, forKey: Key.healthContextEnabled) }
     }
 
+    /// Let Apple's on-device model reword the day's story more warmly.
+    /// The facts are checked against the plain version; nothing leaves the phone.
+    var aiStoriesEnabled: Bool {
+        didSet { defaults.set(aiStoriesEnabled, forKey: Key.aiStoriesEnabled) }
+    }
+
     /// Guides read to the end, each worth a sticker on Your Path.
     var guideStickers: Set<String> {
         didSet { defaults.set(guideStickers.sorted(), forKey: Key.guideStickers) }
@@ -220,7 +227,8 @@ final class SettingsStore {
             Key.insulinActionHours: 4.0,
             Key.acceptedDisclaimerVersion: 0,
             Key.notificationsEnabled: true,
-            Key.autoBackupEnabled: true
+            Key.autoBackupEnabled: true,
+            Key.aiStoriesEnabled: true,
         ])
 
         self.userName = defaults.string(forKey: Key.userName) ?? ""
@@ -247,6 +255,7 @@ final class SettingsStore {
         self.guideStickers = Set(defaults.stringArray(forKey: Key.guideStickers) ?? [])
         self.barcodeLookupEnabled = defaults.bool(forKey: Key.barcodeLookupEnabled)
         self.healthContextEnabled = defaults.bool(forKey: Key.healthContextEnabled)
+        self.aiStoriesEnabled = defaults.bool(forKey: Key.aiStoriesEnabled)
 
         normalizeThresholds()
         insulinActionHours = min(max(insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)

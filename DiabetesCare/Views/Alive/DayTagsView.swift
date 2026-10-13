@@ -125,6 +125,7 @@ struct SickDayCard: View {
         }
         .softPanel(border: Theme.vermilion.opacity(0.6))
         .sensoryFeedback(.selection, trigger: checked)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("sickDayCard")
     }
 

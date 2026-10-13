@@ -47,6 +47,11 @@ struct DiabetesCareApp: App {
             settings.familySharingEnabled = false
             settings.grownUpName = ""
             settings.grownUpPhone = ""
+            settings.guideStickers = []
+            settings.barcodeLookupEnabled = false
+            settings.healthContextEnabled = false
+            // Model output varies; tests check the plain template.
+            settings.aiStoriesEnabled = false
             // Nobody followed, so a demo-family test can't leak into the next.
             for person in FamilyService.shared.followed { FamilyService.shared.unfollow(person) }
             if arguments.contains("-resetSetup") {
@@ -67,6 +72,8 @@ struct DiabetesCareApp: App {
         if arguments.contains("-resetData"), PersistenceController.shared.loadError == nil {
             _ = DataService.shared.clearAllData(context: PersistenceController.shared.container.viewContext)
             AlertService.shared.reset()
+            KitStore.shared.apply(KitArchive())
+            LowTreatmentService.clear()
             SettingsStore.shared.glucoseUnit = "mg/dL"
             // A test that failed midway can leave its thresholds behind.
             let standard = GlucoseThresholds.standard

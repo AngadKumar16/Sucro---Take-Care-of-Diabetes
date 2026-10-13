@@ -34,6 +34,7 @@ struct AGPSection: View {
             }
             .card()
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("agpSection")
     }
 
@@ -167,6 +168,7 @@ struct MealImpactSection: View {
             }
             .card()
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("mealImpact")
     }
 
