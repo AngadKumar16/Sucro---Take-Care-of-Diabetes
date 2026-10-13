@@ -72,10 +72,10 @@ struct FamilyRecordCodecTests {
         let (good, _) = try FamilyRecordCodec.records(for: sample(), zoneID: zone)
         let unknownKind = CKRecord(recordType: FamilyCloud.RecordType.entry, recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: zone))
         unknownKind["kind"] = "bloodPressure" as CKRecordValue
-        unknownKind["payload"] = Data("{}".utf8) as CKRecordValue
+        unknownKind.encryptedValues["payload"] = Data("{}".utf8)
         let corrupt = CKRecord(recordType: FamilyCloud.RecordType.entry, recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: zone))
         corrupt["kind"] = "glucose" as CKRecordValue
-        corrupt["payload"] = Data("not json".utf8) as CKRecordValue
+        corrupt.encryptedValues["payload"] = Data("not json".utf8)
         let noPayload = CKRecord(recordType: FamilyCloud.RecordType.help, recordID: CKRecord.ID(recordName: UUID().uuidString, zoneID: zone))
 
         let decoded = FamilyRecordCodec.changeSet(from: good + [unknownKind, corrupt, noPayload],

@@ -19,7 +19,7 @@ If you choose **Settings › Family › Share with Family**, DiabetesCare uses A
 
 - **What's shared:** glucose, carbs, insulin, activity and site changes from the last 30 days; your first name, stage (kid, teen, adult), glucose ranges and learned skills; and "I need help" taps from a kid's phone. Notes are shared only at the Kid stage. **Photos, ketone checks, day tags and supplies are never shared.**
 - **Replies:** a family member can answer an "I need help" tap with a short reply ("On my way!"), which is saved in the same shared iCloud space so the kid's phone can show it. The app never lets a family member change your log.
-- **Where it goes:** from your private iCloud database to the iCloud accounts of the people you invite. It does not pass through any server of ours, and we cannot see it.
+- **Where it goes:** from your private iCloud database to the iCloud accounts of the people you invite. It does not pass through any server of ours, and we cannot see it. Your readings, carbs, insulin and notes are end-to-end encrypted in iCloud, so only the people you invite can read them, not us and not Apple.
 - **Who sees it:** only the people you invite in the iCloud sharing screen. You can see exactly what they see with **See What Family Sees**.
 - **Stopping:** **Stop Sharing** removes the shared data from iCloud. On a kid's or teen's phone, stopping needs the grown-up passcode.
 

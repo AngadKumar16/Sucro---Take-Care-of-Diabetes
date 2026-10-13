@@ -71,7 +71,8 @@ nonisolated enum FamilyRecordCodec {
 
     private static func record<T: Encodable>(type: String, name: String, payload: T, date: Date?, zoneID: CKRecordZone.ID) throws -> CKRecord {
         let record = CKRecord(recordType: type, recordID: CKRecord.ID(recordName: name, zoneID: zoneID))
-        record["payload"] = try encoder.encode(payload) as CKRecordValue
+        // End-to-end encrypted: only the people the share is with can read it, not Apple.
+        record.encryptedValues["payload"] = try encoder.encode(payload)
         if let date { record["timestamp"] = date as CKRecordValue }
         return record
     }
@@ -83,7 +84,7 @@ nonisolated enum FamilyRecordCodec {
     /// Replies among fetched records; anything else is ignored.
     static func replies(from records: [CKRecord]) -> [FamilyHelpReply] {
         records.compactMap { record in
-            guard record.recordType == FamilyCloud.RecordType.reply, let payload = record["payload"] as? Data else { return nil }
+            guard record.recordType == FamilyCloud.RecordType.reply, let payload = record.encryptedValues["payload"] as? Data else { return nil }
             return try? decoder.decode(FamilyHelpReply.self, from: payload)
         }
     }
@@ -102,7 +103,7 @@ nonisolated enum FamilyRecordCodec {
     }
 
     private static func add(_ record: CKRecord, to changes: inout FamilyChangeSet) {
-        guard let payload = record["payload"] as? Data else { return }
+        guard let payload = record.encryptedValues["payload"] as? Data else { return }
         do {
             switch record.recordType {
             case FamilyCloud.RecordType.profile:

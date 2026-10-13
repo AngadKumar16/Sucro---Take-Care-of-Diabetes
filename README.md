@@ -35,7 +35,7 @@ Kids move up by learning. Your Path has six skills: four short quizzes tied to t
 
 ## Privacy
 
-Nothing is sent to us. There is no account and no server. Data stays on the phone, in Apple Health if you allow it, and (once family sharing is on) in your own iCloud. App Store privacy label: Data Not Collected. See [docs/privacy-policy.md](docs/privacy-policy.md).
+Your health data is never sold, never used for ads and never sent to us. There is no account and no server. It stays on your phone, and the only people who ever see it are the family members you invite. Family sharing is end-to-end encrypted in your own iCloud (CloudKit `encryptedValues`), so not even Apple can read it. App Store privacy label: Data Not Collected. See [docs/privacy-policy.md](docs/privacy-policy.md).
 
 **Not for dosing.** DiabetesCare is a log and a learning tool. It doesn't calculate insulin doses or replace advice from your care team.
 
