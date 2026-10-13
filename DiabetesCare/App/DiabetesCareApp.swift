@@ -5,6 +5,7 @@
 
 import SwiftUI
 import CoreData
+import CoreSpotlight
 
 @main
 struct DiabetesCareApp: App {
@@ -90,6 +91,8 @@ struct DiabetesCareApp: App {
         }
         #endif
 
+        AppTips.configure(hidden: Self.isUITesting || arguments.contains("-hideTips"))
+
         // Registered here rather than in a view so that when HealthKit wakes
         // the app in the background for new glucose, the observer exists.
         let persistence = PersistenceController.shared
@@ -98,7 +101,10 @@ struct DiabetesCareApp: App {
         }
         if persistence.loadError == nil {
             FamilyService.shared.start(container: persistence.container)
+            GlanceWriter.shared.start(container: persistence.container)
         }
+        WatchBridge.shared.start()
+        SpotlightIndexer.indexIfNeeded()
     }
 
     var body: some Scene {
@@ -113,6 +119,13 @@ struct DiabetesCareApp: App {
                 .environment(parentGate)
                 .environment(family)
                 .preferredColorScheme(settings.preferredColorScheme)
+                .onOpenURL { url in AppRouter.shared.open(url) }
+                .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                    if let id = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+                       let route = SpotlightIndexer.route(for: id) {
+                        AppRouter.shared.pending = route
+                    }
+                }
                 .task {
                     // Run a daily backup if the user has Auto Backup enabled.
                     if persistence.loadError == nil {
@@ -132,6 +145,7 @@ struct DiabetesCareApp: App {
                     }
                     if !Self.isUITesting {
                         await NotificationService.shared.requestAuthorizationIfNeeded()
+                        NotificationService.shared.scheduleWeeklyRecap()
                     }
                 }
                 // Catch up on readings that arrived while the app was away,
@@ -142,6 +156,7 @@ struct DiabetesCareApp: App {
                     }
                     if phase == .active, persistence.loadError == nil {
                         family.schedulePublish(after: .zero)
+                        Task { await family.checkReplies() }
                         if !family.followed.isEmpty {
                             Task { await family.refreshFollowed() }
                         }

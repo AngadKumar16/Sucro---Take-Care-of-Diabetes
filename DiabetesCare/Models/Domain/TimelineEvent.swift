@@ -31,6 +31,8 @@ struct TimelineEvent: Identifiable {
             return "bandage"
         case .activity:
             return "figure.walk"
+        case .ketone:
+            return "flask"
         }
     }
     
@@ -44,6 +46,8 @@ struct TimelineEvent: Identifiable {
             return .purple
         case .activity:
             return .blue
+        case .ketone:
+            return .indigo
         }
     }
 }
@@ -53,4 +57,5 @@ enum EventType {
     case bolus
     case siteChange
     case activity
+    case ketone
 }

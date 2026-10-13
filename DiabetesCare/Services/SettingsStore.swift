@@ -42,6 +42,9 @@ final class SettingsStore {
         static let familySharingEnabled = "settings.familySharingEnabled"
         static let grownUpName = "settings.grownUpName"
         static let grownUpPhone = "settings.grownUpPhone"
+        static let guideStickers = "settings.guideStickers"
+        static let barcodeLookupEnabled = "settings.barcodeLookupEnabled"
+        static let healthContextEnabled = "settings.healthContextEnabled"
     }
 
     // MARK: - Profile
@@ -158,6 +161,23 @@ final class SettingsStore {
         didSet { defaults.set(grownUpPhone, forKey: Key.grownUpPhone) }
     }
 
+    /// Scanning a barcode asks Open Food Facts for the product's carbs.
+    /// Off until the person turns it on, since it sends the barcode out.
+    var barcodeLookupEnabled: Bool {
+        didSet { defaults.set(barcodeLookupEnabled, forKey: Key.barcodeLookupEnabled) }
+    }
+
+    /// Read steps, workouts, sleep and cycle days from Apple Health for
+    /// Trends. Off until turned on there.
+    var healthContextEnabled: Bool {
+        didSet { defaults.set(healthContextEnabled, forKey: Key.healthContextEnabled) }
+    }
+
+    /// Guides read to the end, each worth a sticker on Your Path.
+    var guideStickers: Set<String> {
+        didSet { defaults.set(guideStickers.sorted(), forKey: Key.guideStickers) }
+    }
+
     var grownUpContact: GrownUpContact? {
         GrownUpContact(name: grownUpName, phone: grownUpPhone)
     }
@@ -172,6 +192,12 @@ final class SettingsStore {
 
     func access(to feature: Feature) -> FeatureAccess {
         stage.access(to: feature, completed: completedSkills)
+    }
+
+    /// How grown the plant on Your Path is: skills count fully, guide
+    /// stickers half, plus the logging streak.
+    func plantGrowth(streak: Int) -> SproutGrowth {
+        SproutGrowth.level(skills: completedSkills.count + guideStickers.count / 2, streak: streak)
     }
 
     func complete(_ skill: Skill) {
@@ -218,6 +244,9 @@ final class SettingsStore {
         self.familySharingEnabled = defaults.bool(forKey: Key.familySharingEnabled)
         self.grownUpName = defaults.string(forKey: Key.grownUpName) ?? ""
         self.grownUpPhone = defaults.string(forKey: Key.grownUpPhone) ?? ""
+        self.guideStickers = Set(defaults.stringArray(forKey: Key.guideStickers) ?? [])
+        self.barcodeLookupEnabled = defaults.bool(forKey: Key.barcodeLookupEnabled)
+        self.healthContextEnabled = defaults.bool(forKey: Key.healthContextEnabled)
 
         normalizeThresholds()
         insulinActionHours = min(max(insulinActionHours, Self.insulinActionBounds.lowerBound), Self.insulinActionBounds.upperBound)

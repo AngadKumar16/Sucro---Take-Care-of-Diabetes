@@ -18,7 +18,9 @@ struct CaregiverView: View {
     var isPreview = false
 
     @Environment(SettingsStore.self) private var settings
+    @Environment(FamilyService.self) private var family
     @State private var model = CaregiverModel()
+    @State private var replySent: FamilyHelpReply.Message?
 
     private var profile: FamilyProfile? { person.profile }
     private var thresholds: GlucoseThresholds { profile?.thresholds ?? .standard }
@@ -28,6 +30,14 @@ struct CaregiverView: View {
             TimelineView(.periodic(from: .now, by: 60)) { context in
                 VStack(alignment: .leading, spacing: 16) {
                     if isPreview { previewNote }
+                    if let request = family.pendingHelp[person.id] {
+                        helpCard(request, now: context.date)
+                    } else if let replySent {
+                        Label("Sent: \(replySent.text)", systemImage: "checkmark.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.green)
+                            .softPanel(border: Theme.green)
+                    }
                     latest(now: context.date)
                     chart(now: context.date)
                     today
@@ -57,6 +67,42 @@ struct CaregiverView: View {
         if person.id == DemoData.demoPersonID { return String(localized: "Sample data for a demo. Nothing came from another phone.") }
         #endif
         return String(localized: "Read only. Comes from \(person.displayName)'s phone through iCloud.")
+    }
+
+    /// A help request waiting for an answer, with one-tap replies.
+    private func helpCard(_ request: FamilyHelpRequest, now: Date) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("\(person.displayName) asked for help", systemImage: "bell.badge.fill")
+                .font(.headline)
+                .foregroundStyle(Theme.vermilion)
+                .symbolEffect(.wiggle, options: .repeat(2), value: request.id)
+            Text([
+                request.sentAt.formatted(.relative(presentation: .named)),
+                request.mgdl.map { String(localized: "glucose \(settings.formattedGlucose($0))") },
+            ].compactMap { $0 }.joined(separator: " · "))
+                .font(.subheadline)
+                .foregroundStyle(Theme.soft)
+            Text("Let them know you saw it:")
+                .font(.subheadline)
+            ForEach(FamilyHelpReply.Message.allCases, id: \.self) { message in
+                Button {
+                    Task {
+                        if await family.reply(message, to: person) {
+                            withAnimation(.smooth) { replySent = message }
+                        }
+                    }
+                } label: {
+                    Label(message.text, systemImage: message.symbol)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+                .tint(Theme.green)
+                .accessibilityIdentifier("reply.\(message.rawValue)")
+            }
+        }
+        .softPanel(border: Theme.vermilion)
+        .sensoryFeedback(.success, trigger: replySent)
+        .accessibilityIdentifier("helpRequestCard")
     }
 
     private var previewNote: some View {

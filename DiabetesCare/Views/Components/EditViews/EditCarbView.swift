@@ -15,10 +15,11 @@ struct EditCarbView: View {
     @State private var foodItems = ""
     @State private var timestamp = Date()
     @State private var notes = ""
+    @State private var photo: Data?
     @State private var original: [AnyHashable] = []
     @FocusState private var gramsFocused: Bool
 
-    private var current: [AnyHashable] { [gramsText, mealType, foodItems, timestamp, notes] }
+    private var current: [AnyHashable] { [gramsText, mealType, foodItems, timestamp, notes, photo] }
 
     private var grams: Double? {
         parseNumber(gramsText).flatMap { EntryLimits.carbGrams.contains($0) ? $0 : nil }
@@ -33,6 +34,7 @@ struct EditCarbView: View {
             onCancel: operation.cancel
         ) {
             CarbFields(gramsText: $gramsText, mealType: $mealType, foodItems: $foodItems, timestamp: $timestamp, notes: $notes, focus: $gramsFocused)
+            SitePhotoSection(photo: $photo, subject: String(localized: "Meal photo"), identifier: "mealPhoto")
         }
         .onAppear(perform: load)
     }
@@ -44,6 +46,7 @@ struct EditCarbView: View {
         foodItems = entry.foodItems ?? ""
         timestamp = entry.timestamp ?? Date()
         notes = entry.notes ?? ""
+        photo = entry.photo
         original = current
     }
 
@@ -54,6 +57,7 @@ struct EditCarbView: View {
         entry.foodItems = foodItems.isEmpty ? nil : foodItems
         entry.timestamp = timestamp
         entry.notes = notes.isEmpty ? nil : notes
+        entry.photo = photo
         return operation.save()
     }
 }

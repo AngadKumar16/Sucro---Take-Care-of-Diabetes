@@ -10,6 +10,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct QuickActionButtonsView: View {
     let onLogMeal: () -> Void
@@ -37,6 +38,7 @@ struct QuickActionButtonsView: View {
                         Button("\(preset.name) (\(Int(preset.carbs))g carbs)") {
                             onLogPreset?(preset)
                             loggedPreset += 1
+                            SavedMealsTip().invalidate(reason: .actionPerformed)
                         }
                     }
                 }
@@ -51,6 +53,7 @@ struct QuickActionButtonsView: View {
             .buttonStyle(QuickActionButtonStyle())
             .accessibilityLabel("Log Meal")
             .accessibilityHint("Touch and hold for saved meals")
+            .popoverTip(SavedMealsTip())
 
             if showsBolus {
                 Button(action: onQuickBolus) {

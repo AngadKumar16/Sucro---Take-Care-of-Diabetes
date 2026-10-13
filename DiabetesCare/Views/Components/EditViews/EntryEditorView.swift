@@ -23,6 +23,8 @@ struct EntryEditorView: View {
             EditActivityView(entry: entry, operation: operation)
         case let entry as SiteChange:
             EditSiteChangeView(entry: entry, operation: operation)
+        case let entry as KetoneReading:
+            EditKetoneView(entry: entry, operation: operation)
         default:
             ContentUnavailableView("Can't Edit This Entry", systemImage: "pencil.slash")
         }

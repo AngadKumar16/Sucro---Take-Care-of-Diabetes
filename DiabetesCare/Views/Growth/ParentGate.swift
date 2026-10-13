@@ -68,7 +68,7 @@ final class ParentGate {
         switch event.type {
         case .bolus: run(.logInsulin, action: action)
         case .siteChange: run(.changeSite, action: action)
-        case .meal, .activity: action()
+        case .meal, .activity, .ketone: action()
         }
     }
 

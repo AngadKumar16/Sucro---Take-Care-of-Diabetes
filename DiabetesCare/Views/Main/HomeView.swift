@@ -32,7 +32,10 @@ struct HomeView: View {
     /// How much of the thread is on screen, and where it starts.
     @State private var zoom: ThreadZoom = .day
     @State private var scrollStart = ThreadView.start(showing: .day, at: Date())
-    @State private var showKidHelp = false
+    @State private var milestone: Milestone?
+    @State private var showWeeklyRecap = false
+    /// The last streak milestone celebrated, so each is celebrated once.
+    @AppStorage("alive.celebratedLoggingStreak") private var celebratedLoggingStreak = 0
     @State private var earnedSkill: Skill?
     /// The stage whose "ready to move up" card was dismissed.
     @AppStorage("growth.readyCardDismissedFor") private var readyCardDismissedFor = ""
@@ -65,6 +68,25 @@ struct HomeView: View {
             }
         }
         .sensoryFeedback(.success, trigger: earnedSkill) { _, new in new != nil }
+        .overlay(alignment: .top) {
+            if let milestone {
+                CelebrationOverlay(milestone: milestone)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    .task(id: milestone.id) {
+                        AccessibilityNotification.Announcement("\(milestone.title). \(milestone.message)").post()
+                        try? await Task.sleep(for: .seconds(4))
+                        withAnimation(.smooth) { self.milestone = nil }
+                    }
+            }
+        }
+        .sensoryFeedback(.levelChange, trigger: milestone) { _, new in new != nil }
+        .onChange(of: viewModel.story.streaks.logging) { _, streak in celebrate(streak) }
+        .sheet(isPresented: $showWeeklyRecap) {
+            NavigationStack {
+                WeeklyRecapView()
+                    .doneButton()
+            }
+        }
         // A new reading moves the thread along if it was showing now.
         .onChange(of: viewModel.latestGlucoseReading?.timestamp) { _, _ in
             let now = Date()
@@ -96,6 +118,10 @@ struct HomeView: View {
         }
         .sheet(isPresented: Bindable(viewModel).showAddCarbSheet, onDismiss: viewModel.fetchLatestData) {
             AddCarbView()
+                .environment(logViewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddKetones, onDismiss: viewModel.fetchLatestData) {
+            AddKetoneView()
                 .environment(logViewModel)
         }
         .sheet(isPresented: Bindable(viewModel).showQuickBolusSheet) {
@@ -131,7 +157,7 @@ struct HomeView: View {
         .sheet(isPresented: Bindable(viewModel).showTroubleshootingSheet) {
             DeviceTroubleshootingView()
         }
-        .sheet(isPresented: $showKidHelp) {
+        .sheet(isPresented: Bindable(viewModel).showKidHelp) {
             KidHelpView(
                 latestMgdl: recentMgdl,
                 onHadCarbs: viewModel.logFastCarbs(grams:),
@@ -153,8 +179,17 @@ struct HomeView: View {
         return VStack(spacing: 16) {
             alerts
             dateline(now: now)
+            StreakChips(streaks: viewModel.story.streaks)
+            if viewModel.todayTags.contains(.sick) {
+                SickDayCard(
+                    latestKetone: viewModel.latestKetoneToday,
+                    onLogKetones: { viewModel.showAddKetones = true },
+                    onLearnMore: { viewModel.showKetoneInfoSheet = true }
+                )
+            }
+            storyCards(now: now)
             if settings.stage == .kid {
-                KidHelpCard(onCheckGlucose: viewModel.logGlucose, onHelp: { showKidHelp = true })
+                KidHelpCard(onCheckGlucose: viewModel.logGlucose, onHelp: { viewModel.showKidHelp = true })
             }
             if let next = settings.stage.next,
                settings.stage.isReadyToMoveUp(completed: settings.completedSkills),
@@ -276,6 +311,10 @@ struct HomeView: View {
             )
         }
 
+        DayTagsRow(selected: viewModel.todayTags, onToggle: { tag in
+            withAnimation(.smooth) { viewModel.toggleTag(tag) }
+        })
+
         RemindersView(
             reminders: viewModel.upcomingReminders,
             suggestion: viewModel.smartSuggestion,
@@ -293,16 +332,69 @@ struct HomeView: View {
     /// A hello with the person's name when they've given one, and the date.
     private func dateline(now: Date) -> some View {
         let name = settings.userName.trimmingCharacters(in: .whitespaces)
-        return VStack(alignment: .leading, spacing: 2) {
+        return HStack(alignment: .top) {
+            datelineText(now: now, name: name)
+            // Kids and teens see their plant grow right on Today.
+            if settings.stage != .adult, settings.appRole == .selfCare {
+                NavigationLink(value: GrowthDestination.path) {
+                    SproutView(growth: settings.plantGrowth(streak: viewModel.story.streaks.logging), size: 72)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens Your Path")
+                .accessibilityIdentifier("todayPlant")
+            }
+        }
+    }
+
+    private func datelineText(now: Date, name: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
             Text(name.isEmpty ? greeting(at: now) : "\(greeting(at: now)), \(name)")
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .foregroundStyle(Theme.ink)
             Text(now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                 .font(.subheadline)
                 .foregroundStyle(Theme.soft)
+            NextUpLine(
+                now: now,
+                lowRecheckAt: viewModel.lowRecheckAt,
+                reminders: viewModel.upcomingReminders,
+                siteDue: viewModel.siteDue,
+                loggingStreak: viewModel.story.streaks.logging
+            )
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
+    }
+
+    /// The night in the morning, the day's story from late afternoon, and
+    /// yesterday's story until there's enough of today.
+    @ViewBuilder
+    private func storyCards(now: Date) -> some View {
+        let hour = Calendar.current.component(.hour, from: now)
+        if (5..<12).contains(hour), let night = viewModel.story.night {
+            NightCard(night: night)
+        }
+        if hour >= 17, let day = viewModel.story.day, day.readingCount >= 3 {
+            DayStoryCard(title: String(localized: "Your day so far"), day: day, onOpenRecap: { showWeeklyRecap = true })
+        } else if hour < 17, let yesterday = viewModel.story.yesterday, yesterday.readingCount >= 3 {
+            DayStoryCard(title: String(localized: "Yesterday"), day: yesterday, onOpenRecap: { showWeeklyRecap = true })
+        }
+    }
+
+    /// Celebrates a logging streak the first time it reaches a milestone.
+    private func celebrate(_ streak: Int) {
+        // A broken streak resets the memory, so the next 3 days count again.
+        if streak < celebratedLoggingStreak { celebratedLoggingStreak = 0 }
+        guard let reached = Streaks.newMilestone(value: streak, lastCelebrated: celebratedLoggingStreak) else { return }
+        celebratedLoggingStreak = reached
+        withAnimation(.smooth) {
+            milestone = Milestone(
+                title: String(localized: "\(reached) days in a row!"),
+                message: String(localized: "You've logged something every day. Your plant is growing."),
+                symbol: "leaf.fill"
+            )
+        }
     }
 
     private func greeting(at date: Date) -> String {
@@ -328,7 +420,7 @@ struct HomeView: View {
         let needsApproval = switch event.type {
         case .bolus: gate.needsApproval(.logInsulin)
         case .siteChange: gate.needsApproval(.changeSite)
-        case .meal, .activity: false
+        case .meal, .activity, .ketone: false
         }
         guard needsApproval else { return action() }
         viewModel.detailEvent = nil

@@ -205,7 +205,7 @@ class DataService {
 
     /// Deletes every record in every entity. Used by Settings > Clear All Data.
     func clearAllData(context: NSManagedObjectContext) -> Bool {
-        let entityNames = ["GlucoseReading", "InsulinEntry", "CarbEntry", "ActivityEntry", "SiteChange", "DeviceStatus"]
+        let entityNames = ["GlucoseReading", "InsulinEntry", "CarbEntry", "ActivityEntry", "SiteChange", "KetoneReading", "ContextTag", "DeviceStatus"]
         do {
             for name in entityNames {
                 let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: name)

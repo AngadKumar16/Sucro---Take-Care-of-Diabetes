@@ -12,6 +12,7 @@ import SwiftUI
 struct ReadingRingCard: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Observed so an edit to this reading redraws it.
     @ObservedObject var reading: GlucoseReading
@@ -31,11 +32,25 @@ struct ReadingRingCard: View {
     private var trend: GlucoseTrend? { isStale ? nil : GlucoseTrend(stored: reading.trend) }
     private var inkColor: Color { isStale ? Theme.soft : zone.color }
 
+    /// 1 for a reading taken just now, fading to 0 as it nears stale, so the
+    /// number visibly loses color as it ages instead of flipping grey.
+    private var freshness: Double {
+        guard let timestamp = reading.timestamp else { return 0 }
+        return max(0, 1 - now.timeIntervalSince(timestamp) / Self.staleAfter)
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             ZStack {
                 MoleculeRing()
                     .frame(width: 200, height: 210)
+                    .overlay {
+                        // A soft halo breathes while the reading is fresh.
+                        if !isStale {
+                            FreshHalo(color: zone.color, animated: !reduceMotion)
+                                .opacity(0.25 + 0.5 * freshness)
+                        }
+                    }
                 VStack(spacing: 0) {
                     Text(settings.glucoseValueString(reading.value))
                         .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
@@ -43,6 +58,7 @@ struct ReadingRingCard: View {
                         .minimumScaleFactor(0.6)
                         .lineLimit(1)
                         .contentTransition(.numericText(value: reading.value))
+                        .saturation(isStale ? 0 : 0.55 + 0.45 * freshness)
                     Text(settings.glucoseUnit)
                         .font(Theme.mono(.caption))
                         .foregroundStyle(Theme.soft)
@@ -66,6 +82,8 @@ struct ReadingRingCard: View {
                     } icon: {
                         Image(systemName: trend.arrowSymbol)
                             .foregroundStyle(inkColor)
+                            .contentTransition(.symbolEffect(.replace))
+                            .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? nil : reading.timestamp)
                     }
                     .foregroundStyle(Theme.ink)
                 }
@@ -80,6 +98,8 @@ struct ReadingRingCard: View {
             .padding(.top, 18)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: reading.value)
+        .animation(reduceMotion ? nil : .smooth(duration: 0.6), value: zone)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(readingDescription)
     }
@@ -147,5 +167,27 @@ struct MoleculeRing: View {
                          at: CGPoint(x: c5.x - 22, y: c5.y - 28))
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// A ring of the zone's color that slowly breathes behind a fresh reading.
+private struct FreshHalo: View {
+    let color: Color
+    let animated: Bool
+
+    var body: some View {
+        Circle()
+            .stroke(color.opacity(0.35), lineWidth: 10)
+            .blur(radius: 6)
+            .padding(30)
+            .phaseAnimator(animated ? [false, true] : [false]) { content, expanded in
+                content
+                    .scaleEffect(expanded ? 1.06 : 0.96)
+                    .opacity(expanded ? 0.55 : 1)
+            } animation: { _ in
+                .easeInOut(duration: 2.4)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }

@@ -11,6 +11,8 @@
 //    (glucose/carbs/insulin/activity/site), `payload` (JSON) and `timestamp`.
 //  - `Profile`: one record named "profile".
 //  - `Help`: one per help request, named by its UUID.
+//  - `Reply`: one per grown-up's answer to a help request, written by the
+//    follower into the same zone.
 //
 
 import CloudKit
@@ -72,6 +74,18 @@ nonisolated enum FamilyRecordCodec {
         record["payload"] = try encoder.encode(payload) as CKRecordValue
         if let date { record["timestamp"] = date as CKRecordValue }
         return record
+    }
+
+    static func record(for reply: FamilyHelpReply, zoneID: CKRecordZone.ID) throws -> CKRecord {
+        try record(type: FamilyCloud.RecordType.reply, name: reply.id.uuidString, payload: reply, date: reply.sentAt, zoneID: zoneID)
+    }
+
+    /// Replies among fetched records; anything else is ignored.
+    static func replies(from records: [CKRecord]) -> [FamilyHelpReply] {
+        records.compactMap { record in
+            guard record.recordType == FamilyCloud.RecordType.reply, let payload = record["payload"] as? Data else { return nil }
+            return try? decoder.decode(FamilyHelpReply.self, from: payload)
+        }
     }
 
     // MARK: - Decode

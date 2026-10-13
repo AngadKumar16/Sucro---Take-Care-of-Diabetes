@@ -23,6 +23,9 @@ final class NotificationService: NSObject {
         static let reminderPrefix = "reminder."
         static let lowRecheck = "alert.lowRecheck"
         static let familyPrefix = "family."
+        static let weeklyRecap = "recap.weekly"
+        static let expiryPrefix = "expiry."
+        static let suppliesLow = "supplies.low"
 
         static func glucose(_ kind: GlucoseAlertKind) -> String { glucosePrefix + kind.rawValue }
     }
@@ -161,6 +164,56 @@ final class NotificationService: NSObject {
         add(UNNotificationRequest(identifier: Identifier.lowRecheck, content: content, trigger: trigger))
     }
 
+    /// A grown-up answered a help request.
+    func deliverHelpReply(_ reply: FamilyHelpReply) {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "\(reply.from) replied")
+        content.body = reply.message.text
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        add(UNNotificationRequest(identifier: Identifier.familyPrefix + "reply", content: content, trigger: nil))
+    }
+
+    // MARK: - Weekly recap
+
+    /// "Your week is ready", Sundays at 6 p.m. Opens the recap when tapped.
+    func scheduleWeeklyRecap() {
+        guard notificationsEnabled else {
+            center.removePendingNotificationRequests(withIdentifiers: [Identifier.weeklyRecap])
+            return
+        }
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Your Week Is Ready")
+        content.body = String(localized: "See your time in range, your steadiest day and your streaks.")
+        content.sound = .default
+        content.userInfo = ["route": AppRouter.url(for: .weeklyRecap).absoluteString]
+        var when = DateComponents()
+        when.weekday = 1
+        when.hour = 18
+        let trigger = UNCalendarNotificationTrigger(dateMatching: when, repeats: true)
+        add(UNNotificationRequest(identifier: Identifier.weeklyRecap, content: content, trigger: trigger))
+    }
+
+    /// A one-off reminder at `date`, replaced when scheduled again with the
+    /// same id. Used for pen and vial expiry and running low on supplies.
+    func schedule(id: String, title: String, body: String, at date: Date, route: AppRouter.Route? = nil) {
+        guard notificationsEnabled, date > .now else {
+            center.removePendingNotificationRequests(withIdentifiers: [id])
+            return
+        }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        if let route { content.userInfo = ["route": AppRouter.url(for: route).absoluteString] }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date.timeIntervalSinceNow), repeats: false)
+        add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+    }
+
+    func cancel(id: String) {
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+    }
+
     func cancelStaleDataAlert() {
         center.removePendingNotificationRequests(withIdentifiers: [Identifier.staleData])
     }
@@ -226,5 +279,18 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound, .list])
+    }
+
+    /// Opens the screen a notification points at, if it has one.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let route = response.notification.request.content.userInfo["route"] as? String
+        Task { @MainActor in
+            if let route, let url = URL(string: route) { AppRouter.shared.open(url) }
+        }
+        completionHandler()
     }
 }

@@ -80,10 +80,13 @@ final class BackupService {
     func makeArchive(container: NSPersistentContainer, now: Date = Date()) async throws -> BackupArchive {
         let backupSettings = settings.backupSettings
         let appVersion = AppInfo.version
+        let kit = KitStore.shared.archive
         let context = container.newBackgroundContext()
-        return try await context.perform {
+        var archive = try await context.perform {
             try BackupStore.makeArchive(in: context, settings: backupSettings, appVersion: appVersion, now: now)
         }
+        archive.kit = kit
+        return archive
     }
 
     /// Adds the archive's entries to the store (or replaces everything) and
@@ -100,6 +103,9 @@ final class BackupService {
         )
         if mode == .replace, let backupSettings = archive.settings {
             settings.apply(backupSettings)
+        }
+        if mode == .replace, let kit = archive.kit {
+            KitStore.shared.apply(kit)
         }
         if mode == .replace {
             AlertService.shared.reset()

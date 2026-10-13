@@ -1,5 +1,7 @@
 // Draws the app icon (light, dark, tinted) at 1024 px.
 // Run: swift scripts/make-app-icon.swift DiabetesCare/Resources/Assets.xcassets/AppIcon.appiconset
+// Alternate icons (Settings › App Icon) and their in-app previews:
+//      swift scripts/make-app-icon.swift --alternates DiabetesCare/Resources/Assets.xcassets
 
 import CoreGraphics
 import Foundation
@@ -39,6 +41,9 @@ func leaf(base: CGPoint, angle: Double, length L: Double, width W: Double) -> CG
 
 enum Variant { case light, dark, tinted }
 
+/// Top and bottom of the light background. Alternates swap these.
+var lightBackground: (top: CGColor, bottom: CGColor) = (color(0.20, 0.55, 0.38), color(0.11, 0.40, 0.27))
+
 func render(_ v: Variant, to url: URL) {
     let ctx = CGContext(data: nil, width: Int(size), height: Int(size), bitsPerComponent: 8, bytesPerRow: 0,
                         space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
@@ -47,7 +52,7 @@ func render(_ v: Variant, to url: URL) {
     // Background
     switch v {
     case .light:
-        let g = CGGradient(colorsSpace: space, colors: [color(0.20, 0.55, 0.38), color(0.11, 0.40, 0.27)] as CFArray, locations: [0, 1])!
+        let g = CGGradient(colorsSpace: space, colors: [lightBackground.top, lightBackground.bottom] as CFArray, locations: [0, 1])!
         ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: size), end: CGPoint(x: 0, y: 0), options: [])
     case .dark:
         let g = CGGradient(colorsSpace: space, colors: [color(0.10, 0.16, 0.13), color(0.05, 0.08, 0.07)] as CFArray, locations: [0, 1])!
@@ -99,8 +104,45 @@ func render(_ v: Variant, to url: URL) {
     CGImageDestinationFinalize(dest)
 }
 
-let out = URL(fileURLWithPath: CommandLine.arguments[1])
-render(.light, to: out.appending(path: "AppIcon.png"))
-render(.dark, to: out.appending(path: "AppIcon-Dark.png"))
-render(.tinted, to: out.appending(path: "AppIcon-Tinted.png"))
-print("ok")
+let arguments = CommandLine.arguments
+if arguments.count > 2, arguments[1] == "--alternates" {
+    let catalog = URL(fileURLWithPath: arguments[2])
+    // Name, then the light background's top and bottom.
+    let alternates: [(String, CGColor, CGColor)] = [
+        ("Sunrise", color(0.98, 0.62, 0.30), color(0.86, 0.36, 0.20)),
+        ("Ocean", color(0.25, 0.58, 0.85), color(0.12, 0.36, 0.66)),
+        ("Berry", color(0.66, 0.38, 0.78), color(0.44, 0.20, 0.58)),
+        ("Midnight", color(0.16, 0.18, 0.30), color(0.06, 0.07, 0.14)),
+    ]
+    let fm = FileManager.default
+    for (name, top, bottom) in alternates {
+        lightBackground = (top, bottom)
+        let set = catalog.appending(path: "AppIcon-\(name).appiconset")
+        let preview = catalog.appending(path: "IconPreview-\(name).imageset")
+        try? fm.createDirectory(at: set, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: preview, withIntermediateDirectories: true)
+        render(.light, to: set.appending(path: "Icon.png"))
+        render(.light, to: preview.appending(path: "Icon.png"))
+        try! """
+        {"images":[{"filename":"Icon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"xcode","version":1}}
+        """.write(to: set.appending(path: "Contents.json"), atomically: true, encoding: .utf8)
+        try! """
+        {"images":[{"filename":"Icon.png","idiom":"universal"}],"info":{"author":"xcode","version":1}}
+        """.write(to: preview.appending(path: "Contents.json"), atomically: true, encoding: .utf8)
+    }
+    // A preview of the main icon for the picker.
+    lightBackground = (color(0.20, 0.55, 0.38), color(0.11, 0.40, 0.27))
+    let main = catalog.appending(path: "IconPreview-Default.imageset")
+    try? fm.createDirectory(at: main, withIntermediateDirectories: true)
+    render(.light, to: main.appending(path: "Icon.png"))
+    try! """
+    {"images":[{"filename":"Icon.png","idiom":"universal"}],"info":{"author":"xcode","version":1}}
+    """.write(to: main.appending(path: "Contents.json"), atomically: true, encoding: .utf8)
+    print("ok")
+} else {
+    let out = URL(fileURLWithPath: arguments[1])
+    render(.light, to: out.appending(path: "AppIcon.png"))
+    render(.dark, to: out.appending(path: "AppIcon-Dark.png"))
+    render(.tinted, to: out.appending(path: "AppIcon-Tinted.png"))
+    print("ok")
+}

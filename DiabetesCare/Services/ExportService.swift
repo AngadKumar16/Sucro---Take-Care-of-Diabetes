@@ -69,10 +69,24 @@ class ExportService {
                     carbs: carbEntries
                 )
                 
+                // The typical day, when there are enough days of readings.
+                let profile = AGP.profile(samples: glucoseReadings.compactMap(\.sample))
+                if !profile.isEmpty {
+                    context.beginPage()
+                    self.drawAGPPage(in: context.pdfContextBounds, buckets: profile)
+                }
+
                 // Page 3+: Data Tables (if needed, split across pages)
                 if !glucoseReadings.isEmpty {
                     context.beginPage()
                     self.drawGlucoseDataPage(in: context.pdfContextBounds, readings: glucoseReadings)
+                }
+
+                // Questions saved for the visit, last so they're easy to find.
+                let questions = KitStore.shared.openQuestions.map(\.text)
+                if !questions.isEmpty {
+                    context.beginPage()
+                    self.drawQuestionsPage(in: context.pdfContextBounds, questions: questions)
                 }
             }
             
@@ -203,6 +217,78 @@ class ExportService {
         }
     }
     
+    /// Median and percentile bands by time of day, drawn on a 24-hour axis.
+    private func drawAGPPage(in bounds: CGRect, buckets: [AGP.Bucket]) {
+        let settings = SettingsStore.shared
+        "Typical Day (Ambulatory Glucose Profile)".draw(at: CGPoint(x: 50, y: 50), withAttributes: [
+            .font: UIFont.boldSystemFont(ofSize: 22), .foregroundColor: UIColor.label,
+        ])
+        "Every day in this report folded onto one 24-hour clock. Line: median. Dark band: 25–75%. Light band: 5–95%.".draw(
+            in: CGRect(x: 50, y: 84, width: bounds.width - 100, height: 40),
+            withAttributes: [.font: UIFont.systemFont(ofSize: 11), .foregroundColor: UIColor.secondaryLabel]
+        )
+        guard let cg = UIGraphicsGetCurrentContext() else { return }
+        let plot = CGRect(x: 80, y: 140, width: bounds.width - 130, height: 320)
+        let low = 40.0, high = max(300, (buckets.map(\.p95).max() ?? 300) + 20)
+        func x(_ minute: Int) -> CGFloat { plot.minX + plot.width * CGFloat(minute) / 1440 }
+        func y(_ mgdl: Double) -> CGFloat { plot.maxY - plot.height * CGFloat((mgdl - low) / (high - low)) }
+
+        // Target band and frame.
+        let green = UIColor(red: 0.12, green: 0.42, blue: 0.29, alpha: 1)
+        cg.setFillColor(green.withAlphaComponent(0.08).cgColor)
+        cg.fill(CGRect(x: plot.minX, y: y(settings.targetHigh), width: plot.width, height: y(settings.targetLow) - y(settings.targetHigh)))
+        cg.setStrokeColor(UIColor.separator.cgColor)
+        cg.stroke(plot)
+
+        func band(_ lower: KeyPath<AGP.Bucket, Double>, _ upper: KeyPath<AGP.Bucket, Double>, alpha: CGFloat) {
+            let path = CGMutablePath()
+            path.move(to: CGPoint(x: x(buckets[0].minute), y: y(buckets[0][keyPath: upper])))
+            for bucket in buckets.dropFirst() { path.addLine(to: CGPoint(x: x(bucket.minute), y: y(bucket[keyPath: upper]))) }
+            for bucket in buckets.reversed() { path.addLine(to: CGPoint(x: x(bucket.minute), y: y(bucket[keyPath: lower]))) }
+            path.closeSubpath()
+            cg.addPath(path)
+            cg.setFillColor(green.withAlphaComponent(alpha).cgColor)
+            cg.fillPath()
+        }
+        band(\.p5, \.p95, alpha: 0.15)
+        band(\.p25, \.p75, alpha: 0.35)
+        let median = CGMutablePath()
+        median.move(to: CGPoint(x: x(buckets[0].minute), y: y(buckets[0].median)))
+        for bucket in buckets.dropFirst() { median.addLine(to: CGPoint(x: x(bucket.minute), y: y(bucket.median))) }
+        cg.addPath(median)
+        cg.setStrokeColor(green.cgColor)
+        cg.setLineWidth(2.5)
+        cg.strokePath()
+
+        // Axis labels.
+        let label: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10), .foregroundColor: UIColor.secondaryLabel]
+        for hour in stride(from: 0, through: 24, by: 3) {
+            let text = hour == 24 ? "12a" : Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date())!.formatted(.dateTime.hour())
+            text.draw(at: CGPoint(x: x(hour * 60) - 8, y: plot.maxY + 6), withAttributes: label)
+        }
+        for value in stride(from: 50.0, through: high, by: 50) {
+            settings.glucoseValueString(value).draw(at: CGPoint(x: plot.minX - 34, y: y(value) - 6), withAttributes: label)
+        }
+        "\(settings.glucoseUnit) · target \(settings.glucoseValueString(settings.targetLow))–\(settings.glucoseValueString(settings.targetHigh)) shaded".draw(
+            at: CGPoint(x: plot.minX, y: plot.maxY + 24), withAttributes: label)
+    }
+
+    private func drawQuestionsPage(in bounds: CGRect, questions: [String]) {
+        "Questions for the Visit".draw(at: CGPoint(x: 50, y: 50), withAttributes: [
+            .font: UIFont.boldSystemFont(ofSize: 22), .foregroundColor: UIColor.label,
+        ])
+        var top: CGFloat = 96
+        let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 14), .foregroundColor: UIColor.label]
+        for (index, question) in questions.enumerated() {
+            let text = "\(index + 1). \(question)" as NSString
+            let rect = text.boundingRect(with: CGSize(width: bounds.width - 100, height: .greatestFiniteMagnitude),
+                                         options: .usesLineFragmentOrigin, attributes: attributes, context: nil)
+            guard top + rect.height < bounds.height - 50 else { break }
+            text.draw(in: CGRect(x: 50, y: top, width: bounds.width - 100, height: rect.height), withAttributes: attributes)
+            top += rect.height + 12
+        }
+    }
+
     private func drawGlucoseDataPage(in bounds: CGRect, readings: [GlucoseReading]) {
         let title = "Glucose Readings"
         let titleAttributes: [NSAttributedString.Key: Any] = [

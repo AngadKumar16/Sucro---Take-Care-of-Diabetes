@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 
 struct LearnView: View {
     @Environment(SettingsStore.self) private var settings
@@ -51,6 +52,7 @@ struct LearnView: View {
     private var browseSections: some View {
         if settings.appRole == .selfCare {
             Section {
+                TipView(YourPathTip())
                 NavigationLink(value: GrowthDestination.path) {
                     LabeledContent {
                         Text("\(settings.completedSkills.count) of \(Skill.allCases.count)")

@@ -21,6 +21,7 @@ struct SkillPathView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                PlantCard(growth: growth, streak: progress.streak)
                 StageLadder(current: settings.stage)
                     .softPanel()
                 if let next = settings.stage.next {
@@ -37,6 +38,7 @@ struct SkillPathView: View {
                         if skill.isQuiz { quiz = skill }
                     }
                 }
+                StickerBook()
                 Text("Skills are about knowing what to do and building habits. They never tell you how much insulin to take; that plan comes from your care team.")
                     .font(.footnote)
                     .foregroundStyle(Theme.soft)
@@ -53,6 +55,10 @@ struct SkillPathView: View {
             SkillQuizView(skill: skill)
         }
         .sensoryFeedback(.success, trigger: movedUp)
+    }
+
+    private var growth: SproutGrowth {
+        settings.plantGrowth(streak: progress.streak)
     }
 
     private func refresh() {
@@ -227,5 +233,38 @@ struct SkillRow: View {
                 .font(.caption)
                 .foregroundStyle(Theme.soft)
         }
+    }
+}
+
+/// The plant at the top of Your Path, with what helps it grow.
+struct PlantCard: View {
+    let growth: SproutGrowth
+    let streak: Int
+
+    var body: some View {
+        HStack(spacing: 16) {
+            SproutView(growth: growth, size: 110)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(growth.name)
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .foregroundStyle(Theme.green)
+                    .contentTransition(.opacity)
+                Text(growth == .flower
+                     ? String(localized: "Fully grown. Keep it blooming with your daily logs.")
+                     : String(localized: "Skills, stickers and logging every day help your plant grow."))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.soft)
+                    .fixedSize(horizontal: false, vertical: true)
+                if streak > 0 {
+                    Label("\(streak)-day streak", systemImage: "flame.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.amber)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .softPanel()
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("plantCard")
     }
 }

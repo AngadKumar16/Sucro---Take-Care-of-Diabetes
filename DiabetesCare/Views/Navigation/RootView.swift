@@ -29,6 +29,9 @@ struct RootView: View {
             }
         }
         .parentGateSheet(gate)
+        .toastOverlay()
+        .stagePalette(settings.appRole == .caregiver ? .adult : settings.stage)
+        .animation(.smooth, value: settings.stage)
     }
 
     private func acceptDisclaimer() {

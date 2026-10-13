@@ -49,6 +49,7 @@ struct SettingsView: View {
                 appearanceSection
             } else {
                 growingSection
+                EverydaySection()
                 profileSection
                 glucoseSection
                 guidesSection
@@ -70,6 +71,7 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .helpDestinations()
         .growthDestinations()
+        .kitDestinations()
         .task { await checkNotificationPermission() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await checkNotificationPermission() } }

@@ -37,6 +37,14 @@ class HomeViewModel: BaseViewModel {
     /// When each site was last used, for the body map and rotation.
     var siteHistory: [SiteLocation: Date] = [:]
     var criticalAlert: AlertType?
+    /// Streaks, the night and the day in words.
+    var story = StoryService.Today()
+    /// When the current site is due to change, from its rotation days.
+    var siteDue: Date? {
+        guard let change = lastSiteChange, let date = change.timestamp else { return nil }
+        let days = SiteLocation(stored: change.location)?.rotationDays ?? 3
+        return Calendar.current.date(byAdding: .day, value: days, to: date)
+    }
     /// Id of the banner the user closed; it stays hidden until the alert is
     /// about a different event.
     private var dismissedAlertID: String?
@@ -46,6 +54,11 @@ class HomeViewModel: BaseViewModel {
     var showAddCarbSheet = false
     var showQuickBolusSheet = false
     var showAddSiteChangeSheet = false
+    var showKidHelp = false
+    var showAddKetones = false
+    /// Tags for today ("Sick", "Sports"...).
+    var todayTags: Set<DayTag> = []
+    var latestKetoneToday: KetoneReading?
     /// The event being edited or annotated.
     var selectedEvent: TimelineEvent?
     /// The event whose detail sheet is open.
@@ -95,6 +108,10 @@ class HomeViewModel: BaseViewModel {
         save()
         HealthKitManager.shared.saveCarbohydrateIntake(preset.carbs, timestamp: timestamp)
         fetchLatestData()
+        ToastCenter.shared.show(
+            String(localized: "Logged \(preset.name), \(Int(preset.carbs)) g carbs"),
+            undo: ToastCenter.undoInsert(entry.objectID, in: viewContext)
+        )
     }
         
     /// When to check again after treating a low; drives the countdown on
@@ -106,21 +123,9 @@ class HomeViewModel: BaseViewModel {
     /// Logs fast-acting carbs taken for a low, then schedules the
     /// 15-minute recheck (the rule of 15).
     func logFastCarbs(grams: Double) {
-        let timestamp = Date()
-        let entry = CarbEntry(context: viewContext)
-        entry.id = UUID()
-        entry.grams = grams
-        entry.mealType = MealType.snack.rawValue
-        entry.foodItems = "Fast-acting carbs"
-        entry.notes = "Treating a low"
-        entry.timestamp = timestamp
-        save()
-        HealthKitManager.shared.saveCarbohydrateIntake(grams, timestamp: timestamp)
-
-        let recheck = timestamp.addingTimeInterval(15 * 60)
+        let recheck = LowTreatmentService.logFastCarbs(grams: grams, context: viewContext)
         lowRecheckAt = recheck
         lowTreatmentGrams = grams
-        NotificationService.shared.scheduleLowRecheck(at: recheck, grams: grams)
         fetchLatestData()
     }
 
@@ -153,10 +158,12 @@ class HomeViewModel: BaseViewModel {
 
     func deleteEvent(_ event: TimelineEvent) {
         guard let objectID = event.objectID else { return }
+        let undo = (try? viewContext.existingObject(with: objectID)).map(ToastCenter.undoDelete(of:))
         if dataService.delete(objectID, context: viewContext) {
             selectedEvent = nil
             detailEvent = nil
             fetchLatestData()
+            ToastCenter.shared.show(String(localized: "\(event.title) deleted"), kind: .removed, undo: undo)
         } else {
             actionError = "This entry couldn't be deleted. Please try again."
         }
@@ -226,15 +233,52 @@ class HomeViewModel: BaseViewModel {
         )
         lastSiteChange = dataService.fetchLastSiteChange(context: viewContext)
         siteHistory = fetchSiteHistory()
+        story = StoryService.today(samples: threadSamples, context: viewContext, settings: settings, now: now)
+        fetchTodayTags(now: now)
         
         fetchTimelineEvents()
         reminderService.refresh(context: viewContext)
         generateSmartSuggestion()
         checkForCriticalAlerts()
         // A finished low treatment clears once glucose is no longer low.
+        // A treatment started elsewhere (a widget, Siri, the watch) shows too.
+        if lowRecheckAt == nil { lowRecheckAt = LowTreatmentService.pendingRecheck }
         if case .lowGlucose = criticalAlert {} else { lowRecheckAt = nil }
     }
     
+    // MARK: - Day tags
+
+    private func todayTagObjects(now: Date = Date()) -> [ContextTag] {
+        let start = Calendar.current.startOfDay(for: now)
+        let request: NSFetchRequest<ContextTag> = ContextTag.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", start as NSDate, start.addingTimeInterval(86_400) as NSDate)
+        return (try? viewContext.fetch(request)) ?? []
+    }
+
+    private func fetchTodayTags(now: Date) {
+        todayTags = Set(todayTagObjects(now: now).compactMap(\.tagKind))
+        let start = Calendar.current.startOfDay(for: now)
+        let request: NSFetchRequest<KetoneReading> = KetoneReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", start as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \KetoneReading.timestamp, ascending: false)]
+        request.fetchLimit = 1
+        latestKetoneToday = (try? viewContext.fetch(request))?.first
+    }
+
+    /// Turns a tag on or off for today.
+    func toggleTag(_ tag: DayTag) {
+        if let existing = todayTagObjects().first(where: { $0.tagKind == tag }) {
+            viewContext.delete(existing)
+        } else {
+            let new = ContextTag(context: viewContext)
+            new.id = UUID()
+            new.timestamp = Date()
+            new.kind = tag.rawValue
+        }
+        save()
+        fetchTodayTags(now: Date())
+    }
+
     private func fetchSiteHistory() -> [SiteLocation: Date] {
         let request: NSFetchRequest<SiteChange> = SiteChange.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SiteChange.timestamp, ascending: false)]

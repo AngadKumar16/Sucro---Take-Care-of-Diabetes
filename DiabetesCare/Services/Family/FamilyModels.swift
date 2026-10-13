@@ -41,6 +41,38 @@ nonisolated struct FamilyHelpRequest: Codable, Equatable, Sendable, Identifiable
     var mgdl: Double?
 }
 
+/// A grown-up's answer to a help request: the kid sees it on their phone.
+nonisolated struct FamilyHelpReply: Codable, Equatable, Sendable, Identifiable {
+    enum Message: String, Codable, CaseIterable, Sendable {
+        case onMyWay
+        case callingYou
+        case gotIt
+
+        var text: String {
+            switch self {
+            case .onMyWay: String(localized: "On my way!")
+            case .callingYou: String(localized: "Calling you now.")
+            case .gotIt: String(localized: "Got it. Treat the low and check again in 15 minutes.")
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .onMyWay: "figure.walk.motion"
+            case .callingYou: "phone.fill"
+            case .gotIt: "hand.thumbsup.fill"
+            }
+        }
+    }
+
+    var id: UUID
+    var requestID: UUID
+    var sentAt: Date
+    /// Who replied, as they set it up ("Mom").
+    var from: String
+    var message: Message
+}
+
 /// One batch of changes, from publisher to follower.
 nonisolated struct FamilyChangeSet: Codable, Equatable, Sendable {
     var profile: FamilyProfile?

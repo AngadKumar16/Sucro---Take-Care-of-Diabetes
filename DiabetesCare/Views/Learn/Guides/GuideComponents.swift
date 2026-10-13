@@ -10,7 +10,10 @@ import SwiftUI
 
 /// A printed tile that names a guide.
 struct GuideCard: View {
+    @Environment(SettingsStore.self) private var settings
     let guide: Guide
+
+    private var hasSticker: Bool { settings.guideStickers.contains(guide.rawValue) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -34,6 +37,13 @@ struct GuideCard: View {
         .foregroundStyle(Theme.ink)
         .padding(14)
         .frame(width: 168, height: 168, alignment: .leading)
+        .overlay(alignment: .topTrailing) {
+            if hasSticker {
+                GuideSticker(guide: guide, size: 34)
+                    .padding(8)
+                    .accessibilityLabel("Sticker collected")
+            }
+        }
         .background(alignment: .bottomTrailing) {
             // An oversized faded symbol gives each card its own texture.
             Image(systemName: guide.symbol)
@@ -119,6 +129,7 @@ struct GuidePage<Content: View>: View {
             VStack(alignment: .leading, spacing: 24) {
                 GuideHero(guide: guide)
                 content
+                GuideStickerButton(guide: guide)
                 GlossaryDisclaimer()
             }
             .frame(maxWidth: 640, alignment: .leading)
@@ -236,4 +247,90 @@ struct GuideRelatedTerms: View {
         }
     }
     .environment(SettingsStore())
+}
+
+/// A round sticker for a finished guide.
+struct GuideSticker: View {
+    let guide: Guide
+    var size: CGFloat = 56
+
+    var body: some View {
+        Image(systemName: guide.symbol)
+            .font(.system(size: size * 0.42, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(guide.gradient, in: .circle)
+            .overlay(Circle().strokeBorder(.white, lineWidth: size * 0.06))
+            .shadow(color: .black.opacity(0.15), radius: 3, y: 2)
+            .rotationEffect(.degrees(-8))
+    }
+}
+
+/// "I read this" at the end of a guide: collects its sticker.
+struct GuideStickerButton: View {
+    @Environment(SettingsStore.self) private var settings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let guide: Guide
+
+    private var collected: Bool { settings.guideStickers.contains(guide.rawValue) }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            GuideSticker(guide: guide)
+                .saturation(collected ? 1 : 0)
+                .opacity(collected ? 1 : 0.45)
+                .scaleEffect(collected ? 1 : 0.9)
+                .symbolEffect(.bounce, value: reduceMotion ? false : collected)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(collected ? "Sticker collected" : "Finished reading?")
+                    .font(.headline)
+                if collected {
+                    Text("It's on Your Path.")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.soft)
+                } else {
+                    Button("Collect the Sticker") {
+                        withAnimation(.bouncy) { _ = settings.guideStickers.insert(guide.rawValue) }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .accessibilityIdentifier("collectSticker")
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .softPanel(border: collected ? Theme.green : Theme.rule)
+        .sensoryFeedback(.success, trigger: collected) { old, new in !old && new }
+    }
+}
+
+/// Every guide's sticker, collected or not, for Your Path.
+struct StickerBook: View {
+    @Environment(SettingsStore.self) private var settings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Stickers")
+                    .font(.headline)
+                Spacer()
+                Text("\(settings.guideStickers.count) of \(Guide.allCases.count)")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(Theme.soft)
+            }
+            HStack(spacing: 12) {
+                ForEach(Guide.allCases) { guide in
+                    let has = settings.guideStickers.contains(guide.rawValue)
+                    GuideSticker(guide: guide, size: 48)
+                        .saturation(has ? 1 : 0)
+                        .opacity(has ? 1 : 0.3)
+                        .accessibilityLabel("\(guide.title): \(has ? "collected" : "not yet")")
+                }
+            }
+            Text("Read a guide in Learn to the end to collect its sticker.")
+                .font(.footnote)
+                .foregroundStyle(Theme.soft)
+        }
+        .softPanel()
+        .accessibilityElement(children: .contain)
+    }
 }

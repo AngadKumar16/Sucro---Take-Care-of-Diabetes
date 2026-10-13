@@ -116,9 +116,35 @@ struct KidHelpView: View {
         case .sending:
             ProgressView("Sending…")
         case .sent:
-            Label("Sent! Your grown-up's phone will buzz.", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(Theme.green)
-                .font(.headline)
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Sent! Your grown-up's phone will buzz.", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(Theme.green)
+                    .font(.headline)
+                if let reply = family.latestReply, reply.requestID == family.lastHelpRequestID {
+                    Label("\(reply.from): \(reply.message.text)", systemImage: reply.message.symbol)
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .padding(12)
+                        .background(Theme.green.opacity(0.15), in: .rect(cornerRadius: 14))
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityIdentifier("helpReply")
+                } else {
+                    Label("Waiting for a reply…", systemImage: "ellipsis.bubble")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.soft)
+                        .symbolEffect(.variableColor.iterative, options: .repeating)
+                }
+            }
+            // Checks for the grown-up's answer while this screen is open.
+            .task {
+                for _ in 0..<60 {
+                    if await family.checkReplies() != nil { break }
+                    try? await Task.sleep(for: .seconds(10))
+                    if Task.isCancelled { break }
+                }
+            }
+            .animation(.bouncy, value: family.latestReply)
+            .sensoryFeedback(.success, trigger: family.latestReply)
         }
     }
 

@@ -11,6 +11,9 @@ import UIKit
 
 struct SitePhotoSection: View {
     @Binding var photo: Data?
+    /// What the photo is of, for the header and VoiceOver.
+    var subject = String(localized: "Site photo")
+    var identifier = "sitePhoto"
 
     @State private var item: PhotosPickerItem?
     @State private var isLoading = false
@@ -25,8 +28,8 @@ struct SitePhotoSection: View {
                     .frame(maxHeight: 200)
                     .clipShape(.rect(cornerRadius: 8))
                     .frame(maxWidth: .infinity)
-                    .accessibilityLabel("Site photo")
-                    .accessibilityIdentifier("sitePhoto")
+                    .accessibilityLabel(subject)
+                    .accessibilityIdentifier(identifier)
             }
             PhotosPicker(selection: $item, matching: .images) {
                 HStack {

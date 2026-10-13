@@ -23,9 +23,13 @@ nonisolated struct BackupArchive: Codable, Equatable, Sendable {
     var insulin: [Insulin] = []
     var activity: [Activity] = []
     var sites: [Site] = []
+    // Added after version 1 shipped, so optional: older files don't have them.
+    var ketones: [Ketone]?
+    var tags: [Tag]?
+    var kit: KitArchive?
 
     var entryCount: Int {
-        glucose.count + carbs.count + insulin.count + activity.count + sites.count
+        glucose.count + carbs.count + insulin.count + activity.count + sites.count + (ketones?.count ?? 0) + (tags?.count ?? 0)
     }
 
     struct Settings: Codable, Equatable, Sendable {
@@ -58,6 +62,7 @@ nonisolated struct BackupArchive: Codable, Equatable, Sendable {
         var mealType: String?
         var foodItems: String?
         var notes: String?
+        var photo: Data?
     }
 
     struct Insulin: Codable, Equatable, Sendable {
@@ -87,6 +92,21 @@ nonisolated struct BackupArchive: Codable, Equatable, Sendable {
         var deviceType: String?
         var notes: String?
         var photo: Data?
+    }
+
+    struct Ketone: Codable, Equatable, Sendable {
+        var id: UUID
+        var timestamp: Date?
+        var value: Double
+        var method: String?
+        var notes: String?
+    }
+
+    struct Tag: Codable, Equatable, Sendable {
+        var id: UUID
+        var timestamp: Date?
+        var kind: String?
+        var notes: String?
     }
 
     enum ReadError: LocalizedError {
@@ -154,7 +174,7 @@ nonisolated enum BackupStore {
         var deleted: [NSManagedObjectID] = []
     }
 
-    static let entityNames = ["GlucoseReading", "CarbEntry", "InsulinEntry", "ActivityEntry", "SiteChange"]
+    static let entityNames = ["GlucoseReading", "CarbEntry", "InsulinEntry", "ActivityEntry", "SiteChange", "KetoneReading", "ContextTag"]
 
     static func makeArchive(in context: NSManagedObjectContext, settings: BackupArchive.Settings?, appVersion: String, now: Date = Date()) throws -> BackupArchive {
         var archive = BackupArchive(exportedAt: now, appVersion: appVersion, settings: settings)
@@ -164,7 +184,7 @@ nonisolated enum BackupStore {
         }
         archive.carbs = try fetch(CarbEntry.self, in: context).compactMap { c in
             guard let id = c.id else { return nil }
-            return .init(id: id, timestamp: c.timestamp, grams: c.grams, mealType: c.mealType, foodItems: c.foodItems, notes: c.notes)
+            return .init(id: id, timestamp: c.timestamp, grams: c.grams, mealType: c.mealType, foodItems: c.foodItems, notes: c.notes, photo: c.photo)
         }
         archive.insulin = try fetch(InsulinEntry.self, in: context).compactMap { i in
             guard let id = i.id else { return nil }
@@ -177,6 +197,14 @@ nonisolated enum BackupStore {
         archive.sites = try fetch(SiteChange.self, in: context).compactMap { s in
             guard let id = s.id else { return nil }
             return .init(id: id, timestamp: s.timestamp, location: s.location, siteType: s.siteType, deviceType: s.deviceType, notes: s.notes, photo: s.photo)
+        }
+        archive.ketones = try fetch(KetoneReading.self, in: context).compactMap { k in
+            guard let id = k.id else { return nil }
+            return .init(id: id, timestamp: k.timestamp, value: k.value, method: k.method, notes: k.notes)
+        }
+        archive.tags = try fetch(ContextTag.self, in: context).compactMap { t in
+            guard let id = t.id else { return nil }
+            return .init(id: id, timestamp: t.timestamp, kind: t.kind, notes: t.notes)
         }
         return archive
     }
@@ -213,7 +241,7 @@ nonisolated enum BackupStore {
             row(["id": g.id, "value": g.value], ["timestamp": g.timestamp, "unit": g.unit, "trend": g.trend, "source": g.source, "context": g.context, "notes": g.notes])
         })
         try insert("CarbEntry", ids: archive.carbs.map(\.id), rows: archive.carbs.map { c in
-            row(["id": c.id, "grams": c.grams], ["timestamp": c.timestamp, "mealType": c.mealType, "foodItems": c.foodItems, "notes": c.notes])
+            row(["id": c.id, "grams": c.grams], ["timestamp": c.timestamp, "mealType": c.mealType, "foodItems": c.foodItems, "notes": c.notes, "photo": c.photo])
         })
         try insert("InsulinEntry", ids: archive.insulin.map(\.id), rows: archive.insulin.map { i in
             row(["id": i.id, "units": i.units], ["timestamp": i.timestamp, "type": i.type, "deliveryMethod": i.deliveryMethod, "notes": i.notes])
@@ -223,6 +251,14 @@ nonisolated enum BackupStore {
         })
         try insert("SiteChange", ids: archive.sites.map(\.id), rows: archive.sites.map { s in
             row(["id": s.id], ["timestamp": s.timestamp, "location": s.location, "siteType": s.siteType, "deviceType": s.deviceType, "notes": s.notes, "photo": s.photo])
+        })
+        let ketones = archive.ketones ?? []
+        try insert("KetoneReading", ids: ketones.map(\.id), rows: ketones.map { k in
+            row(["id": k.id, "value": k.value], ["timestamp": k.timestamp, "method": k.method, "notes": k.notes])
+        })
+        let tags = archive.tags ?? []
+        try insert("ContextTag", ids: tags.map(\.id), rows: tags.map { t in
+            row(["id": t.id], ["timestamp": t.timestamp, "kind": t.kind, "notes": t.notes])
         })
         return result
     }

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import TipKit
 import CoreData
 import Charts
 
@@ -23,6 +24,11 @@ struct TrendsView: View {
     @State private var explainedTerm: GlossaryTerm?
     /// The last week of readings, for the test tubes.
     @State private var weekSamples: [GlucoseSample] = []
+    /// Meals, doses and activity in the range, marked on the chart.
+    @State private var events: [TimelineEvent] = []
+    @State private var tagComparisons: [TagInsights.Comparison] = []
+    @State private var agp: [AGP.Bucket] = []
+    @State private var meals: [MealImpact.Meal] = []
 
     var body: some View {
         ScrollView {
@@ -46,7 +52,8 @@ struct TrendsView: View {
                             .card()
                         } else {
                             statTiles
-                            GlucoseTrendChart(points: monitor.trendData, range: range)
+                            TipView(ChartScrubTip())
+                            GlucoseTrendChart(points: monitor.trendData, range: range, events: events)
                                 .card()
                         }
                     }
@@ -64,6 +71,20 @@ struct TrendsView: View {
                     insightsSection
                         .frame(maxWidth: .infinity)
                     weekdaySection
+                        .frame(maxWidth: .infinity)
+                }
+
+                columns {
+                    AGPSection(buckets: agp)
+                        .frame(maxWidth: .infinity)
+                    MealImpactSection(meals: meals)
+                        .frame(maxWidth: .infinity)
+                }
+
+                columns {
+                    TagInsightsSection(comparisons: tagComparisons)
+                        .frame(maxWidth: .infinity)
+                    HealthContextSection(range: range)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -122,8 +143,36 @@ struct TrendsView: View {
             in: DateInterval(start: Calendar.current.startOfDay(for: now.addingTimeInterval(-6 * 86_400)), end: now)
         ).compactMap(\.sample)
         insights.timeRange = range
+        events = range.days <= 7
+            ? TimelineService.shared.buildTimeline(context: viewContext, hoursBack: range.days * 24, limited: false)
+            : []
         monitor.fetchDataForTimeRange()
         insights.fetchInsights()
+        tagComparisons = tagInsights(now: now)
+        // The typical day needs a couple of weeks even on the Day view.
+        let profileRange = DateInterval(start: now.addingTimeInterval(-Double(max(range.days, 14)) * 86_400), end: now)
+        let profileSamples = DataService.shared.fetchGlucoseReadings(context: viewContext, in: profileRange).compactMap(\.sample)
+        agp = AGP.profile(samples: profileSamples)
+        let carbEntries = DataService.shared.fetchCarbEntries(context: viewContext, in: profileRange).compactMap { entry -> MealImpact.Entry? in
+            guard let time = entry.timestamp else { return nil }
+            let name = entry.foodItems?.split(separator: ",").first.map { String($0).trimmingCharacters(in: .whitespaces) }
+                ?? MealType(stored: entry.mealType)?.rawValue ?? String(localized: "Meal")
+            return MealImpact.Entry(time: time, name: name, carbs: entry.grams)
+        }
+        meals = MealImpact.meals(entries: carbEntries, samples: profileSamples)
+    }
+
+    /// Day tags over the last 90 days against untagged days.
+    private func tagInsights(now: Date) -> [TagInsights.Comparison] {
+        let interval = DateInterval(start: now.addingTimeInterval(-90 * 86_400), end: now)
+        let request: NSFetchRequest<ContextTag> = ContextTag.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", interval.start as NSDate)
+        let tags = ((try? viewContext.fetch(request)) ?? []).compactMap { tag in
+            tag.tagKind.flatMap { kind in tag.timestamp.map { (kind, $0) } }
+        }
+        guard !tags.isEmpty else { return [] }
+        let samples = DataService.shared.fetchGlucoseReadings(context: viewContext, in: interval).compactMap(\.sample)
+        return TagInsights.compare(samples: samples, tags: tags, thresholds: settings.thresholds)
     }
 
     private var statTiles: some View {
@@ -258,8 +307,18 @@ struct GlucoseTrendChart: View {
     @Environment(SettingsStore.self) private var settings
     let points: [MonitorViewModel.GlucoseTrendPoint]
     let range: TimeRange
+    /// Shown as marks along the top; the ones near a selected time are listed.
+    var events: [TimelineEvent] = []
 
     @State private var selectedDate: Date?
+
+    /// What was logged within 45 minutes of the selected time.
+    private var nearbyEvents: [TimelineEvent] {
+        guard let time = selectedPoint?.timestamp else { return [] }
+        return events
+            .filter { abs($0.timestamp.timeIntervalSince(time)) <= 45 * 60 }
+            .sorted { $0.timestamp < $1.timestamp }
+    }
 
     private var selectedPoint: MonitorViewModel.GlucoseTrendPoint? {
         guard let selectedDate else { return nil }
@@ -301,6 +360,20 @@ struct GlucoseTrendChart: View {
                     }
                 }
 
+                ForEach(events) { event in
+                    PointMark(
+                        x: .value("Time", event.timestamp),
+                        y: .value("Glucose", settings.displayGlucose(max(300, highest + 20)) * 0.97)
+                    )
+                    .symbol {
+                        Image(systemName: event.icon)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(event.color)
+                    }
+                    .accessibilityLabel(event.title)
+                    .accessibilityValue(event.subtitle ?? "")
+                }
+
                 if let selectedPoint {
                     RuleMark(x: .value("Selected", selectedPoint.timestamp))
                         .foregroundStyle(.secondary.opacity(0.5))
@@ -326,6 +399,9 @@ struct GlucoseTrendChart: View {
             .chartXScale(domain: interval.start...interval.end, range: .plotDimension(endPadding: 28))
             .chartYScale(domain: settings.displayGlucose(40)...settings.displayGlucose(max(300, highest + 20)))
             .chartXSelection(value: $selectedDate)
+            .onChange(of: selectedDate) { _, date in
+                if date != nil { ChartScrubTip().invalidate(reason: .actionPerformed) }
+            }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine()
@@ -339,7 +415,26 @@ struct GlucoseTrendChart: View {
                 }
             }
             .frame(height: 220)
+            .sensoryFeedback(.selection, trigger: selectedPoint?.timestamp)
+
+            if !nearbyEvents.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Around this time")
+                        .friendlyLabel()
+                    ForEach(nearbyEvents) { event in
+                        Label {
+                            Text("\(event.title) · \(event.subtitle ?? "") · \(event.timestamp.formatted(date: .omitted, time: .shortened))")
+                                .font(.subheadline)
+                        } icon: {
+                            Image(systemName: event.icon).foregroundStyle(event.color)
+                        }
+                    }
+                }
+                .transition(.opacity)
+                .accessibilityElement(children: .combine)
+            }
         }
+        .animation(.smooth(duration: 0.2), value: nearbyEvents.map(\.id))
     }
 
     private var axisFormat: Date.FormatStyle {

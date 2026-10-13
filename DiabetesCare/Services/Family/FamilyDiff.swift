@@ -20,6 +20,11 @@ nonisolated enum FamilyDiff {
         var archive = archive
         archive.settings = nil
         archive.sites = archive.sites.map { var s = $0; s.photo = nil; return s }
+        archive.carbs = archive.carbs.map { var c = $0; c.photo = nil; return c }
+        // Ketones, day tags and supplies stay on this phone.
+        archive.ketones = nil
+        archive.tags = nil
+        archive.kit = nil
         if stage != .kid {
             archive.glucose = archive.glucose.map { var e = $0; e.notes = nil; return e }
             archive.carbs = archive.carbs.map { var e = $0; e.notes = nil; return e }

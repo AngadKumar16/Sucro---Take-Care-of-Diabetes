@@ -17,6 +17,10 @@ nonisolated protocol FamilyTransport: Sendable {
     /// Follower: what changed for one person since `token`. Returns the new
     /// token to pass next time.
     func fetchChanges(for personID: String, since token: Data?) async throws -> (changes: FamilyChangeSet, token: Data?)
+    /// Follower: answer a help request. The only thing a follower writes.
+    func sendReply(_ reply: FamilyHelpReply, to personID: String) async throws
+    /// Publisher: replies to this person's help requests since `token`.
+    func fetchReplies(since token: Data?) async throws -> (replies: [FamilyHelpReply], token: Data?)
 }
 
 /// Everything in memory. Each publish is kept in order, and a token is the
@@ -25,6 +29,7 @@ actor LoopbackFamilyTransport: FamilyTransport {
     static let personID = "loopback"
 
     private var log: [FamilyChangeSet] = []
+    private var replies: [FamilyHelpReply] = []
 
     init() {}
 
@@ -43,6 +48,15 @@ actor LoopbackFamilyTransport: FamilyTransport {
             merged = Self.merge(merged, changes)
         }
         return (merged, Data(String(log.count).utf8))
+    }
+
+    func sendReply(_ reply: FamilyHelpReply, to personID: String) async throws {
+        replies.append(reply)
+    }
+
+    func fetchReplies(since token: Data?) async throws -> (replies: [FamilyHelpReply], token: Data?) {
+        let start = token.flatMap { Int(String(decoding: $0, as: UTF8.self)) } ?? 0
+        return (Array(replies.dropFirst(start)), Data(String(replies.count).utf8))
     }
 
     /// Later changes win over earlier ones for the same entry.

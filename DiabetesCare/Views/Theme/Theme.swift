@@ -86,6 +86,19 @@ extension Color {
 
 // MARK: - Surfaces
 
+/// The paper, its grain, and the stage's faint wash.
+private struct PaperBackground: View {
+    @Environment(\.stageWash) private var wash
+
+    var body: some View {
+        ZStack {
+            Theme.paper
+            wash
+            PaperGrain()
+        }
+    }
+}
+
 /// Paper grain: a fixed scatter of fine ink specks.
 struct PaperGrain: View {
     var body: some View {
@@ -124,11 +137,8 @@ extension View {
         self
             .scrollContentBackground(.hidden)
             .background {
-                ZStack {
-                    Theme.paper
-                    PaperGrain()
-                }
-                .ignoresSafeArea()
+                PaperBackground()
+                    .ignoresSafeArea()
             }
     }
 

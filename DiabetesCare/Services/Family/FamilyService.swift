@@ -33,6 +33,12 @@ final class FamilyService {
     private(set) var isWorking = false
     /// Shown in Family settings when something went wrong.
     var lastError: String?
+    /// Follower: the latest unanswered help request from each person.
+    private(set) var pendingHelp: [String: FamilyHelpRequest] = [:]
+    /// Publisher: the grown-up's answer to the last help request sent.
+    private(set) var latestReply: FamilyHelpReply?
+    /// Publisher: the last help request sent from this phone.
+    private(set) var lastHelpRequestID: UUID?
 
     var isCloudAvailable: Bool { cloud != nil }
 
@@ -52,6 +58,10 @@ final class FamilyService {
         static let lastPublished = "family.lastPublished"
         static let publishedProfile = "family.publishedProfile"
         static func alertState(_ id: String) -> String { "family.alerts.\(id)" }
+        static let pendingHelp = "family.pendingHelp"
+        static let replyToken = "family.replyToken"
+        static let latestReply = "family.latestReply"
+        static let lastHelpRequest = "family.lastHelpRequest"
     }
 
     /// - Parameter transport: Injected in tests. By default, iCloud when
@@ -75,6 +85,12 @@ final class FamilyService {
             followed = people
         }
         lastPublished = defaults.object(forKey: Key.lastPublished) as? Date
+        if let data = defaults.data(forKey: Key.pendingHelp),
+           let pending = try? JSONDecoder().decode([String: FamilyHelpRequest].self, from: data) {
+            pendingHelp = pending
+        }
+        latestReply = defaults.data(forKey: Key.latestReply).flatMap { try? JSONDecoder().decode(FamilyHelpReply.self, from: $0) }
+        lastHelpRequestID = defaults.string(forKey: Key.lastHelpRequest).flatMap(UUID.init(uuidString:))
     }
 
     // MARK: - Publisher
@@ -156,12 +172,66 @@ final class FamilyService {
     func sendHelpRequest(mgdl: Double?) async -> Bool {
         guard settings.familySharingEnabled, let transport else { return false }
         do {
-            try await transport.publish(FamilyChangeSet(helpRequests: [FamilyHelpRequest(id: UUID(), sentAt: Date(), mgdl: mgdl)]))
+            let request = FamilyHelpRequest(id: UUID(), sentAt: Date(), mgdl: mgdl)
+            try await transport.publish(FamilyChangeSet(helpRequests: [request]))
+            lastHelpRequestID = request.id
+            defaults.set(request.id.uuidString, forKey: Key.lastHelpRequest)
+            latestReply = nil
+            defaults.removeObject(forKey: Key.latestReply)
             return true
         } catch {
             Log.family.error("Help request failed: \(error.localizedDescription, privacy: .public)")
             return false
         }
+    }
+
+    /// Publisher: picks up a grown-up's reply to the last help request and
+    /// shows it. Returns the reply if a new one came in.
+    @discardableResult
+    func checkReplies() async -> FamilyHelpReply? {
+        guard settings.familySharingEnabled, let transport, let requestID = lastHelpRequestID else { return nil }
+        do {
+            let token = defaults.data(forKey: Key.replyToken)
+            let (replies, newToken) = try await transport.fetchReplies(since: token)
+            defaults.set(newToken, forKey: Key.replyToken)
+            guard let reply = replies.filter({ $0.requestID == requestID }).max(by: { $0.sentAt < $1.sentAt }),
+                  reply != latestReply else { return nil }
+            receive(reply)
+            return reply
+        } catch {
+            Log.family.error("Reply check failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+
+    private func receive(_ reply: FamilyHelpReply) {
+        latestReply = reply
+        defaults.set(try? JSONEncoder().encode(reply), forKey: Key.latestReply)
+        NotificationService.shared.deliverHelpReply(reply)
+    }
+
+    /// Follower: answers someone's help request.
+    func reply(_ message: FamilyHelpReply.Message, to person: FamilyPerson) async -> Bool {
+        guard let request = pendingHelp[person.id] else { return false }
+        let name = settings.userName.trimmingCharacters(in: .whitespaces)
+        let reply = FamilyHelpReply(id: UUID(), requestID: request.id, sentAt: Date(),
+                                    from: name.isEmpty ? String(localized: "Your grown-up") : name, message: message)
+        if let transport {
+            do {
+                try await transport.sendReply(reply, to: person.id)
+            } catch {
+                lastError = error.localizedDescription
+                Log.family.error("Reply failed: \(error.localizedDescription, privacy: .public)")
+                return false
+            }
+        }
+        setPendingHelp(nil, for: person.id)
+        return true
+    }
+
+    func setPendingHelp(_ request: FamilyHelpRequest?, for personID: String) {
+        pendingHelp[personID] = request
+        defaults.set(try? JSONEncoder().encode(pendingHelp), forKey: Key.pendingHelp)
     }
 
     /// Turns sharing on and returns the iCloud share to invite family to.
@@ -249,6 +319,10 @@ final class FamilyService {
             if let profile = followed[index].profile {
                 notify(for: followed[index], profile: profile, context: store.container.viewContext, help: changes.helpRequests, now: now)
             }
+            // The newest help request in the last two hours waits for a reply.
+            if let latest = changes.helpRequests.max(by: { $0.sentAt < $1.sentAt }), now.timeIntervalSince(latest.sentAt) < 2 * 3600 {
+                setPendingHelp(latest, for: personID)
+            }
         }
         tokens[personID] = token
         defaults.set(tokens, forKey: Key.tokens)
@@ -298,6 +372,7 @@ final class FamilyService {
     /// iCloud settings or by them stopping sharing.
     func unfollow(_ person: FamilyPerson) {
         followed.removeAll { $0.id == person.id }
+        setPendingHelp(nil, for: person.id)
         stores[person.id] = nil
         FamilyStore.removeStore(for: person.id)
         var tokens = defaults.dictionary(forKey: Key.tokens) as? [String: Data] ?? [:]

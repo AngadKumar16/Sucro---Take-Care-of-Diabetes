@@ -24,6 +24,8 @@ public class CarbEntry: NSManagedObject {
     @NSManaged public var mealType: String?
     @NSManaged public var foodItems: String?
     @NSManaged public var notes: String?
+    /// A photo of the meal, downscaled JPEG (`SitePhoto.encode`).
+    @NSManaged public var photo: Data?
 }
 
 extension CarbEntry {

@@ -7,8 +7,10 @@
 //
 //  The person with diabetes keeps a "Family" zone in their private
 //  database: one record per shared entry, one profile record, and help
-//  requests. A zone-wide CKShare lets invited family read that zone (read
-//  only). On a follower's phone the zone shows up in the shared database.
+//  requests. A zone-wide CKShare lets invited family read that zone. The
+//  share allows writing only so family can add a `Reply` to a help
+//  request; the app never writes or changes entries from a follower's
+//  phone. On a follower's phone the zone shows up in the shared database.
 //
 //  Needs the iCloud (CloudKit) and Push Notifications capabilities, which
 //  need a paid Apple Developer account. Until `FamilyCloud.containerID` is
@@ -35,6 +37,7 @@ nonisolated enum FamilyCloud {
         static let entry = "Entry"
         static let profile = "Profile"
         static let help = "Help"
+        static let reply = "Reply"
     }
 
     static let profileRecordName = "profile"
@@ -145,5 +148,30 @@ actor CloudKitFamilyTransport: FamilyTransport {
         let changes = FamilyRecordCodec.changeSet(from: records, deleted: deleted)
         let data = serverToken.flatMap { try? NSKeyedArchiver.archivedData(withRootObject: $0, requiringSecureCoding: true) }
         return (changes, data)
+    }
+
+    // MARK: - Help replies
+
+    func sendReply(_ reply: FamilyHelpReply, to personID: String) async throws {
+        let zone = CKRecordZone.ID(zoneName: FamilyCloud.zoneName, ownerName: personID)
+        let record = try FamilyRecordCodec.record(for: reply, zoneID: zone)
+        _ = try await container.sharedCloudDatabase.modifyRecords(saving: [record], deleting: [])
+    }
+
+    func fetchReplies(since token: Data?) async throws -> (replies: [FamilyHelpReply], token: Data?) {
+        try await ensureZone()
+        let database = container.privateCloudDatabase
+        var serverToken = token.flatMap { try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: $0) }
+        var records: [CKRecord] = []
+        while true {
+            let result = try await database.recordZoneChanges(inZoneWith: zoneID, since: serverToken)
+            for case (_, .success(let modification)) in result.modificationResultsByID {
+                records.append(modification.record)
+            }
+            serverToken = result.changeToken
+            if !result.moreComing { break }
+        }
+        let data = serverToken.flatMap { try? NSKeyedArchiver.archivedData(withRootObject: $0, requiringSecureCoding: true) }
+        return (FamilyRecordCodec.replies(from: records), data)
     }
 }

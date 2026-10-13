@@ -44,6 +44,8 @@ enum DemoData {
         )
         do {
             try await family.installDemoPerson(from: maya.container, profile: profile)
+            // A help request waiting for an answer, to show the reply buttons.
+            family.setPendingHelp(FamilyHelpRequest(id: UUID(), sentAt: Date().addingTimeInterval(-120), mgdl: 64), for: demoPersonID)
         } catch {
             Log.family.error("Demo family failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -97,6 +99,14 @@ enum DemoData {
                 carbs.grams = (meal.grams + Double.random(in: -15...15, using: &random)).rounded()
                 carbs.mealType = meal.type.rawValue
                 carbs.timestamp = mealTime
+                // Named foods, so After Meals can compare them.
+                let dayIndex = Int(day.timeIntervalSince(start) / 86_400)
+                let foods: [MealType: [String]] = [
+                    .breakfast: ["Cereal with milk", "Eggs and toast"],
+                    .lunch: ["Turkey sandwich", "Pizza"],
+                    .dinner: ["Pasta", "Rice and chicken"],
+                ]
+                if let options = foods[meal.type] { carbs.foodItems = options[dayIndex % options.count] }
 
                 let dose = InsulinEntry(context: context)
                 dose.id = UUID()
@@ -111,6 +121,25 @@ enum DemoData {
         site.id = UUID()
         site.timestamp = now.addingTimeInterval(-30 * 3600)
         site.location = SiteLocation.abdomenLeft.rawValue
+
+        // Soccer every third day and a cold last week, for Your Days on Trends.
+        for offset in stride(from: 1, through: days, by: 3) {
+            let tag = ContextTag(context: context)
+            tag.id = UUID()
+            tag.timestamp = now.addingTimeInterval(-Double(offset) * 86_400)
+            tag.kind = DayTag.sports.rawValue
+        }
+        for offset in [5, 6] {
+            let tag = ContextTag(context: context)
+            tag.id = UUID()
+            tag.timestamp = now.addingTimeInterval(-Double(offset) * 86_400)
+            tag.kind = DayTag.sick.rawValue
+            let ketones = KetoneReading(context: context)
+            ketones.id = UUID()
+            ketones.timestamp = now.addingTimeInterval(-Double(offset) * 86_400)
+            ketones.value = offset == 5 ? 0.4 : 0.9
+            ketones.method = KetoneMethod.blood.rawValue
+        }
 
         try? context.save()
     }

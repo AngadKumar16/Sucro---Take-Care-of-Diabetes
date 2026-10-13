@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import TipKit
 import CoreData
 
 struct LogView: View {
@@ -24,6 +25,7 @@ struct LogView: View {
         case insulin = "Insulin"
         case activity = "Activity"
         case sites = "Sites"
+        case ketones = "Ketones"
     }
 
     var body: some View {
@@ -34,12 +36,22 @@ struct LogView: View {
                     canGoForward: !viewModel.isShowingToday,
                     onMove: viewModel.moveDay(by:)
                 )
-                Picker("Show", selection: $filter) {
-                    ForEach(Filter.allCases, id: \.self) { filter in
-                        Text(filter.rawValue).tag(filter)
+                // Seven kinds don't fit a segmented control on a phone, so
+                // they scroll as chips.
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(Filter.allCases, id: \.self) { option in
+                            Button(option.rawValue) {
+                                withAnimation(.snappy) { filter = option }
+                            }
+                            .buttonStyle(FilterChipStyle(isSelected: filter == option))
+                            .accessibilityAddTraits(filter == option ? .isSelected : [])
+                        }
                     }
+                    .padding(.horizontal, 2)
                 }
-                .pickerStyle(.segmented)
+                .scrollIndicators(.hidden)
+                .sensoryFeedback(.selection, trigger: filter)
                 .listRowSeparator(.hidden)
             }
             .listRowBackground(Color.clear)
@@ -60,9 +72,12 @@ struct LogView: View {
                 .listRowBackground(Color.clear)
             } else {
                 Section {
+                    TipView(LogSwipeTip())
+                        .listRowBackground(Color.clear)
                     ReceiptHeader(date: viewModel.selectedDate)
                     ForEach(rows) { row in
                         Button {
+                            LogSwipeTip().invalidate(reason: .actionPerformed)
                             gate.runEditing(row.object) { viewModel.edit(row.object) }
                         } label: {
                             LogRowView(row: row)
@@ -107,6 +122,7 @@ struct LogView: View {
                         }
                     }
                     Button("Add Activity", systemImage: "figure.walk") { viewModel.showAddActivity = true }
+                    Button("Add Ketones", systemImage: "flask") { viewModel.showAddKetones = true }
                 }
                 .accessibilityIdentifier("addEntryMenu")
             }
@@ -144,6 +160,10 @@ struct LogView: View {
         }
         .sheet(isPresented: Bindable(viewModel).showAddActivity) {
             AddActivityView()
+                .environment(viewModel)
+        }
+        .sheet(isPresented: Bindable(viewModel).showAddKetones) {
+            AddKetoneView()
                 .environment(viewModel)
         }
         .sheet(item: Bindable(viewModel).editOperation) { operation in
@@ -233,6 +253,19 @@ struct LogView: View {
                 )
             }
         }
+        if filter == .all || filter == .ketones {
+            rows += viewModel.ketoneReadings.map { reading in
+                LogRow(
+                    object: reading,
+                    timestamp: reading.timestamp,
+                    icon: "flask.fill",
+                    color: reading.level >= .high ? Theme.vermilion : Theme.indigo,
+                    title: reading.displayValue,
+                    detail: "\(reading.ketoneMethod.name) · \(reading.level.name)",
+                    notes: reading.notes
+                )
+            }
+        }
         return rows.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
     }
 
@@ -252,6 +285,22 @@ struct LogView: View {
 
     private func hidesInAll(_ reading: GlucoseReading) -> Bool {
         reading.isFromHealth && (reading.notes ?? "").isEmpty
+    }
+}
+
+/// A filter chip: filled when selected.
+private struct FilterChipStyle: ButtonStyle {
+    let isSelected: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(isSelected ? .semibold : .regular))
+            .foregroundStyle(isSelected ? Theme.onAccent : Theme.ink)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 36)
+            .background(isSelected ? Theme.green : Theme.card, in: .capsule)
+            .overlay(Capsule().strokeBorder(isSelected ? Color.clear : Theme.rule))
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
@@ -278,6 +327,7 @@ private struct LogRowView: View {
         case "syringe.fill": "INSULIN"
         case "figure.walk": "ACTIVITY"
         case "bandage.fill": "SITE"
+        case "flask.fill": "KETONES"
         default: "ENTRY"
         }
     }

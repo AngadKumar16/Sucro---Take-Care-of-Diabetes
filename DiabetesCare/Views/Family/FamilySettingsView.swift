@@ -258,7 +258,8 @@ struct CloudSharingSheet: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UICloudSharingController {
         let controller = UICloudSharingController(share: share, container: container)
-        controller.availablePermissions = [.allowReadOnly, .allowPrivate]
+        // Write access is only used for replies to help requests.
+        controller.availablePermissions = [.allowReadWrite, .allowPrivate]
         return controller
     }
 

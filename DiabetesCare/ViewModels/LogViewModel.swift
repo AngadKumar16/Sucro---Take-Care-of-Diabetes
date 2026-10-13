@@ -17,6 +17,7 @@ class LogViewModel: BaseViewModel {
     var insulinEntries: [InsulinEntry] = []
     var activityEntries: [ActivityEntry] = []
     var siteChanges: [SiteChange] = []
+    var ketoneReadings: [KetoneReading] = []
     var selectedDate: Date = Date()
     /// Bumped on every fetch. A refetch usually returns the same managed
     /// objects, which Observation treats as "no change", so views read this
@@ -26,6 +27,7 @@ class LogViewModel: BaseViewModel {
     var showAddCarbs = false
     var showAddInsulin = false
     var showAddActivity = false
+    var showAddKetones = false
     /// The entry being edited, if any.
     var editOperation: DraftOperation<NSManagedObject>?
     /// Set when deleting fails, for the Log to show.
@@ -45,6 +47,7 @@ class LogViewModel: BaseViewModel {
         fetchInsulinEntries(from: startOfDay, to: endOfDay)
         fetchActivityEntries(from: startOfDay, to: endOfDay)
         fetchSiteChanges(from: startOfDay, to: endOfDay)
+        fetchKetones(from: startOfDay, to: endOfDay)
         revision += 1
     }
     
@@ -108,6 +111,31 @@ class LogViewModel: BaseViewModel {
         }
     }
 
+    private func fetchKetones(from start: Date, to end: Date) {
+        let request: NSFetchRequest<KetoneReading> = KetoneReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@ AND timestamp < %@", start as NSDate, end as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \KetoneReading.timestamp, ascending: false)]
+        ketoneReadings = (try? viewContext.fetch(request)) ?? []
+    }
+
+    func addKetoneReading(value: Double, method: KetoneMethod, notes: String?, timestamp: Date = Date()) {
+        let entry = KetoneReading(context: viewContext)
+        entry.id = UUID()
+        entry.value = value
+        entry.method = method.rawValue
+        entry.notes = notes
+        entry.timestamp = timestamp
+        save()
+        fetchEntriesForDate(selectedDate)
+        let level = entry.level
+        ToastCenter.shared.show(
+            String(localized: "Logged ketones: \(entry.displayValue) · \(level.name)"),
+            kind: level >= .high ? .attention : .saved,
+            haptic: level >= .high,
+            undo: ToastCenter.undoInsert(entry.objectID, in: viewContext)
+        )
+    }
+
     func addGlucoseReading(value: Double, unit: String, context: String?, notes: String?, timestamp: Date = Date()) {
         let reading = GlucoseReading(context: viewContext)
         reading.id = UUID()
@@ -122,6 +150,14 @@ class LogViewModel: BaseViewModel {
         HealthKitManager.shared.saveGlucoseReading(value, unit: unit, timestamp: timestamp)
         AlertService.shared.evaluate(context: viewContext)
         fetchEntriesForDate(selectedDate)
+        let settings = SettingsStore.shared
+        let zone = settings.zone(for: value)
+        ToastCenter.shared.show(
+            String(localized: "Logged \(settings.formattedGlucose(value)) · \(zone.name)"),
+            kind: zone.needsAction ? .attention : .saved,
+            haptic: zone.needsAction,
+            undo: ToastCenter.undoInsert(reading.objectID, in: viewContext)
+        )
     }
 
     /// Trend arrow for a new reading, measured against the readings logged
@@ -137,7 +173,7 @@ class LogViewModel: BaseViewModel {
         return GlucoseCalculator.trend(samples: earlier + [sample])
     }
 
-    func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?, timestamp: Date = Date()) {
+    func addCarbEntry(grams: Double, mealType: String?, foodItems: String?, notes: String?, timestamp: Date = Date(), photo: Data? = nil) {
         let entry = CarbEntry(context: viewContext)
         entry.id = UUID()
         entry.grams = grams
@@ -145,10 +181,16 @@ class LogViewModel: BaseViewModel {
         entry.foodItems = foodItems
         entry.timestamp = timestamp
         entry.notes = notes
+        entry.photo = photo
 
         save()
         HealthKitManager.shared.saveCarbohydrateIntake(grams, timestamp: timestamp)
         fetchEntriesForDate(selectedDate)
+        ToastCenter.shared.show(
+            String(localized: "Logged \(grams.formatted(.number.precision(.fractionLength(0...1)))) g carbs"),
+            haptic: false,
+            undo: ToastCenter.undoInsert(entry.objectID, in: viewContext)
+        )
     }
 
     func addInsulinEntry(units: Double, type: String?, deliveryMethod: String?, notes: String?, timestamp: Date = Date()) {
@@ -164,6 +206,11 @@ class LogViewModel: BaseViewModel {
         HealthKitManager.shared.saveInsulinDose(units, type: type ?? InsulinType.bolus.rawValue, timestamp: timestamp)
         ReminderService.shared.refresh(context: viewContext)
         fetchEntriesForDate(selectedDate)
+        ToastCenter.shared.show(
+            String(localized: "Logged \(units.formatted(.number.precision(.fractionLength(0...2)))) U insulin"),
+            haptic: false,
+            undo: ToastCenter.undoInsert(entry.objectID, in: viewContext)
+        )
     }
 
     func addActivityEntry(type: String?, duration: Int16, intensity: String?, caloriesBurned: Double, notes: String?, timestamp: Date = Date()) {
@@ -184,6 +231,11 @@ class LogViewModel: BaseViewModel {
             timestamp: timestamp
         )
         fetchEntriesForDate(selectedDate)
+        ToastCenter.shared.show(
+            String(localized: "Logged \(type ?? String(localized: "activity")), \(duration) min"),
+            haptic: false,
+            undo: ToastCenter.undoInsert(entry.objectID, in: viewContext)
+        )
     }
 
     // MARK: - Day navigation
@@ -213,8 +265,10 @@ class LogViewModel: BaseViewModel {
     }
 
     func deleteEntry(_ object: NSManagedObject) {
+        let undo = ToastCenter.undoDelete(of: object)
         if DataService.shared.delete(object.objectID, context: viewContext) {
             entriesChanged()
+            ToastCenter.shared.show(String(localized: "Entry deleted"), kind: .removed, undo: undo)
         } else {
             actionError = "This entry couldn't be deleted. Please try again."
         }

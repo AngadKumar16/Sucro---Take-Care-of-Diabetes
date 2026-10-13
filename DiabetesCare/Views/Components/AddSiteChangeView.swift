@@ -56,6 +56,7 @@ struct AddSiteChangeView: View {
             viewModel.viewContext.delete(siteChange)
             return false
         }
+        KitStore.shared.recordSiteChange()
         // Refreshing also schedules the reminder for the next change.
         viewModel.fetchLatestData()
         return true

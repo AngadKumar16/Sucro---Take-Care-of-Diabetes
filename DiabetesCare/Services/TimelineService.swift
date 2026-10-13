@@ -44,6 +44,7 @@ class TimelineService {
         
         // Fetch activities
         events += fetchActivities(context: context, since: startTime, limit: limited ? 3 : nil, dataService: dataService)
+        events += fetchKetones(context: context, since: startTime, limit: limited ? 3 : nil)
         
         return events.sorted { $0.timestamp > $1.timestamp }
     }
@@ -146,6 +147,24 @@ class TimelineService {
         } catch {
             Log.data.error("Error fetching activities: \(error.localizedDescription, privacy: .public)")
             return []
+        }
+    }
+
+    private func fetchKetones(context: NSManagedObjectContext, since: Date, limit: Int?) -> [TimelineEvent] {
+        let request: NSFetchRequest<KetoneReading> = KetoneReading.fetchRequest()
+        request.predicate = NSPredicate(format: "timestamp >= %@", since as NSDate)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \KetoneReading.timestamp, ascending: false)]
+        let entries = (try? context.fetch(request)) ?? []
+        return entries.prefix(limit ?? .max).map { entry in
+            TimelineEvent(
+                type: .ketone,
+                timestamp: entry.timestamp ?? Date(),
+                glucoseValue: nil,
+                title: String(localized: "Ketones"),
+                subtitle: "\(entry.displayValue) · \(entry.level.name)",
+                notes: entry.notes,
+                objectID: entry.objectID
+            )
         }
     }
 }
