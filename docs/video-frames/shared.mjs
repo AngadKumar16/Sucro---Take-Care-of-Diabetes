@@ -1,5 +1,5 @@
 // Shared setup for the demo-video figures. Built with the anatomy skill's kit:
-// ANATOMY=<path to the skill> node docs/video-frames/build.mjs
+// ANATOMY=<path to the skill> node docs/video-frames/build-scenes.mjs
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
