@@ -30,6 +30,17 @@ The app's own style, which the owner chose: soft, rounded, friendly, illustrated
 | Berry | `#e0644a` | lows, alerts, Maya's hoodie accent |
 | Ink | `#2f4a3b` | outlines (never pure black) |
 
+The real app carries the solution; a mix of looks frames it so it never feels like one trick (the owner asked for variety, not Maya everywhere, and for the real app on screen a lot). `docs/demo-video.md` assigns a look to each shot:
+
+| Look | What it is | Code |
+|---|---|---|
+| App | The real app in a phone frame, real screens (simulator recordings in the final), paper callouts on real controls. The main look of the solution: the owner wants the real app on screen a lot | `scenes/app.js` (`realPhone`, `callout`) |
+| Paper | Stop-motion cut paper: poses on twos (12 per second), a deterministic per-pose wobble, soft shadows, textured paper | `scenes/paper.js` (`pose`, `boil`, `cut`, `hop`) |
+| Maya | The character | `maya.js`, `scenes/maya-scenes.js` |
+| Desk | Isometric phones on a desk with the app's screens | `docs/video-frames/scenes.mjs` |
+| Code | The app's real Swift typed onto an editor card; the code appears at least three times | `scenes/code.js` |
+| Flat | The approved sealed-letter illustration, animated | `scenes/flat.js` |
+
 Type: **Nunito** (800/900 display, 700 text), the closest free face to the app's SF Rounded. Outline weight: 4 px at 1080p on characters and props. Light from the top left.
 
 ## 3. Maya
@@ -50,7 +61,8 @@ Rules:
 - **Frame-deterministic.** Every animated clip is `render(ctx, t)` on a 1920×1080 canvas, drawing the frame at time `t` seconds with no stored state, so frames render in any order and in parallel.
 - **Files.** `docs/video/` holds: `maya.js` (character), `film.js` (scenes, timeline, `events()`), `scenes/*.js` (one per clip), `render.mjs`, `sound.py`, `package.json`, `README.md`.
 - **App scenes** from `docs/video-frames/scenes.mjs` are SVG; drive them by `t` (replace the rAF loop with `setTime(t)`) and capture each frame. Their screens must keep matching the real app.
-- **Real app footage** is simulator recordings (`xcrun simctl io booted recordVideo`), with the launch args in `CLAUDE.md` (`-demoData`, `-stage kid`, `-demoFamily`, `-uiTesting`), status bar set to 9:41. Don't redraw what the app can show for real.
+- **The real app, not a redraw.** App shots use real screenshots (`docs/screenshots/`, `docs/video/assets/`) in drafts and real simulator recordings (`xcrun simctl io booted recordVideo`, launch args in `CLAUDE.md`) in the final, drawn into the phone frame frame by frame. Drawn screens (Desk scenes) appear only as accents and must match the app. Code on screen is copied from the source and kept in sync.
+- **Footage.** `sh scripts/record-demo.sh [testName…]` records `DemoReelUITests` (one flow per test, human pace, demo data) to `docs/video/assets/rec/*.mp4` and named stills to `docs/video/assets/stills/`. Show the app's distinctive parts (kitchen scale, insulin pen, body map, test tubes, the plant, Your Path, Live Activity, help request and reply), not generic list screens. Add a test for any new flow the plan needs.
 - **Renderer.** Headless Chromium (Playwright, installed in `docs/video/`) draws frames; pipe JPEG frames into ffmpeg: `-c:v libx264 -pix_fmt yuv420p -movflags +faststart`. Fonts: `@fontsource/nunito`, inlined as base64.
 - **One timing source.** `film.js` exports `events()` (pops, stamps, transitions, caption in/out). Save to `events.json`; `sound.py` reads it so every sound lands on its frame.
 - **Assembly.** Clips plus simulator footage plus voiceover are cut in an editor (iMovie or CapCut) unless asked to assemble in ffmpeg. Deliver each clip as its own MP4 with handles (0.5 s before and after).

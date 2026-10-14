@@ -6,7 +6,7 @@ import { W, H, FLOOR, smooth, backOut, span, pushIn, rr, text, caption, cornerCa
 
 // 2a · 6:40 a.m., kitchen table, meter and a paper log.
 export const kitchen = {
-  duration: 9,
+  duration: 8,
   line: "Meet Maya. She's fourteen. Every day starts with numbers.",
   render(ctx, t) {
     ctx.save();
@@ -39,7 +39,7 @@ export const kitchen = {
 
 // 2b · School lunch: Mom texts "What's your number?" again and again.
 export const lunch = {
-  duration: 9,
+  duration: 8,
   line: "Her mom checks in all day, because she has no other way to know.",
   render(ctx, t) {
     ctx.save();
@@ -76,7 +76,7 @@ export const lunch = {
 
 // 2c · 2 a.m.: an alarm, the pillow, then she sits up: "I can do this. Just let me."
 export const night = {
-  duration: 10,
+  duration: 9,
   line: "Most apps treat her like an adult, or like a little kid. Nothing grows up with her.",
   render(ctx, t) {
     ctx.save();
@@ -173,7 +173,7 @@ export const cheer = {
       ctx.lineWidth = 3; ctx.strokeStyle = C.pine; ctx.stroke(); ctx.restore();
     }
     const k = backOut(span(t, 0.1, 0.6));
-    ctx.save(); ctx.translate(1340, 260); ctx.scale(k, k);
+    ctx.save(); ctx.translate(1480, 230); ctx.scale(k, k);
     rr(ctx, -230, -60, 460, 120, 60, "#ffffff", C.ink, 4);
     text(ctx, "Skill learned: Treat a Low", 0, 2, { size: 38, weight: 900, color: C.pine });
     ctx.restore();
