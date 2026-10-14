@@ -21,6 +21,10 @@ Record the simulator with `xcrun simctl io booted recordVideo --codec h264 take1
 
 Notes
 - **Sealed-letter frame** (`docs/video-frames/sealed-letter.png`, 1920×1080; vector in `sealed-letter.svg`): Maya's phone sends a sealed envelope with the sprout seal straight to Mom's phone, which holds the only key. Hold it under "only the family you invite can see it… not even Apple". Drawn in the app's soft style (Nunito, app greens).
+- **Animated app scenes** (`docs/video-frames/scene1-today.html`, `scene2-feeling-off.html`, `scene3-family.html`; rebuild with `node docs/video-frames/build-scenes.mjs`, needs the anatomy skill): phones on a desk with the app's real screens, made with the anatomy skill. Open full screen and screen-record. Sample data, sped up (the captions say so).
+  - Scene 1, Today (loops ~18 s): sensor flashes, the reading rolls 148 → 112, the trend arrow turns, the 3-hour line grows. Use behind shot 2 or 3.
+  - Scene 2, Feeling off? (loops ~12 s): Low 62 banner, juice box (15 g), 15-minute recheck ring on phone and watch, then "Back in range · 94". Use with shot 3.
+  - Scene 3, Only your family (loops 11 s): the sealed letter flies from Maya's phone to Mom's, "Maya: Low 62 · treating it" slides onto Mom's lock screen, later "back in range". Use with shot 6 or 7.
 - Shot 7 is the promise: never shared beyond family, no one else can see it, and it's secure. Put "Only your family. No one else." and "End-to-end encrypted" on screen as text. Security details for questions: `docs/security.md`.
 - Be honest: say iCloud sharing isn't live yet (shot 10) and that the parent screen is sample data.
 - Keep text on screen big; judges may watch on a phone. No dead air or long cuts (Structure row).
