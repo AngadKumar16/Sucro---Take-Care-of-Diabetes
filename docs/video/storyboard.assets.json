@@ -1,0 +1,12 @@
+{
+  "today": "../screenshots/iPhone-17-Pro-Max/01-Today.png",
+  "quiz": "../screenshots/iPhone-17-Pro-Max/03-Quiz.png",
+  "kidToday": "../screenshots/iPhone-17-Pro-Max/04-KidToday.png",
+  "kidHelp": "../screenshots/iPhone-17-Pro-Max/04b-KidGetHelp.png",
+  "familySees": "../screenshots/iPhone-17-Pro-Max/06-FamilySees.png",
+  "parentPhone": "../screenshots/iPhone-17-Pro-Max/07-ParentPhone.png",
+  "scene1": "../video-frames/shots/scene1-today-7500.png",
+  "scene2": "../video-frames/shots/scene2-feeling-off-7500.png",
+  "scene3": "../video-frames/shots/scene3-flight.png",
+  "letter": "../video-frames/sealed-letter.png"
+}
