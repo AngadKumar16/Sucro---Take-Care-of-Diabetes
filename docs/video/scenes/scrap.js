@@ -266,7 +266,7 @@ export const scrapFamily = {
 
 // 12b · The last page: the plant sticker, the plans on sticky notes, then the closing line.
 export const scrapEnd = {
-  duration: 13.5,
+  duration: 14.5,
   line: "Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed.",
   render(ctx, t) {
     scrapPage(ctx, { seed: 33, spine: true });

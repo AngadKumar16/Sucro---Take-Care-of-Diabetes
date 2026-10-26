@@ -22,7 +22,7 @@ export const FILM = [
   { shot: "10", scene: "appSees", dur: 8.5, in: "smoothleft" },
   { shot: "11", scene: "hypeGate", dur: 11.5, in: "fade" },
   { shot: "12a", scene: "hypeMontage", dur: 15.5, in: "fade" },
-  { shot: "12b", scene: "scrapEnd", dur: 13.5, in: "circleopen", cap: { mode: "paper", x: 1240, y: 965 } },
+  { shot: "12b", scene: "scrapEnd", dur: 14.5, in: "circleopen", cap: { mode: "paper", x: 1240, y: 965 } },
   { shot: "13", scene: "scrapSignOff", dur: 6.5, in: "slideleft", cap: { mode: "paper", x: 1240, y: 900 } },
 ];
 
