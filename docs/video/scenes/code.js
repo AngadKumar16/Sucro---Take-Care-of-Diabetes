@@ -198,34 +198,43 @@ export function sideCode(ctx, t, { x, y, w, h, tabs, size = 24, enter = 0, alpha
   ctx.restore();
 }
 
-// 9b · Under the hood of the help request, between the two real phones: Maya's request is built
-// and published, sealed into encryptedValues, and the letter flies to Mom's phone.
+// 9b · Family sharing, under the hood, between the two real phones: the invite-only iCloud share
+// each family gets, Maya's help request published to it, then sealed into encryptedValues; the
+// letter flies to Mom's phone.
 export const codeSeal = {
-  duration: 6,
-  line: "Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only.",
+  duration: 10.5,
+  line: "Family sharing is built on iCloud, with a private share for each family. Before anything leaves her phone, it's sealed: end-to-end encrypted, for her family only.",
   render(ctx, t) {
     paperGround(ctx, C.sage, { seed: 52 });
-    realPhone(ctx, t, { x: 50, y: 150, h: 640, screens: [["kidHelp", 0]], tag: "Maya's phone" });
-    realPhone(ctx, t, { x: 1576, y: 150, h: 640, screens: [["parentHelp", 0]], tag: "Mom's phone · sample data" });
-    sideCode(ctx, t, { x: 400, y: 190, w: 1120, h: 560, size: 24, enter: 0.1, tabs: [
-      { ...SRC.sendHelp, from: 0.1, marks: [[0.5, 3], [1.3, 4]] },
-      { ...SRC.codec, from: 2.2, marks: [[2.5, 3]] },
+    realPhone(ctx, t, { x: 50, y: 170, h: 640, screens: [["kidHelp", 0]], tag: "Maya's phone" });
+    realPhone(ctx, t, { x: 1576, y: 170, h: 640, screens: [["parentHelp", 0]], tag: "Mom's phone · sample data" });
+    sideCode(ctx, t, { x: 400, y: 210, w: 1120, h: 560, size: 24, enter: 0.1, tabs: [
+      { ...SRC.familyShare, from: 0.1, marks: [[0.6, 1], [2.2, 8], [3.2, 10]] },
+      { ...SRC.sendHelp, from: 4.3, marks: [[4.5, 3], [5.2, 4]] },
+      { ...SRC.codec, from: 6.2, marks: [[6.5, 3]] },
     ] });
-    const label = t < 2.2 ? (t < 1.3 ? "Her help request" : "Published to her family") : "Sealed: end-to-end encrypted";
-    const k = backOut(span(t, t < 1.3 ? 0.5 : t < 2.2 ? 1.3 : 2.5, (t < 1.3 ? 0.5 : t < 2.2 ? 1.3 : 2.5) + 0.35));
-    if (t > 0.5) { ctx.save(); ctx.translate(960, 130); ctx.scale(k, k); ctx.font = FONT(900, 40); const w = ctx.measureText(label).width + 64; rr(ctx, -w / 2, -38, w, 76, 38, t < 2.2 ? "#fbf8f1" : C.pine, C.ink, 4); text(ctx, label, 0, 2, { size: 40, weight: 900, color: t < 2.2 ? C.ink : "#ffffff" }); ctx.restore(); }
+    // The label over the code says what each part is.
+    const steps = [[0.3, "Family sharing · built on iCloud", C.mint, C.ink], [2.2, "A private share for each family", "#fbf8f1", C.ink], [3.2, "Invite only: no public access", "#fbf8f1", C.ink], [4.5, "Her help request, published", "#fbf8f1", C.ink], [6.5, "Sealed: end-to-end encrypted", C.pine, "#ffffff"]];
+    const cur = steps.filter(([a]) => t >= a).pop();
+    if (cur) {
+      const [a, label, bg, fg] = cur, k = backOut(span(t, a, a + 0.35));
+      ctx.save(); ctx.translate(960, 130); ctx.scale(k, k); ctx.font = FONT(900, 40);
+      const w = ctx.measureText(label).width + 64;
+      rr(ctx, -w / 2, -38, w, 76, 38, bg, C.ink, 4); text(ctx, label, 0, 2, { size: 40, weight: 900, color: fg });
+      ctx.restore();
+    }
     // The sealed letter: leaves Maya's phone, passes over the sealed line, lands on Mom's.
-    const f = span(t, 3, 5.2);
+    const f = span(t, 7.4, 9.6);
     if (f > 0 && f < 1) {
-      const e = smooth(f), x = 200 + e * 1520, y = 420 - Math.sin(Math.PI * e) * 260;
+      const e = smooth(f), x = 200 + e * 1520, y = 440 - Math.sin(Math.PI * e) * 260;
       ctx.save(); ctx.translate(x, y); ctx.rotate(-0.08 + e * 0.16);
       rr(ctx, -80, -52, 160, 104, 14, C.cream, C.ink, 4);
       ctx.beginPath(); ctx.moveTo(-74, -46); ctx.lineTo(0, 6); ctx.lineTo(74, -46); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
       ctx.beginPath(); ctx.arc(0, 8, 24, 0, Math.PI * 2); ctx.fillStyle = C.pine; ctx.fill(); ctx.stroke();
       ctx.restore();
     }
-    const land = span(t, 5.2, 5.8);
-    if (land > 0 && land < 1) { ctx.beginPath(); ctx.arc(1723, 420, 40 + land * 90, 0, Math.PI * 2); ctx.lineWidth = 6; ctx.strokeStyle = `rgba(31,107,74,${1 - land})`; ctx.stroke(); }
+    const land = span(t, 9.6, 10.2);
+    if (land > 0 && land < 1) { ctx.beginPath(); ctx.arc(1723, 440, 40 + land * 90, 0, Math.PI * 2); ctx.lineWidth = 6; ctx.strokeStyle = `rgba(31,107,74,${1 - land})`; ctx.stroke(); }
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };

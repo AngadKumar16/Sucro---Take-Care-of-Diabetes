@@ -26,6 +26,7 @@ SNIPPETS = {
     "replyMessage": ("DiabetesCare/Services/Family/FamilyModels.swift", "enum Message: String, Codable", 12),
     "codec": ("DiabetesCare/Services/Family/FamilyRecordCodec.swift", "private static func record<T: Encodable>", 7),
     "familyModels": ("DiabetesCare/Services/Family/FamilyModels.swift", "struct FamilyProfile: Codable", 28),
+    "familyShare": ("DiabetesCare/Services/Family/CloudKitFamilyTransport.swift", "/// The zone-wide share family members are invited to", 14),
     "access": ("DiabetesCare/Models/Domain/CareStage.swift", "func access(to feature: Feature", 20),
     "healthImport": ("DiabetesCare/Services/HealthGlucoseImporter.swift", "private func registerObserver()", 17),
     "storyWriter": ("DiabetesCare/Services/StoryWriter.swift", "static func reword(_ template: String", 28),

@@ -476,6 +476,26 @@ export const SRC = {
    "}"
   ]
  },
+ "familyShare": {
+  "file": "CloudKitFamilyTransport.swift",
+  "start": 80,
+  "lines": [
+   "/// The zone-wide share family members are invited to. Made on first use.",
+   "func share(title: String) async throws -> CKShare {",
+   "    try await ensureZone()",
+   "    let database = container.privateCloudDatabase",
+   "    let shareID = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: zoneID)",
+   "    if let existing = try? await database.record(for: shareID) as? CKShare {",
+   "        return existing",
+   "    }",
+   "    let share = CKShare(recordZoneID: zoneID)",
+   "    share[CKShare.SystemFieldKey.title] = title as CKRecordValue",
+   "    share.publicPermission = .none",
+   "    _ = try await database.modifyRecords(saving: [share], deleting: [])",
+   "    return share",
+   "}"
+  ]
+ },
  "access": {
   "file": "CareStage.swift",
   "start": 74,

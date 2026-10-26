@@ -15,7 +15,7 @@ Quiet room, phone or mic 6 inches away, one clean take per line.
 [7b]  Readings from her CGM come in through Apple Health. And with Apple Intelligence, an on-device model retells her day, and the app throws it out if a single number changes.
 [8]  Kids earn independence by learning. Each skill unlocks something, and when they're ready, a grown-up approves the move up.
 [9a]  When Maya needs help, Mom sees it right away and answers with one tap. Maya doesn't get four texts at lunch anymore.
-[9b]  Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only.
+[9b]  Family sharing is built on iCloud, with a private share for each family. Before anything leaves her phone, it's sealed: end-to-end encrypted, for her family only.   (RE-RECORD, about 9 s)
 [10]  Her health information stays inside her family. Not even Apple can read it, and since there's no server, I never get a copy.
 [11]  I wrote it in Swift with SwiftUI. One function decides what each age is allowed to do, so every screen follows the same rules. And 198 tests check it.
 [12a]  There's more: widgets, Apple Watch, Siri, five thousand foods, trends, weekly recaps, urgent alerts for family, a sick-day checklist, a school card, doctor reports, supplies, lessons, and iPad. All of it free.

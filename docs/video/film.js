@@ -18,7 +18,7 @@ export const FILM = [
   { shot: "7b", scene: "appApple", dur: 10.5, in: "fade" },
   { shot: "8", scene: "appEarn", dur: 8.5, in: "smoothleft" },
   { shot: "9a", scene: "scrapFamily", dur: 8.5, in: "fade", cap: { mode: "paper", x: 960, y: 965 } },
-  { shot: "9b", scene: "codeSeal", dur: 6, in: "smoothleft" },
+  { shot: "9b", scene: "codeSeal", dur: 10.5, in: "smoothleft" },
   { shot: "10", scene: "appSees", dur: 8.5, in: "smoothleft" },
   { shot: "11", scene: "hypeGate", dur: 11.5, in: "fade" },
   { shot: "12a", scene: "hypeMontage", dur: 15.5, in: "fade" },
