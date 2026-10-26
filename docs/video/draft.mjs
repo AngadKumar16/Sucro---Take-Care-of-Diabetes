@@ -31,6 +31,8 @@ const manifest = JSON.parse(readFileSync(join(HERE, "film.assets.json"), "utf8")
 for (const [k, f] of Object.entries(manifest)) if (!existsSync(join(HERE, f))) { console.warn(`missing still: ${k} (${f})`); delete manifest[k]; }
 const assets = Object.fromEntries(Object.entries(manifest).map(([k, f]) => [k, `data:image/${f.endsWith(".jpg") ? "jpeg" : "png"};base64,${readFileSync(join(HERE, f)).toString("base64")}`]));
 const names = [...new Set(FILM.map((s) => s.scene))];
+// Caption phrases timed to the voiceover (vo-mix.py), when it has run.
+const CUES = existsSync(join(HERE, "out", "captions.json")) ? JSON.parse(readFileSync(join(HERE, "out", "captions.json"), "utf8")) : {};
 
 const html = `<!doctype html><style>${faces}@font-face{font-family:Caveat;font-weight:700;src:url(data:font/woff2;base64,${caveat}) format("woff2")}html,body{margin:0}</style><canvas id="c"></canvas>
 <script>
@@ -42,8 +44,8 @@ const SCENES = { ${names.join(", ")} };
   await Promise.all(Object.entries(${JSON.stringify(assets)}).map(([k, src]) => new Promise((ok) => { const i = new Image(); i.onload = ok; i.src = src; ASSETS[k] = i; })));
   const big = document.createElement("canvas"); big.width = 1920; big.height = 1080;
   const c = document.getElementById("c"); c.width = ${w}; c.height = ${h};
-  window.frame = (name, t, gate = 1) => {
-    window.CAPTION_GATE = gate;
+  window.frame = (name, t, gate = 1, ct = 0, cap = null, cues = null) => {
+    window.CAPTION_GATE = gate; window.CLIP_T = ct; window.CAPTION_STYLE = cap; window.CAPTION_CUES = cues;
     const g = big.getContext("2d"); g.save(); g.clearRect(0, 0, 1920, 1080); SCENES[name].render(g, t, ASSETS); g.restore();
     const o = c.getContext("2d"); o.drawImage(big, 0, 0, ${w}, ${h});
     return c.toDataURL("image/jpeg", 0.9).slice(23);
@@ -70,7 +72,7 @@ async function renderShot(s) {
     // Captions: in after the incoming blend, out before the outgoing one (no fade at the film's ends).
     const ct = i / FPS, first = s === FILM[0], last = s === FILM.at(-1);
     const gate = Math.min(first ? 1 : Math.min(1, Math.max(0, (ct - XF) / 0.25)), last ? 1 : Math.min(1, Math.max(0, (s.dur - XF - ct) / 0.2)));
-    const b64 = await page.evaluate(([name, t, g]) => window.frame(name, t, g), [s.scene, ct * speed, gate]);
+    const b64 = await page.evaluate(([name, t, g, c, cap, cues]) => window.frame(name, t, g, c, cap, cues), [s.scene, ct * speed, gate, ct, s.cap ?? null, CUES[s.shot] ?? null]);
     if (!ff.stdin.write(Buffer.from(b64, "base64"))) await new Promise((ok) => ff.stdin.once("drain", ok));
   }
   ff.stdin.end();

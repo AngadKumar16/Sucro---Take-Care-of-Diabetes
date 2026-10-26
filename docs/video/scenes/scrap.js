@@ -266,7 +266,7 @@ export const scrapFamily = {
 
 // 12b · The last page: the plant sticker, the plans on sticky notes, then the closing line.
 export const scrapEnd = {
-  duration: 12,
+  duration: 13.5,
   line: "Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed.",
   render(ctx, t) {
     scrapPage(ctx, { seed: 33, spine: true });
@@ -278,7 +278,7 @@ export const scrapEnd = {
       blob(c, () => c.arc(0, -340, 20, 0, Math.PI * 2), "#f2c94c");
       blob(c, () => { c.moveTo(-130, -40); c.lineTo(130, -40); c.lineTo(104, 140); c.lineTo(-104, 140); c.closePath(); }, C.amber);
     });
-    const out = smooth(span(onTwos(t), 9, 9.5));
+    const out = smooth(span(onTwos(t), 8.9, 9.4));
     ctx.save(); ctx.globalAlpha = 1 - out;
     hand(ctx, "What's next", 1260, 110, { size: 80, color: C.pine, under: smooth(span(t, 0.3, 0.8)) });
     const notes = [["App Store", "#fff1a8"], ["Family sharing on", C.mint], ["More languages", "#ffe0d6"], ["School nurses", "#fff1a8"], ["Clinics", C.mint]];
@@ -292,20 +292,20 @@ export const scrapEnd = {
       if (tk > 0) { ctx.save(); ctx.translate(x - 160, y - 40); ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-10 + 10 * Math.min(1, tk * 2), 10 * Math.min(1, tk * 2)); if (tk > 0.5) ctx.lineTo(20 * tk, -20 * tk); ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.strokeStyle = C.pine; ctx.stroke(); ctx.restore(); }
     });
     ctx.restore();
-    caption(ctx, this.line, smooth(span(t, 0.2, 0.6)) * (1 - smooth(span(t, 9, 9.4))));
+    caption(ctx, this.line, smooth(span(t, 0.2, 0.6)) * (1 - smooth(span(t, 8.9, 9.3))));
     // The closing line, taped onto the page.
-    const e = backOut(span(onTwos(t), 9.5, 10));
+    const e = backOut(span(onTwos(t), 9.2, 9.7));
     if (e > 0) {
       cut(ctx, 1230, 540, -0.02, 230, t, (c) => {
         c.scale(e, e);
         blob(c, () => c.rect(-560, -190, 1120, 380), "#ffffff");
         c.shadowColor = "transparent"; c.textAlign = "center"; c.textBaseline = "middle";
-        c.font = FONT(900, 62); c.fillStyle = C.ink; c.fillText("Every kid with diabetes grows up.", 0, -50);
-        c.fillStyle = C.pine; c.fillText("Now their app can too.", 0, 50);
+        c.font = FONT(900, 62); c.fillStyle = C.ink; c.fillText("Diabetes doesn't stop growing.", 0, -50);
+        c.fillStyle = C.pine; c.fillText("DiabetesCare doesn't stop caring.", 0, 50);
       }, { lift: 1.4 });
-      tape(ctx, 720, 370, 200, -0.5, C.mint, 231, span(t, 9.9, 10.1));
-      tape(ctx, 1740, 710, 200, -0.5, "#f2b8a8", 232, span(t, 10, 10.2));
-      doodle(ctx, "heart", 1700, 340, 1.1, t, 10.4, C.berry);
+      tape(ctx, 720, 370, 200, -0.5, C.mint, 231, span(t, 9.6, 9.8));
+      tape(ctx, 1740, 710, 200, -0.5, "#f2b8a8", 232, span(t, 9.7, 9.9));
+      doodle(ctx, "heart", 1700, 340, 1.1, t, 10.1, C.berry);
       hand(ctx, "DiabetesCare", 1230, 840, { size: 60, color: C.pine, rot: -0.02 });
     }
   },

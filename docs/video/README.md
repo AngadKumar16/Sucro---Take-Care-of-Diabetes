@@ -16,7 +16,8 @@ Setup: `npm install` (uses your installed Google Chrome; set `CHROME=<path>` if 
 | Draft | `node draft.mjs` (`node draft.mjs 4 12a` for some shots, `--join` to rejoin) | `out/draft/<shot>-<scene>.mp4`, `film.mp4` |
 | Final clips | `node draft.mjs --final` | `out/final/` (1080p) |
 | Music | `python3 sound.py` | `out/music.wav` (original, made in code; peaks at -18 dBFS) |
-| Final cut | `node draft.mjs --final`, then mux `out/final/film.mp4` + `out/music.wav` | `out/final/DiabetesCare-CAC-2026.mp4` |
+| Voice + captions | `python3 vo-mix.py` (recordings in `assets/vo/<shot>.m4a`) | `out/captions.json` (phrase timing the renderer reads), `out/final/captions.srt`, `out/final/voice.wav` |
+| Final cut | `python3 vo-mix.py`, `node draft.mjs --final`, `python3 vo-mix.py` again | `out/final/DiabetesCare-CAC-2026.mp4` (voice only; `--music` adds the bed) |
 
 - `maya.js`: Maya, drawn in code. `props.js`: chair, table, bed.
 - `scenes/`: one `render(ctx, t)` clip per Maya shot, plus shared helpers (`common.js`).

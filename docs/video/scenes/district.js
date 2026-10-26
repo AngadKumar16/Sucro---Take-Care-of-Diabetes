@@ -72,7 +72,7 @@ export const district = {
   duration: 12.5,
   line: "According to the CDC, about 64,000 adults in my district, Texas's 22nd, live with diabetes. And across the country, 314,000 kids and teens have type 1.",
   render(ctx, t) {
-    const hits = [3, 7.6];
+    const hits = [2.2, 8.6];
     ctx.save();
     shake(ctx, t, hits, 8);
     hypeBg(ctx, t, { tint: "#1f4a37" });
@@ -107,10 +107,10 @@ export const district = {
     ctx.restore();
     // The dots: one per thousand adults; the lit ones (diabetes) count up with the number.
     const { pts, step, lit } = dots();
-    const show = smooth(span(t, 2.6, 3.2)) * (1 - smooth(span(t, 6.4, 7)));
+    const show = smooth(span(t, 1.9, 2.4)) * (1 - smooth(span(t, 6.4, 7)));
     if (show > 0) {
       const r = Math.max(3, step * view[0] * 0.3);
-      const count = smooth(span(t, 3, 5.6));
+      const count = smooth(span(t, 2.2, 4.4));
       pts.forEach((p, i) => {
         const [x, y] = project(view, p), k = lit.get(i);
         const on = k !== undefined && k < count * WITH;
@@ -133,20 +133,20 @@ export const district = {
       ctx.beginPath(); ctx.arc(cx, cy, 10 + k * 50, 0, Math.PI * 2); ctx.lineWidth = 4; ctx.strokeStyle = `rgba(242,201,76,${1 - k})`; ctx.stroke();
       ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fillStyle = "#f2c94c"; ctx.fill();
     }
-    if (d > 0 && t < 3) { const [lx, ly] = project(view, [-95.9, 29.95]); text(ctx, "TX-22", lx, ly, { size: 40, weight: 900, color: "#f2c94c" }); }
+    if (d > 0 && t < 2.2) { const [lx, ly] = project(view, [-95.9, 29.95]); text(ctx, "TX-22", lx, ly, { size: 40, weight: 900, color: "#f2c94c" }); }
     // The numbers, each with its source right under it.
-    const n = Math.round((64000 * smooth(span(t, 3, 5.6))) / 1000) * 1000;
+    const n = Math.round((64000 * smooth(span(t, 2.2, 4.4))) / 1000) * 1000;
     slam(ctx, t, 0.4, "According to the CDC", 1460, 46, { size: 34, color: C.mint, shadow: C.pine, rot: 0 });
-    slam(ctx, t, 1.2, "Texas's 22nd", 1460, 116, { size: 64, color: "#f2c94c", shadow: C.pine, rot: -0.02 });
-    if (t > 3) slam(ctx, t, 3, n.toLocaleString("en-US"), 1460, 260, { size: 140, color: C.cream, shadow: C.berry, rot: -0.03 });
-    slam(ctx, t, 3.3, "adults with diabetes", 1460, 372, { size: 46, color: C.mint, shadow: C.pine, rot: -0.02 });
-    slam(ctx, t, 5.2, "more than 1 in 9", 1290, 446, { size: 36, color: "#10261c", shadow: C.pine, pill: "#f2c94c", rot: 0.02 });
-    cite(ctx, "According to CDC PLACES 2025 (2023 data), census tracts in TX-22", 1460, 506, smooth(span(t, 3.6, 4.1)));
-    burst(ctx, t, 3, 1460, 260, { color: C.berry, r: 220 });
-    slam(ctx, t, 7.6, "314,000", 1460, 640, { size: 120, color: "#f2c94c", shadow: C.berry, rot: 0.03 });
-    slam(ctx, t, 7.9, "U.S. kids and teens with type 1", 1460, 738, { size: 40, color: C.cream, shadow: C.pine, rot: 0.01 });
-    cite(ctx, "According to the CDC, National Diabetes Statistics Report", 1460, 800, smooth(span(t, 8.2, 8.7)));
-    burst(ctx, t, 7.6, 1460, 640, { color: "#f2c94c", r: 200 });
+    slam(ctx, t, 4.7, "Texas's 22nd", 1460, 116, { size: 64, color: "#f2c94c", shadow: C.pine, rot: -0.02 });
+    if (t > 2.2) slam(ctx, t, 2.2, n.toLocaleString("en-US"), 1460, 260, { size: 140, color: C.cream, shadow: C.berry, rot: -0.03 });
+    slam(ctx, t, 2.5, "adults with diabetes", 1460, 372, { size: 46, color: C.mint, shadow: C.pine, rot: -0.02 });
+    slam(ctx, t, 5.6, "more than 1 in 9", 1290, 446, { size: 36, color: "#10261c", shadow: C.pine, pill: "#f2c94c", rot: 0.02 });
+    cite(ctx, "According to CDC PLACES 2025 (2023 data), census tracts in TX-22", 1460, 506, smooth(span(t, 2.8, 3.3)));
+    burst(ctx, t, 2.2, 1460, 260, { color: C.berry, r: 220 });
+    slam(ctx, t, 8.6, "314,000", 1460, 640, { size: 120, color: "#f2c94c", shadow: C.berry, rot: 0.03 });
+    slam(ctx, t, 8.9, "U.S. kids and teens with type 1", 1460, 738, { size: 40, color: C.cream, shadow: C.pine, rot: 0.01 });
+    cite(ctx, "According to the CDC, National Diabetes Statistics Report", 1460, 800, smooth(span(t, 9.2, 9.7)));
+    burst(ctx, t, 8.6, 1460, 640, { color: "#f2c94c", r: 200 });
     ctx.restore();
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },

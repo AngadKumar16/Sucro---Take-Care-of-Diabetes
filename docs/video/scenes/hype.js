@@ -89,7 +89,7 @@ export const hypeTitle = {
   line: "So I built DiabetesCare, an iPhone app that helps kids and teens with type 1 diabetes take over their own care, with their parents in the loop.",
   render(ctx, t) {
     const word = "DiabetesCare", letterAt = (i) => 1.1 + i * 0.07;
-    const hits = [0.45, ...[...word].map((_, i) => letterAt(i)), 2.1, 3.7, 5.2, 8.2];
+    const hits = [0.45, ...[...word].map((_, i) => letterAt(i)), 2.1, 3, 6.6, 8.5];
     ctx.save();
     shake(ctx, t, hits, 14);
     hypeBg(ctx, t, { tint: "#2f7a55", pulse: Math.exp(-Math.max(0, t - 2.1) * 3) * (t > 2.1 ? 1 : 0) });
@@ -112,15 +112,15 @@ export const hypeTitle = {
     const widths = [...word].map((ch) => ctx.measureText(ch).width);
     let x = W / 2 - widths.reduce((a, b) => a + b, 0) / 2;
     [...word].forEach((ch, i) => { slam(ctx, t, letterAt(i), ch, x + widths[i] / 2, 610, { size: 150, rot: (hash(i) - 0.5) * 0.12, shadow: i < 8 ? C.pine : C.berry }); x += widths[i]; });
-    slam(ctx, t, 3.7, "grows with you", W / 2, 738, { size: 70, color: NIGHT, shadow: C.pine, pill: C.mint, rot: -0.03 });
-    burst(ctx, t, 3.7, W / 2, 738, { color: C.mint, r: 260, n: 18 });
+    slam(ctx, t, 8.5, "grows with you", W / 2, 738, { size: 70, color: NIGHT, shadow: C.pine, pill: C.mint, rot: -0.03 });
+    burst(ctx, t, 8.5, W / 2, 738, { color: C.mint, r: 260, n: 18 });
     // Who made it, and who it's for (the purpose in one sentence is the spoken line).
     const by = smooth(span(t, 2.4, 2.9));
     if (by > 0) text(ctx, "by Angad Kumar", 70, 64, { size: 40, weight: 800, align: "left", color: `rgba(191,224,201,${by})` });
-    slam(ctx, t, 5.2, "For kids & teens with type 1", 440, 250, { size: 52, color: C.cream, shadow: C.berry, rot: -0.04 });
-    slam(ctx, t, 8.2, "+ their parents", 1520, 250, { size: 52, color: C.cream, shadow: C.pine, rot: 0.04 });
+    slam(ctx, t, 3, "For kids & teens with type 1", 440, 250, { size: 52, color: C.cream, shadow: C.berry, rot: -0.04 });
+    slam(ctx, t, 6.6, "+ their parents", 1520, 250, { size: 52, color: C.cream, shadow: C.pine, rot: 0.04 });
     ctx.restore();
-    flash(ctx, t, [0.45, 2.1, 3.7], 0.45);
+    flash(ctx, t, [0.45, 2.1, 8.5], 0.45);
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };

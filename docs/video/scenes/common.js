@@ -38,6 +38,8 @@ export function text(ctx, s, x, y, { size = 44, weight = 800, color = C.ink, ali
 // it, so two shots' captions never show at once while they blend.
 export function caption(ctx, line, alpha = 1) {
   alpha *= globalThis.CAPTION_GATE ?? 1;
+  const cap = globalThis.CAPTION_STYLE;
+  if (cap && cap.mode !== "card" && globalThis.CAPTION_CUES) return phraseCaption(ctx, cap, globalThis.CAPTION_CUES, globalThis.CLIP_T ?? 0);
   if (!line || alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -131,4 +133,47 @@ export function fadeLayer(ctx, alpha, draw, slot = 0) {
   g.setTransform(ctx.getTransform());
   draw(g);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha *= alpha; ctx.drawImage(LAYERS[slot], 0, 0); ctx.restore();
+}
+
+// Phrase captions, timed to the voice (out/captions.json, from vo-mix.py): one phrase at a time,
+// easing in with a small rise. "float" = big words with an ink outline placed in open space;
+// "paper" = the phrase on a taped paper strip, for the scrapbook pages.
+function wrap(ctx, s, w) {
+  const out = []; let cur = "";
+  for (const word of s.split(" ")) { const next = cur ? cur + " " + word : word; if (ctx.measureText(next).width > w && cur) { out.push(cur); cur = word; } else cur = next; }
+  out.push(cur); return out;
+}
+function phraseCaption(ctx, cap, cues, t) {
+  const cue = cues.find(([a, b]) => t >= a - 0.05 && t < b);
+  if (!cue) return;
+  const [a, b, s] = cue;
+  const k = smooth(span(t, a - 0.05, a + 0.15)) * (1 - smooth(span(t, b - 0.12, b)));
+  if (k <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.translate(cap.x, cap.y + (1 - k) * 12);
+  if (cap.mode === "float") {
+    const size = cap.size ?? 54;
+    ctx.font = FONT(900, size);
+    const lines = wrap(ctx, s, cap.w ?? 900), lh = size * 1.18;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+    lines.forEach((l, i) => {
+      const y = (i - (lines.length - 1) / 2) * lh;
+      ctx.shadowColor = "rgba(20,35,28,.45)"; ctx.shadowBlur = 14; ctx.shadowOffsetY = 4;
+      ctx.lineWidth = size * 0.13; ctx.strokeStyle = "rgba(31,48,39,.95)"; ctx.strokeText(l, 0, y);
+      ctx.shadowColor = "transparent";
+      ctx.fillStyle = "#fffdf6"; ctx.fillText(l, 0, y);
+    });
+  } else {
+    ctx.font = FONT(800, 46);
+    const w = Math.min(1500, ctx.measureText(s).width + 70), h = 84;
+    ctx.rotate(-0.012);
+    ctx.shadowColor = "rgba(60,40,20,.28)"; ctx.shadowBlur = 12; ctx.shadowOffsetY = 6;
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(-w / 2, -h / 2, w, h);
+    ctx.shadowColor = "transparent";
+    ctx.fillStyle = "rgba(191,224,201,.85)"; ctx.fillRect(-w / 2 - 26, -h / 2 - 8, 70, 30);
+    ctx.fillStyle = "rgba(242,184,168,.85)"; ctx.fillRect(w / 2 - 44, h / 2 - 22, 70, 30);
+    text(ctx, s, 0, 3, { size: 46, weight: 800 });
+  }
+  ctx.restore();
 }

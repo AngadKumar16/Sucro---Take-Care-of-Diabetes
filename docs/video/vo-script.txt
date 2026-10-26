@@ -20,4 +20,5 @@ Quiet room, phone or mic 6 inches away, one clean take per line.
 [11]  I wrote it in Swift with SwiftUI. One function decides what each age is allowed to do, so every screen follows the same rules. And 198 tests check it.
 [12a]  There's more: widgets, Apple Watch, Siri, five thousand foods, trends, weekly recaps, urgent alerts for family, a sick-day checklist, a school card, doctor reports, supplies, lessons, and iPad. All of it free.
 [12b]  Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed.
+[12b-2]  Diabetes doesn't stop growing. DiabetesCare doesn't stop caring.   (a separate recording, 12b-2.m4a, said slowly)
 [13]  I'm Angad. I built DiabetesCare for my mom, and for every kid who'll grow up with it.
