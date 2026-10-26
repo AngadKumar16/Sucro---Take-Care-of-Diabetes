@@ -2,12 +2,12 @@
 // Lines match docs/demo-video.md; the caption is drawn here so drafts read on their own.
 import { C, drawMaya, thought } from "../maya.js";
 import { chair, table, bed } from "../props.js";
-import { W, H, FLOOR, smooth, backOut, span, pushIn, rr, text, caption, cornerCard, room, windowFrame, wallClock, classmate, textBubble } from "./common.js";
+import { W, H, FLOOR, smooth, backOut, span, pushIn, rr, text, caption, cornerCard, room, windowFrame, wallClock, classmate, textBubble, fadeLayer } from "./common.js";
 
 // 2a · 6:40 a.m., kitchen table, meter and a paper log.
 export const kitchen = {
   duration: 8,
-  line: "Meet Maya. She's fourteen. Every day starts with numbers.",
+  line: "Meet Maya. She's fourteen, and her day starts with a blood sugar check.",
   render(ctx, t) {
     ctx.save();
     pushIn(ctx, t, 9, 0.05, 900, 600);
@@ -33,14 +33,15 @@ export const kitchen = {
     nums.forEach((n, i) => { const a = span(t, 1 + i * 1.2, 1.4 + i * 1.2); if (a > 0) text(ctx, n, 1196 + i * 26, top - 30 - i * 2, { size: 16, weight: 800, color: `rgba(47,74,59,${a})` }); });
     ctx.restore();
     cornerCard(ctx, "Maya is made up. Her days aren't.", smooth(span(t, 0.3, 0.9)));
+    timeStamp(ctx, "6:40 a.m.", smooth(span(t, 0.3, 0.9)));
     caption(ctx, this.line, smooth(span(t, 0.4, 0.8)));
   },
 };
 
 // 2b · School lunch: Mom texts "What's your number?" again and again.
 export const lunch = {
-  duration: 8,
-  line: "Her mom checks in all day, because she has no other way to know.",
+  duration: 10.5,
+  line: "Her mom checks in all day, because she has no other way to know. And a new Texas law keeps phones put away at school unless a doctor signs off.",
   render(ctx, t) {
     ctx.save();
     pushIn(ctx, t, 9, 0.04, 760, 560);
@@ -55,12 +56,19 @@ export const lunch = {
     const lean = smooth(span(t, 3.2, 4.2)) * 0.12;
     ctx.save(); ctx.translate(1300, FLOOR - 132); ctx.rotate(-lean); classmate(ctx, 0, 0, 1.15, C.mint, "#6b4a32"); ctx.restore();
     ctx.save(); ctx.translate(1520, FLOOR - 132); ctx.rotate(-lean * 0.7); classmate(ctx, 0, 0, 1.1, "#f3d6a8", "#2f2522"); ctx.restore();
-    const expression = t < 4.6 ? "embarrassed" : "annoyed";
-    const out = drawMaya(ctx, { x: 780, y: FLOOR, scale: 1.3, facing: "three-quarter", expression, pose: "sitPhone", t });
+    // Texas HB 1481 (2025): the notice goes up and the phone goes away.
+    const away = smooth(span(t, 6.6, 7.4)), calm = smooth(span(t, 4.4, 5));
+    let out;
+    fadeLayer(ctx, 1 - away, (g) => {
+      fadeLayer(g, 1 - calm, (h) => { out = drawMaya(h, { x: 780, y: FLOOR, scale: 1.3, facing: "three-quarter", expression: "embarrassed", pose: "sitPhone", t }); }, 3);
+      fadeLayer(g, calm, (h) => { out = drawMaya(h, { x: 780, y: FLOOR, scale: 1.3, facing: "three-quarter", expression: "annoyed", pose: "sitPhone", t }); }, 4);
+    }, 1);
+    fadeLayer(ctx, away, (g) => drawMaya(g, { x: 780, y: FLOOR, scale: 1.3, facing: "three-quarter", expression: "annoyed", pose: "sit", t }), 2);
     // Buzz marks beside the phone each time a text lands.
     const hits = [0.8, 2.2, 3.6, 5.0];
-    const hand = out.hands[1], hx = 780 + hand[0] * 1.3, hy = FLOOR + hand[1] * 1.3;
-    for (const h of hits) {
+    // (The phone is in her hand until she puts it away at 6.6, after the last buzz.)
+    const hand = out ? out.hands[1] : [0, 0], hx = 780 + hand[0] * 1.3, hy = FLOOR + hand[1] * 1.3;
+    if (out) for (const h of hits) {
       const k = span(t, h, h + 0.5);
       if (k > 0 && k < 1) for (const s of [-1, 1]) {
         ctx.beginPath(); ctx.arc(hx + 6, hy - 18, 44 + k * 16, s > 0 ? -0.6 : Math.PI - 0.6, s > 0 ? 0.6 : Math.PI + 0.6);
@@ -69,10 +77,49 @@ export const lunch = {
     }
     ctx.restore();
     const msgs = ["What's your number?", "What's your number??", "Maya? Number?", "Maya?? Answer please"];
-    hits.forEach((h, i) => { const k = span(t, h, h + 0.45); if (k > 0) textBubble(ctx, 1480, 150 + i * 140, "Mom", msgs[i], 0.2 + 0.8 * backOut(k)); });
+    ctx.save(); ctx.globalAlpha = 1 - away * 0.6;
+    hits.forEach((h, i) => { const k = span(t, h, h + 0.45); if (k > 0) textBubble(ctx, 1480, 200 + i * 132, "Mom", msgs[i], 0.2 + 0.8 * backOut(k)); });
+    ctx.restore();
+    lawNotice(ctx, t, 5.7);
+    timeStamp(ctx, "12:15 p.m.", smooth(span(t, 0.3, 0.9)));
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };
+
+// The time of day, top right: a small clock card so the day reads as one day.
+function timeStamp(ctx, s, alpha) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.font = FONT(900, 34);
+  const w = ctx.measureText(s).width + 92;
+  rr(ctx, W - w - 56, 52, w, 64, 32, "rgba(251,248,241,.94)", C.ink, 3);
+  ctx.beginPath(); ctx.arc(W - w - 56 + 34, 84, 15, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = C.pine; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W - w - 56 + 34, 84); ctx.lineTo(W - w - 56 + 34, 74); ctx.moveTo(W - w - 56 + 34, 84); ctx.lineTo(W - w - 56 + 42, 88); ctx.stroke();
+  text(ctx, s, W - 56 - (w - 60) / 2 - 4, 85, { size: 34, weight: 900 });
+  ctx.restore();
+}
+
+// The notice pinned up in 2b: Texas HB 1481, signed June 2025, bans personal devices for the
+// whole school day; it allows them with a physician's directive or a 504/IEP plan.
+function lawNotice(ctx, t, a) {
+  const k = backOut(span(t, a, a + 0.5));
+  if (k <= 0) return;
+  ctx.save(); ctx.translate(610, 250 - (1 - Math.min(1, k)) * 60); ctx.rotate(-0.03); ctx.scale(0.85 + 0.15 * k, 0.85 + 0.15 * k);
+  ctx.shadowColor = "rgba(30,45,36,.3)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 10;
+  rr(ctx, -330, -150, 660, 300, 18, "#fffdf6", C.ink, 4);
+  ctx.shadowColor = "transparent";
+  rr(ctx, -330, -150, 660, 74, [18, 18, 0, 0], C.berry, null);
+  text(ctx, "PHONES AWAY", 0, -110, { size: 46, weight: 900, color: "#ffffff" });
+  // A phone with a line through it.
+  rr(ctx, -270, -40, 70, 120, 14, C.cream, C.ink, 4);
+  ctx.beginPath(); ctx.moveTo(-290, 90); ctx.lineTo(-180, -50); ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.strokeStyle = C.berry; ctx.stroke();
+  text(ctx, "Texas House Bill 1481", -140, -24, { size: 36, weight: 900, align: "left" });
+  text(ctx, "No phones all school day", -140, 24, { size: 30, weight: 800, color: C.pine, align: "left" });
+  text(ctx, "Exception: a doctor's note · 2025", -140, 74, { size: 26, weight: 800, color: "#6f8277", align: "left" });
+  // Push pin.
+  ctx.beginPath(); ctx.arc(0, -150, 14, 0, Math.PI * 2); ctx.fillStyle = C.amber; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
+  ctx.restore();
+}
 
 // 2c · 2 a.m.: an alarm, the pillow, then she sits up: "I can do this. Just let me."
 export const night = {
@@ -98,17 +145,20 @@ export const night = {
       ctx.beginPath(); ctx.arc(1650, FLOOR - 190, 30 + k * 90, Math.PI * 1.1, Math.PI * 1.9);
       ctx.lineWidth = 5; ctx.strokeStyle = `rgba(240,140,110,${(1 - k) * 0.8})`; ctx.stroke();
     }
-    if (t < 5.6) {
-      drawMaya(ctx, { x: 1060, y: FLOOR - 150, scale: 1.25, facing: "side", expression: "tired", pose: "pillow", t });
-    } else {
-      drawMaya(ctx, { x: 820, y: FLOOR, scale: 1.3, facing: "three-quarter", expression: t < 6.6 ? "annoyed" : "neutral", pose: "sit", t });
-    }
+    // She sits up slowly: the lying pose dissolves into the sitting one while she rises, still
+    // tired, and only then does her face settle (a cross-fade of the face, never a snap).
+    const up = smooth(span(t, 4.9, 6.1)), settle = smooth(span(t, 6.3, 7.1));
+    fadeLayer(ctx, 1 - up, (g) => drawMaya(g, { x: 1060, y: FLOOR - 150 - up * 20, scale: 1.25, facing: "side", expression: "tired", pose: "pillow", t }), 0);
+    const sit = (expression) => (g) => drawMaya(g, { x: 820, y: FLOOR + (1 - up) * 40, scale: 1.3, facing: "three-quarter", expression, pose: "sit", t });
+    fadeLayer(ctx, up * (1 - settle), sit("tired"), 1);
+    fadeLayer(ctx, up * settle, sit("neutral"), 2);
     // Night light: everything dims except what glows.
     ctx.fillStyle = "rgba(16,30,24,.28)";
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
-    const k = span(t, 6.8, 7.3);
-    if (k > 0) { ctx.save(); ctx.translate(1100, 300); ctx.scale(backOut(k), backOut(k)); thought(ctx, 0, 0, "I can do this. Just let me.", { tx: -220, ty: 230, size: 50 }); ctx.restore(); }
+    timeStamp(ctx, "2:00 a.m.", smooth(span(t, 0.3, 0.9)));
+    const k = smooth(span(t, 6.9, 7.5));
+    if (k > 0) { ctx.save(); ctx.globalAlpha = k; ctx.translate(1100, 300 + (1 - k) * 20); ctx.scale(0.9 + 0.1 * k, 0.9 + 0.1 * k); thought(ctx, 0, 0, "I can do this. Just let me.", { tx: -220, ty: 230, size: 50 }); ctx.restore(); }
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };

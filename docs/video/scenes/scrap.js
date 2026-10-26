@@ -5,6 +5,7 @@ import { C } from "../maya.js";
 import { W, H, smooth, backOut, span, rr, caption, FONT } from "./common.js";
 import { cut, blob, hop, onTwos, hash, pose, P } from "./paper.js";
 import { realPhone, IMG } from "./app.js";
+import { SRC } from "./source.js";
 export const HAND = (size) => `700 ${size}px Caveat, "Bradley Hand", cursive`;
 
 // The spread: kraft cover at the edges, a cream dotted journal page, a stitched spine shadow.
@@ -116,8 +117,11 @@ export function polaroid(ctx, t, { img, crop = [0, 1], x, y, w, ph, rot = 0, id 
     const pw = w - 36, px = -pw / 2, py = -h / 2 + 18;
     c.fillStyle = "#e8e3d8"; c.fillRect(px, py, pw, ph);
     if (img) {
-      const sh = img.width * (ph / pw), sy = Math.min(img.height - sh, crop[0] * img.height);
-      c.drawImage(img, 0, Math.max(0, sy), img.width, sh, px, py, pw, ph);
+      // Cover the frame: full width from `crop[0]` down, or, for a wide photo, the middle of it.
+      let sw = img.width, sh = img.width * (ph / pw);
+      if (sh > img.height) { sh = img.height; sw = img.height * (pw / ph); }
+      const sx = (img.width - sw) / 2, sy = Math.max(0, Math.min(img.height - sh, crop[0] * img.height));
+      c.drawImage(img, sx, sy, sw, sh, px, py, pw, ph);
     }
     if (label) { c.font = HAND(46); c.fillStyle = C.ink; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(label, 0, h / 2 - 52); }
   }, { lift: 1 + (1 - Math.min(1, k)) * 2.5 });
@@ -186,26 +190,51 @@ export const scrapKit = {
 
 // 7 · Real-life tools: each one printed as a polaroid and taped in as it's named.
 export const scrapTools = {
-  duration: 12,
+  duration: 9.5,
   line: "Logging feels like real life: a kitchen scale for carbs, an insulin pen you dial, and a body map for sites.",
   render(ctx, t) {
     scrapPage(ctx, { seed: 7 });
-    hand(ctx, "Feels like real life", W / 2, 110, { size: 76, color: C.pine, rot: -0.02, under: smooth(span(t, 0.4, 1)) });
-    // [still, crop top, label, lands at, x, y, rot, tape]
+    hand(ctx, "Feels like real life", W / 2, 100, { size: 72, color: C.pine, rot: -0.02, under: smooth(span(t, 0.3, 0.9)) });
+    // [still, crop top, label, lands at, x, y, rot, tape, code: [snippet, line, ...]]
     const shots = [
-      ["carbsFilled", 0.05, "kitchen scale", 1.6, 320, 500, -0.06, C.mint],
-      ["insulinPen", 0.13, "insulin pen", 3.6, 750, 530, 0.05, "#f2b8a8"],
-      ["bodyMap", 0.17, "body map", 5.6, 1170, 500, -0.04, "#f3d58a"],
-      ["trendsTubes", 0.1, "time in range", 7.6, 1600, 530, 0.06, C.mint],
+      ["carbsFilled", 0.05, "kitchen scale", 1.4, 300, 410, -0.05, C.mint, [["scale", 4], ["scale", 14]]],
+      ["insulinPen", 0.13, "insulin pen", 3.4, 740, 430, 0.04, "#f2b8a8", [["pen", 1], ["penDraw", 0]]],
+      ["bodyMap", 0.17, "body map", 5.4, 1180, 410, -0.04, "#f3d58a", [["bodyMap", 1], ["bodyMap", 3]]],
+      ["trendsTubes", 0.1, "time in range", 7, 1620, 430, 0.05, C.mint, [["tubes", 0], ["tubes", 3]]],
     ];
-    shots.forEach(([name, sy, label, a, x, y, rot, tc], i) => polaroid(ctx, t, { img: IMG(name), crop: [sy, 0], x, y, w: 410, ph: 420, rot, id: 40 + i, label, a, tapeColor: tc }));
-    doodleArrow(ctx, t, 2.4, [560, 830], [470, 780], { bend: -0.4, id: 1 });
-    hand(ctx, "30 g, like a real scale!", 300, 835, { size: 40, color: C.berry, rot: -0.04 });
-    doodle(ctx, "star", 1830, 250, 0.9, t, 9.4, C.amber);
-    doodle(ctx, "spark", 980, 230, 1, t, 4.2, C.berry);
+    shots.forEach(([name, sy, label, a, x, y, rot, tc, code], i) => {
+      polaroid(ctx, t, { img: IMG(name), crop: [sy, 0], x, y, w: 380, ph: 330, rot, id: 40 + i, label, a, tapeColor: tc });
+      printout(ctx, t, a + 0.35, x + 10, 770, -rot * 0.6, 60 + i, SRC[code[0][0]].file, code.map(([k, l]) => SRC[k].lines[l].trim()));
+    });
+    doodle(ctx, "star", 1840, 230, 0.9, t, 8.2, C.amber);
+    doodle(ctx, "spark", 980, 210, 1, t, 4.2, C.berry);
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };
+
+// A torn strip of printed code, taped in under a photo; a highlighter swipes its first line.
+function printout(ctx, t, a, x, y, rot, id, file, lines) {
+  const k = backOut(span(onTwos(t), a, a + 0.3));
+  if (k <= 0) return;
+  const w = 400, h = 118;
+  cut(ctx, x, y - (1 - Math.min(1, k)) * 30, rot, id, t, (c) => {
+    c.beginPath(); c.moveTo(-w / 2, -h / 2); c.lineTo(w / 2, -h / 2);
+    for (let i = 0; i <= 16; i++) c.lineTo(w / 2 - (i * w) / 16, h / 2 + (i % 2 ? 7 : 0) + (hash(id + i) - 0.5) * 4);
+    c.closePath(); c.fillStyle = "#ffffff"; c.fill();
+    c.shadowColor = "transparent";
+    c.font = '700 17px ui-monospace, "SF Mono", Menlo, monospace'; c.textAlign = "left"; c.textBaseline = "middle";
+    c.fillStyle = "#8a9a90"; c.fillText(file, -w / 2 + 16, -h / 2 + 18);
+    const hl = smooth(span(t, a + 0.4, a + 0.9));
+    lines.forEach((l, i) => {
+      let s = l; while (c.measureText(s).width > w - 32 && s.length > 4) s = s.slice(0, -2);
+      if (s !== l) s = s.slice(0, -1) + "…";
+      const ly = -h / 2 + 50 + i * 30;
+      if (i === 0 && hl > 0) { c.fillStyle = "rgba(242,201,76,.65)"; c.fillRect(-w / 2 + 12, ly - 13, (Math.min(w - 24, c.measureText(s).width + 8)) * hl, 26); }
+      c.fillStyle = C.ink; c.fillText(s, -w / 2 + 16, ly);
+    });
+  });
+  tape(ctx, x - 150, y - h / 2 + 4, 90, -0.5, "#f3d58a", id + 7, span(t, a + 0.2, a + 0.35));
+}
 
 // 9a · Mom's phone, taped into the book: Maya asked for help, Mom answers in one tap; the four
 // lunch texts from 2b get scribbled out.
@@ -238,7 +267,7 @@ export const scrapFamily = {
 // 12b · The last page: the plant sticker, the plans on sticky notes, then the closing line.
 export const scrapEnd = {
   duration: 12,
-  line: "Next: the App Store, with family sharing on. Then Spanish, school nurses, and clinics that hand it to families the day a kid is diagnosed.",
+  line: "Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed.",
   render(ctx, t) {
     scrapPage(ctx, { seed: 33, spine: true });
     cut(ctx, 440, 700, 0, 200, t, (c) => {
@@ -252,7 +281,7 @@ export const scrapEnd = {
     const out = smooth(span(onTwos(t), 9, 9.5));
     ctx.save(); ctx.globalAlpha = 1 - out;
     hand(ctx, "What's next", 1260, 110, { size: 80, color: C.pine, under: smooth(span(t, 0.3, 0.8)) });
-    const notes = [["App Store", "#fff1a8"], ["Family sharing on", C.mint], ["En español", "#ffe0d6"], ["School nurses", "#fff1a8"], ["Clinics", C.mint]];
+    const notes = [["App Store", "#fff1a8"], ["Family sharing on", C.mint], ["More languages", "#ffe0d6"], ["School nurses", "#fff1a8"], ["Clinics", C.mint]];
     notes.forEach(([s, col], i) => {
       const a = [0.9, 2, 3.2, 4.1, 5][i], k = backOut(span(onTwos(t), a, a + 0.3));
       if (k <= 0) return;
@@ -279,5 +308,49 @@ export const scrapEnd = {
       doodle(ctx, "heart", 1700, 340, 1.1, t, 10.4, C.berry);
       hand(ctx, "DiabetesCare", 1230, 840, { size: 60, color: C.pine, rot: -0.02 });
     }
+  },
+};
+
+// 13 · Sign-off: the last page of the book is Angad's. Two real photos taped in (drop them at
+// assets/personal/me.jpg and mom.jpg; until then a dashed slot says what goes there), the app icon
+// as a sticker, and a handwritten note.
+function photoSlot(ctx, t, name, label, x, y, rot, id, a) {
+  const img = IMG(name);
+  if (img) return polaroid(ctx, t, { img, crop: [0.1, 0], x, y, w: 420, ph: 420, rot, id, label, a, tapeColor: id % 2 ? "#f2b8a8" : C.mint });
+  const k = backOut(span(onTwos(t), a, a + 0.4));
+  if (k <= 0) return;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(k, k);
+  ctx.setLineDash([14, 12]); rr(ctx, -210, -270, 420, 540, 10, "rgba(255,255,255,.6)", C.berry, 4); ctx.setLineDash([]);
+  ctx.font = HAND(48); ctx.fillStyle = C.berry; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(`photo: ${label}`, 0, -20); ctx.font = HAND(34); ctx.fillText(`assets/personal/${name === "photoMe" ? "me" : "mom"}.jpg`, 0, 40);
+  ctx.restore();
+}
+
+export const scrapSignOff = {
+  duration: 8,
+  line: "I'm Angad. I built DiabetesCare for my mom, and for every kid who'll grow up with it.",
+  render(ctx, t) {
+    scrapPage(ctx, { seed: 77, spine: true });
+    // One photo (Angad) unless Mom's is there too.
+    if (IMG("photoMom")) {
+      photoSlot(ctx, t, "photoMe", "me", 400, 440, -0.06, 301, 0.3);
+      photoSlot(ctx, t, "photoMom", "Mom", 860, 470, 0.05, 302, 1.6);
+      doodle(ctx, "heart", 640, 170, 1.4, t, 2.6, C.berry);
+    } else {
+      polaroid(ctx, t, { img: IMG("photoMe"), crop: [0.12, 0], x: 600, y: 430, w: 500, ph: 560, rot: -0.04, id: 301, label: "me", a: 0.3, tapeColor: C.mint });
+      doodle(ctx, "heart", 930, 150, 1.3, t, 2.6, C.berry);
+    }
+    const icon = IMG("appIcon");
+    const ik = backOut(span(onTwos(t), 3, 3.4));
+    if (icon && ik > 0) cut(ctx, 1400, 300, 0.06, 303, t, (c) => {
+      c.scale(ik, ik);
+      blob(c, () => c.roundRect(-130, -130, 260, 260, 60), "#ffffff");
+      c.shadowColor = "transparent"; c.save(); c.beginPath(); c.roundRect(-118, -118, 236, 236, 52); c.clip(); c.drawImage(icon, -118, -118, 236, 236); c.restore();
+    });
+    if (t > 3.6) hand(ctx, "DiabetesCare", 1400, 480, { size: 58, color: C.pine, rot: -0.02 });
+    if (t > 4.4) hand(ctx, "for Mom, and for every kid like Maya", 1430, 580, { size: 46, rot: -0.02 });
+    if (t > 5.2) hand(ctx, "Angad", 1560, 680, { size: 76, color: C.berry, rot: -0.04, under: smooth(span(t, 5.4, 6)) });
+    doodle(ctx, "star", 1760, 210, 1, t, 5.8, C.amber);
+    caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };

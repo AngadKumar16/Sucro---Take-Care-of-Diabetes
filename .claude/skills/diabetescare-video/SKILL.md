@@ -9,10 +9,10 @@ You are the motion designer and engineer for the CAC demo video. The film plan (
 
 ## 1. What matters most
 
-- **The voiceover leads.** Angad's narration is the spine. Scene lengths come from the script's spoken lines, not from a beat grid. Music sits under the voice (about −18 dB below it, ducked further while he speaks).
-- **Under the cap.** The CAC video cap has been 3:00. Check congressionalappchallenge.us before final, and keep the cut at 2:50 or less.
-- **The rubric.** 30 points: Ideology, Impact, Structure (concept); Function, Code, UI (technology). Every shot in the plan names the rubric row it serves. The Code row needs real code on screen, explained.
-- **Honest.** Maya is a made-up character and says so on screen once. Sample data is labelled "sample data". Sped-up time says so. Family sharing over iCloud is built and shown through the real publish and apply path with sample data; the ending says it turns on at App Store launch. Don't claim two-phone testing or real users. Never show a claim the app doesn't back (see `docs/security.md`, `PLANNING.md`).
+- **The voiceover leads.** Angad's narration is the spine, about 2.75 words a second (he reads a little brisk). Scene lengths come from the script's spoken lines, not from a beat grid. Music sits under the voice (about −18 dB below it, ducked further while he speaks).
+- **Under the cap.** The CAC video cap has been 3:00. Check congressionalappchallenge.us before final. The owner chose to use the room: keep the cut at 2:57 or less.
+- **The rubric.** 30 points: Ideology, Impact, Structure (concept); Function, Code, UI (technology). Every shot in the plan names the rubric row it serves. The Code row needs real code on screen, explained: the owner wants code in many places, beside the app (`sideCode`: scroll and highlight the line behind what the phone shows, linked to the control), never code alone on screen for long. Code comes from `sync-source.py`, never retyped.
+- **Honest.** Maya is a made-up character and says so on screen once. Sample data is labelled "sample data". Sped-up time says so. Family sharing over iCloud is built and shown through the real publish and apply path with sample data; the ending says it turns on at App Store launch. Don't claim two-phone testing or real users. Never show a claim the app doesn't back (see `docs/security.md`, `PLANNING.md`). Every number or law on screen has a source on screen and in `docs/demo-video.md` › Facts on screen.
 - **Captions burned in.** Judges may watch muted or on a phone: every spoken line appears as a caption on a backing card, Nunito 800, at least 44 px at 1080p, bottom third, never over a phone screen's key content.
 
 ## 2. Look
@@ -51,7 +51,7 @@ Maya is original, drawn in code from simple shapes with an Ink outline, so she l
 
 Rules:
 1. Same proportions every shot: head is 1/4.5 of her height; sensor visible whenever the left arm faces the camera.
-2. Five expressions only: neutral, tired, annoyed, embarrassed, proud. Brows and mouth change; eyes stay round.
+2. Five expressions only: neutral, tired, annoyed, embarrassed, proud. Brows and mouth change; eyes stay round. Pose and expression changes cross-fade (`fadeLayer`) over half a second or more; never snap.
 3. Frustration is shown, never mocked: she's tired and fed up, not sad or sick. No needles drawn piercing skin, no blood beyond a dot on a test strip.
 4. Thought text goes in a rounded bubble with an Ink outline, never floating.
 5. She never says anything about dosing.
@@ -94,5 +94,5 @@ Apply requested changes, then show the same gate again. Never skip a gate.
 ## 8. Delivery
 
 - Clips: H.264 + AAC, 1080p, 30 fps, in `docs/video/out/` (git-ignored).
-- Final cut: under the cap, under 30 MB if it must be downloaded from the Claude app (2-pass bitrate re-encode), uploaded unlisted; test the link logged out.
+- Final cut: under the cap, under 30 MB if it must be downloaded from the Claude app (2-pass bitrate re-encode), uploaded to YouTube or Vimeo set to Public (the 2026 rules require public); test the link logged out. The video must say each participant's name, the app's name, its purpose in one sentence, its audience, and the tools and languages used, and disclose AI use (`docs/demo-video.md` › 2026 CAC rules).
 - `docs/video/README.md` lists the four commands: storyboard, draft, sound, final.

@@ -1,8 +1,8 @@
 # Demo video plan
 
-The film for the Congressional App Challenge. Length 2:50 (cap has been 3:00; check congressionalappchallenge.us before final). The real app is the star: most of Act 2 is the real app, animated around. How clips are made: the `diabetescare-video` skill (`.claude/skills/diabetescare-video/SKILL.md`). Storyboard: `docs/video/out/storyboard.png` (`node docs/video/render.mjs storyboard out/storyboard.png`).
+The film for the Congressional App Challenge. Length 2:55.5 (cap has been 3:00; check congressionalappchallenge.us before final). The real app is the star: most of Act 2 is the real app, animated around. How clips are made: the `diabetescare-video` skill (`.claude/skills/diabetescare-video/SKILL.md`). Storyboard: `docs/video/out/storyboard.png` (`node docs/video/render.mjs storyboard out/storyboard.png`).
 
-Built on the CAC rubric (30 points): **Ideology, Impact, Structure** (concept) and **Function, Code, UI** (technology). Three acts: why it matters, how it works, why you can trust it. The code appears three times ("under the hood"): the passcode (6), the sealed letter (9b) and the rules with the tests (11).
+Built on the CAC rubric (30 points): **Ideology, Impact, Structure** (concept) and **Function, Code, UI** (technology). Three acts: why it matters, how it works, why you can trust it. The real code runs beside the app through most of Act 2: an editor card scrolls the actual Swift and highlights the line behind what the phone is showing, with a labelled link to the control (4, 5, 6, 8, 9b, 10), printed strips in the scrapbook (7), the rules with the tests (11), and the type behind each feature (12a). `sync-source.py` copies it from the app, so it's never retyped.
 
 ## Looks
 
@@ -10,37 +10,49 @@ The real app carries the solution: Act 2 and the code shots are built on real ap
 
 | Look | What it is | Shots |
 |---|---|---|
-| **App** | The real app in a phone frame: real screens (screenshots now, simulator recordings in the final), pushed like the app's navigation, tap ripples, paper callouts pointing at real controls | 4, 6, 8, 10 |
+| **App** | The real app in a phone frame: real screens (screenshots now, simulator recordings in the final), pushed like the app's navigation, tap ripples; beside it the code card with labelled links to the controls | 4, 5, 6, 8, 9b, 10 |
 | **Scrapbook** | A journal page on kraft paper: real screens printed as polaroids and taped in with washi tape, the kit as die-cut stickers, handwritten notes (Caveat), doodled arrows and sticky notes. Stop motion on twos | 1, 7, 9a, 12b |
-| **Hype** | The loud beats: a dark pine stage with turning rays and halftone dots; words slam in from the camera with a flash, a shake and a burst; the real phone punches in on each beat | 3, 5, 11, 12a |
+| **Hype** | The loud beats: a dark pine stage with turning rays and halftone dots; words slam in from the camera with a flash, a shake and a burst | 2d, 3, 11, 12a |
 | **Paper** | Stop-motion cut paper: poses on twos (12 per second), a little wobble each pose, soft shadows on textured paper | the callouts, the cut-paper pieces in Scrapbook |
-| **Maya** | The character, drawn in code (`docs/video/maya.js`) | 2a, 2b, 2c, and a cheer in 8 |
-| **Code** | The app's real Swift typed onto an editor card | 6, 9b, 11 |
+| **Maya** | The character, drawn in code (`docs/video/maya.js`); pose and expression changes cross-fade, never snap | 2a, 2b, 2c (each with a time-of-day card), and a cheer in 8 |
+| **Code** | The app's real Swift on an editor card, beside the app wherever it can be | 4–11, 12a |
 
-The isometric Desk scenes and the sealed-letter illustration appear as photos (9a, 10). The calm looks (Scrapbook, App, Maya) carry the story; Hype hits the turn (3), the urgent moment (5), the proof (11) and the list (12a). The real app is on screen for about 110 of the 170 seconds.
+The isometric Desk scenes and the sealed-letter illustration appear as photos (9a, 10). The calm looks (Scrapbook, App, Maya) carry the story; Hype hits the numbers (2d), the turn (3), the proof (11) and the list (12a). The real app is on screen for about 110 of the 170 seconds.
 
-Spoken lines run about 2.5 words a second; each line fits its shot and is a burned-in caption.
+Shots flow into each other: each one has a designed transition into the next (`in` in `film.js`: fades, a slide like the app's navigation, an iris), overlapping by half a second, so there's no dead air at the cuts. Spoken lines run about 2.75 words a second (a bit brisker than easy speech); each line fits its shot and is a burned-in caption. The scratch voice (`scratch-vo.py`) reads at that pace.
 
 ## Shots
 
 | # | Time | Look | Rubric | Picture | Say |
 |---|---|---|---|---|---|
-| 1 | 0:00–0:10 | Scrapbook | Ideology | "Mom, every day": her kit is stuck into a scrapbook as stickers, one by one, each with a handwritten note: her log, the meter (112 before breakfast), the pen (in every bag), the sensor (on her arm, always), juice (for lows). | "My mom has type 1 diabetes. I've watched her manage it every day, and I kept thinking about kids who get it young." |
-| 2a | 0:10–0:18 | Maya | Ideology | 6:40 a.m., kitchen table, tired; numbers fill her paper log. Corner card: "Maya is made up. Her days aren't." | "Meet Maya. She's fourteen. Every day starts with numbers." |
-| 2b | 0:18–0:26 | Maya | Ideology | School lunch: four texts from Mom, "What's your number?"; embarrassed, then annoyed. | "Her mom checks in all day, because she has no other way to know." |
-| 2c | 0:26–0:35 | Maya | Ideology, Impact | 2 a.m.: alarm, pillow over her head; she sits up: "I can do this. Just let me." | "Most apps treat her like an adult or like a little kid. None of them change as she grows up." |
-| 3 | 0:35–0:41 | Hype | Structure | The turn: a flash, the sprout bursts up and blooms, "DiabetesCare" slams in letter by letter, then "grows with you". | "So we built DiabetesCare. It grows with you." |
-| 4 | 0:41–0:51 | App | Impact, UI | Setup "Who's Using DiabetesCare?" → Kid → the grown-up sets a passcode → the kid's Today with the "What did your meter say?" ruler. | "First it asks who it's for: a kid, a teen, an adult, or a parent. The whole app changes with the answer." |
-| 5 | 0:51–1:05 | Hype, App | Function, UI | The stage pulses berry; the real phone punches in on each step: Kid Today → Get Help → "I Had 15 g of Sugar" → the Dynamic Island still counting. Words slam in as they're said: "Feeling off?", "15 g", "Recheck 15:00", "Call Mom: 1 tap"; it calms to green once the recheck runs. | "A kid gets a simpler screen. Feeling off? Get Help walks them through it, starts a 15-minute recheck, and calls Mom in one tap." |
-| 6 | 1:05–1:15 | App, Code | Function, Code | "Ask a Grown-Up" keypad (dots fill) → the range rulers unlock; the phone slides aside and `ParentLock.swift` is typed, salted-hash line highlighted. | "Risky things need a grown-up's passcode. Safety help never does. The app never saves the passcode itself, only a salted hash of it." |
-| 7 | 1:15–1:27 | Scrapbook | UI | "Feels like real life": four polaroids of the real screens taped in as they're named: the kitchen scale (30 g), the insulin pen dial, the body map, time in range as test tubes. | "Logging feels like real life: a kitchen scale for carbs, an insulin pen you dial, and a body map for sites." |
-| 8 | 1:27–1:41 | App | Impact | Your Path with the plant ("Budding") → the last quiz → "Skill Learned!" (Maya cheers) → "Ready for Teen 4 of 4" → Move Up → the ladder fills Teen and the colours change. | "Kids earn independence by learning. Each skill unlocks something, and when they're ready, a grown-up approves the move up." |
-| 9a | 1:41–1:51 | Scrapbook, App | Function | Mom's real phone taped into the book beside a polaroid of Desk scene 3: "Maya asked for help" → one tap → "On my way!" (sample data). The four lunch texts from 2b are sticky notes, scribbled out as the line says it. | "When Maya needs help, Mom sees it right away and answers with one tap. Maya doesn't get four texts at lunch anymore." |
-| 9b | 1:51–1:57 | Code | Code | `FamilyRecordCodec.swift`: the `encryptedValues` line is typed and highlighted; the letter flies over it. | "Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only." |
-| 10 | 1:57–2:11 | App | Impact | Real See What Family Sees beside the sealed-letter photo; "Not us", "Not Apple", "No server". | "Her health information stays inside her family. Not even Apple can read it, and since we don't run a server, we never get a copy." |
-| 11 | 2:11–2:26 | Hype, Code | Code, Function | `CareStage.access` is typed on the dark stage; "SwiftUI", "One function", "No back door" slam in; the highlight walks the stages; 147 unit and 60 UI tests count up and "207 tests ✓" lands with checkmark confetti; the real app slides in: "Running on iPhone". | "It's built in SwiftUI. Every rule about who can do what lives in one function, so no screen has a back door. And 207 tests check it." |
-| 12a | 2:26–2:38 | Hype, App | Function, UI | Rapid fire: each real screen slams onto the stage as it's named, its name slams in up top, about one a second: Home Screen widgets, the watch glance, the "Check Glucose" shortcut (the snippet Siri shows), the food search, the weekly recap, the sick-day checklist, the school card, Teen. | "There's more: widgets, an Apple Watch app, Siri, five thousand foods to look up, a weekly recap, a sick-day checklist, and a card for school. All of it free." |
-| 12b | 2:38–2:50 | Scrapbook | Impact, Structure | The last page: the plant in bloom; sticky notes land and get ticked as they're named: "App Store", "Family sharing on", "En español", "School nurses", "Clinics". End card taped in: "Every kid with diabetes grows up. Now their app can too." | "Next: the App Store, with family sharing on. Then Spanish, school nurses, and clinics that hand it to families the day a kid is diagnosed." |
+| 1 | 0:00–0:08.5 | Scrapbook | Ideology | "Mom, every day": her kit is stuck into a scrapbook as stickers, one by one, each with a handwritten note: her log, the meter (112 before breakfast), the pen (in every bag), the sensor (on her arm, always), juice (for lows). | "My mom has type 1 diabetes. I've watched her manage it every day, and I kept thinking about kids who get it young." |
+| 2a | 0:08–0:14 | Maya | Ideology | 6:40 a.m., kitchen table, tired; numbers fill her paper log. Corner card: "Maya is made up. Her days aren't." | "Meet Maya. She's fourteen, and her day starts with a blood sugar check." |
+| 2b | 0:13.5–0:23 | Maya | Ideology | School lunch, a 12:15 p.m. time card: four texts from Mom, "What's your number?"; embarrassed, then annoyed. A notice is pinned up: "PHONES AWAY · Texas House Bill 1481 · No phones all school day · Exception: a doctor's note · 2025". She puts the phone away and Mom's texts fade. | "Her mom checks in all day, because she has no other way to know. And a new Texas law keeps phones put away at school unless a doctor signs off." |
+| 2c | 0:22.5–0:30 | Maya | Ideology, Impact | 2 a.m.: alarm, pillow over her head; she sits up slowly (the poses dissolve while she rises, then her face settles): "I can do this. Just let me." | "Most apps treat her like an adult or like a little kid. None of them change as she grows up." |
+| 2d | 0:29.5–0:42.5 | Hype | Impact | Texas draws in; the camera dives into TX-22, which fills with dots (one per 1,000 adults); 64 light up as the count runs to 64,000 ("more than 1 in 9"), with its source under it. Then the camera pulls all the way out to the whole country (every state, Alaska and Hawaii as insets, TX-22 pulsing) for 314,000 U.S. kids and teens with type 1, with its own source under it. | "According to the CDC, about 64,000 adults in my district, Texas's 22nd, live with diabetes. And across the country, 314,000 kids and teens have type 1." |
+| 3 | 0:42–0:52.5 | Hype | Structure | The turn: a flash, the sprout bursts up and blooms, "DiabetesCare" slams in letter by letter, "by Angad Kumar" above it, then "grows with you"; "For kids & teens with type 1" and "+ their parents" slam in as the line says them (the one-sentence purpose and the audience the rules ask for). | "So I built DiabetesCare, an iPhone app that helps kids and teens with type 1 diabetes take over their own care, with their parents in the loop." |
+| 4 | 0:52–1:00 | App, Code | Impact, UI, Code | Setup "Who's Using DiabetesCare?" → Kid → the grown-up sets a passcode → the kid's Today. Beside the phone, `SetupView.swift` and `CareStage.swift` scroll to the line behind each choice, with a labelled link to the control. | "First it asks who it's for: a kid, a teen, an adult, or a parent. The whole app changes with the answer." |
+| 5 | 0:59.5–1:10 | App, Code | Function, UI, Code | Kid Today → Get Help → "I Had 15 g of Sugar" → the Dynamic Island still counting. The screen's colours washed behind, a soft glow that beats until the recheck starts, a step tracker (find a grown-up, 15 g, recheck), and the code for each step: `KidHelpCard`, `LowTreatmentService`, the Live Activity. | "A kid gets a simpler screen. Feeling off? Get Help walks them through it, starts a 15-minute recheck, and calls Mom in one tap." |
+| 6 | 1:09.5–1:19.5 | App, Code | Function, Code | "Ask a Grown-Up" keypad (dots fill) → the range rulers unlock, beside `ParentLock.swift`: the check, then the salt and the salted hash, the only thing saved. | "Risky things need a grown-up's passcode. Safety help never does. The app never saves the passcode itself, only a salted hash of it." |
+| 7 | 1:19–1:28 | Scrapbook, Code | UI, Code | "Feels like real life": four polaroids of the real screens taped in as they're named (the kitchen scale, the insulin pen dial, the body map, time in range as test tubes), each with a strip of its real code taped under it and highlighted. | "Logging feels like real life: a kitchen scale for carbs, an insulin pen you dial, and a body map for sites." |
+| 7b | 1:27.5–1:38.5 | App, Code | Function, Code | Built on Apple: Devices & Apple Health, then the day's story on Today, beside `HealthGlucoseImporter` (the observer query, background delivery) and `StoryWriter` (the on-device model's instructions, then `isFaithful`, which throws the answer away unless every number survives). Badges: "Apple Health", "Apple Intelligence". | "Readings from her CGM come in through Apple Health. And with Apple Intelligence, an on-device model retells her day, and the app throws it out if a single number changes." |
+| 8 | 1:38–1:47.5 | App, Code | Impact, Code | Your Path with the plant → "Skill Learned!" (Maya cheers) → "Ready for Teen 4 of 4" → Move Up, beside `CareStage.skillsToMoveUp` and `SkillPathView` (the grown-up's `gate.run(.changeStage)`). | "Kids earn independence by learning. Each skill unlocks something, and when they're ready, a grown-up approves the move up." |
+| 9a | 1:47–1:55.5 | Scrapbook, App | Function | Mom's real phone taped into the book beside a polaroid of Desk scene 3: "Maya asked for help" → one tap → "On my way!" (sample data). The four lunch texts from 2b are sticky notes, scribbled out as the line says it. | "When Maya needs help, Mom sees it right away and answers with one tap. Maya doesn't get four texts at lunch anymore." |
+| 9b | 1:55–2:01 | App, Code | Code | Maya's phone and Mom's phone on either side of the code: `sendHelpRequest` builds and publishes the request, then `FamilyRecordCodec` seals it into `encryptedValues`; the sealed letter flies from her phone over the line to Mom's. | "Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only." |
+| 10 | 2:00.5–2:10 | App, Code | Impact, Code | Real See What Family Sees beside `FamilyModels.swift` (the fields family gets, walked one by one) and the sealing line; "Not me", "Not Apple", "No server". | "Her health information stays inside her family. Not even Apple can read it, and since there's no server, I never get a copy." |
+| 11 | 2:09.5–2:21.5 | Hype, Code | Code, Function | `CareStage.access` (the real function) beside a "Built with" panel: Swift, SwiftUI, Xcode, Core Data, CloudKit, HealthKit, WidgetKit, ActivityKit, App Intents, WatchConnectivity, Foundation Models, Swift Testing and XCTest; the highlight walks the stages. Then all 198 tests from the last full run scroll up past a scan line in four columns, each ticking green with its real name, while the counter runs to "198 of 198 passed". | "I wrote it in Swift with SwiftUI. One function decides what each age is allowed to do, so every screen follows the same rules. And 198 tests check it." |
+| 12a | 2:21–2:37.5 | Hype, App, Code | Function, UI | Thirteen real screens land on the stage as they're named, each with its Swift type underneath (`GlucoseWidget`, `WatchBridge`, `CheckGlucoseIntent`, `FoodSearchView`, `TrendsView`, `WeeklyRecapView`, `CaregiverAlertPolicy`, `SickDayCard`, `SchoolCardView`, `ReportsView`, `SuppliesView`, `LearnView`, the iPad's `MainTabView`); "Free" lands last. | "There's more: widgets, Apple Watch, Siri, five thousand foods, trends, weekly recaps, urgent alerts for family, a sick-day checklist, a school card, doctor reports, supplies, lessons, and iPad. All of it free." |
+| 12b | 2:37–2:49 | Scrapbook | Impact, Structure | The last page: the plant in bloom; sticky notes land and get ticked as they're named: "App Store", "Family sharing on", "More languages", "School nurses", "Clinics". End card taped in: "Every kid with diabetes grows up. Now their app can too." | "Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed." |
+| 13 | 2:48.5–2:55.5 | Scrapbook | Ideology | The last page is Angad's: real photos of him and his mom taped in (`docs/video/assets/personal/me.jpg`, `mom.jpg`; a dashed slot until they're added), the app icon as a sticker, handwritten "DiabetesCare · for Mom, and for every kid like Maya", signed "Angad". | "I'm Angad. I built DiabetesCare for my mom, and for every kid who'll grow up with it." |
+
+## Facts on screen
+
+| Claim | Source |
+|---|---|
+| Texas phone law (2b) | HB 1481, 89th Legislature, signed June 2025, in effect for the 2025–26 school year: districts must ban personal communication devices on campus during the school day; use is allowed with a documented need from a physician's directive, an IEP or a 504 plan, or a health or safety rule. [Bill text](https://capitol.texas.gov/tlodocs/89R/billtext/html/HB01481F.htm) |
+| About 64,000 adults with diabetes in TX-22, more than 1 in 9 (2d; the source is on screen under the number) | CDC PLACES, census-tract estimates (2025 release, 2023 BRFSS data), diagnosed diabetes among adults, summed over the 164 tracts in the district (119th Congress), split tracts weighted by land area: 64,326 of 554,077 adults (11.6%). Model-based estimates. Rerun with `python3 docs/video/district-stat.py`. |
+| 198 tests (11) | Every test that passed in the full suite run of 2026-10-25 (147 unit, 51 UI; 17 demo-footage and screenshot tests are skipped in normal runs and Xcode's 3 empty template tests aren't counted). `HealthImportUITests.testGlucoseDeletedInHealthIsRemoved` failed once inside Apple's Health app and passed on rerun. The wall shows their real names: `python3 docs/video/sync-tests.py <xcresult>…`. |
+| 314,000 U.S. kids and teens with type 1 (2d; the source is on screen under the number) | CDC, National Diabetes Statistics Report: children and adolescents under 20 with diagnosed type 1 diabetes. [CDC](https://www.cdc.gov/diabetes/php/data-research/index.html) |
 
 ## Footage
 
@@ -61,6 +73,7 @@ Recorded from the real app with demo data: `sh scripts/record-demo.sh` runs `Dia
 | `test11ParentPhone` | Mom's phone: Maya's help request → "On my way!" | 9a |
 | `test12SchoolCard` | School & Sitter Card: low signs, rule of 15, who to call | 12a |
 | `test13Siri` | Shortcuts: the app's shortcuts → Check Glucose answers "175 mg/dL, in range" (Siri itself doesn't draw in the simulator) | 12a |
+| `test15MoreFeatures` | Learn, the doctor report, Supplies, Doctor Visit questions, Devices & Apple Health | 7b, 12a |
 | `test14Widgets` | Home Screen widget gallery: small and medium Glucose widgets (placing the widget is flaky; the gallery stills are used) | 12a |
 | `scripts/record-watch.sh` | The watch glance with real data from the phone over WatchConnectivity | 12a |
 
@@ -76,9 +89,26 @@ Not captured: the sample "Maya: Urgent Low" notification (UI-test launches don't
 | Voiceover | Angad, one clean read of every line, WAV; quiet room | all |
 | Music, SFX, captions | `sound.py`, `captions.srt` (final gate) | all |
 
+## 2026 CAC rules the video must meet
+
+From the official 2026 rules (deadline **12:00 pm EDT, Monday, October 26, 2026**; the entry can't be changed after it):
+
+| Rule | Where |
+|---|---|
+| 1 to 3 minutes | 2:55.5 (`node sync-times.mjs` prints it) |
+| Name of each participant | "by Angad Kumar" on the title (3); "I'm Angad" and his signature (13) |
+| Name of the app | 3, and throughout |
+| Purpose in one clear sentence | 3: "…an iPhone app that helps kids and teens with type 1 diabetes take over their own care, with their parents in the loop." |
+| Target audience | 3: kids and teens with type 1, and their parents (spoken and on screen) |
+| Tools and coding languages | 11: spoken "Swift with SwiftUI"; "Built with" panel lists the frameworks and tools |
+| Showcase the functionality | 4 to 12a, the real app |
+| AI use fully disclosed | The submission form (not in the video, by choice) must disclose it in full (what AI helped with, for the app and for this video) |
+| Open-source libraries and tools documented | the form: video tooling (Playwright, Nunito and Caveat fonts), data sources (CDC PLACES, Census, USDA FNDDS for the food list) |
+| Public video on YouTube or Vimeo | upload step |
+
 ## Rules for the cut
 
 - Honest: Maya is labelled made up (2a). Real app screens show sample data and say so where it matters (9a). The code is the real source. Family sharing is shown through the real publish and apply path with sample data, and 12b says it turns on at App Store launch. Don't claim it was tested on two phones or used by real families.
 - Text big, on a backing card; judges may watch on a phone. No dead air.
-- Upload unlisted; test the link while logged out.
+- Upload to YouTube or Vimeo set to **Public** (the 2026 rules require it; unlisted or private doesn't count). Test the link while logged out.
 - Details for questions after: `docs/security.md`, `PLANNING.md`.

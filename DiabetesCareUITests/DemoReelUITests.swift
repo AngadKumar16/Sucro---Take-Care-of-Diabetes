@@ -370,4 +370,33 @@ final class DemoReelUITests: XCTestCase {
         hold(3)
         snap("widgets-home")
     }
+
+    /// The rest of the app for the feature wall: Learn and a glossary term, the doctor report,
+    /// supplies, doctor visit questions, and Devices & Apple Health.
+    func test15MoreFeatures() {
+        app.launchArguments += ["-demoData"]
+        app.launch()
+        tab("Learn")
+        hold(2)
+        snap("learn")
+        tab("Trends")
+        let share = app.buttons["Share Report"]
+        scrollTo(share, attempts: 4)
+        tapWhenReady(share)
+        hold(3)
+        snap("report")
+        let done = app.buttons["Done"]
+        if done.waitForExistence(timeout: 3) { done.tap() } else { app.swipeDown(velocity: .fast) }
+        hold(1)
+        tab("Settings")
+        for (label, still) in [("Supplies", "supplies"), ("Doctor Visit Questions", "doctor-questions"), ("Devices & Apple Health", "devices-health")] {
+            let row = app.buttons[label].firstMatch
+            scrollTo(row, attempts: 14)
+            tapWhenReady(row)
+            hold(2.5)
+            snap(still)
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+            hold(1)
+        }
+    }
 }

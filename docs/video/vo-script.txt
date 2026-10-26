@@ -1,0 +1,23 @@
+DiabetesCare demo video: voiceover script (read a little brisker than easy speech).
+Record each line as its own file in docs/video/assets/vo/, named by shot: 1.wav, 2a.wav, 2b.wav ... 13.wav.
+Quiet room, phone or mic 6 inches away, one clean take per line.
+
+[1]  My mom has type 1 diabetes. I've watched her manage it every day, and I kept thinking about kids who get it young.
+[2a]  Meet Maya. She's fourteen, and her day starts with a blood sugar check.
+[2b]  Her mom checks in all day, because she has no other way to know. And a new Texas law keeps phones put away at school unless a doctor signs off.
+[2c]  Most apps treat her like an adult or like a little kid. None of them change as she grows up.
+[2d]  According to the CDC, about 64,000 adults in my district, Texas's 22nd, live with diabetes. And across the country, 314,000 kids and teens have type 1.
+[3]  So I built DiabetesCare, an iPhone app that helps kids and teens with type 1 diabetes take over their own care, with their parents in the loop.
+[4]  First it asks who it's for: a kid, a teen, an adult, or a parent. The whole app changes with the answer.
+[5]  A kid gets a simpler screen. Feeling off? Get Help walks them through it, starts a 15-minute recheck, and calls Mom in one tap.
+[6]  Risky things need a grown-up's passcode. Safety help never does. The app never saves the passcode itself, only a salted hash of it.
+[7]  Logging feels like real life: a kitchen scale for carbs, an insulin pen you dial, and a body map for sites.
+[7b]  Readings from her CGM come in through Apple Health. And with Apple Intelligence, an on-device model retells her day, and the app throws it out if a single number changes.
+[8]  Kids earn independence by learning. Each skill unlocks something, and when they're ready, a grown-up approves the move up.
+[9a]  When Maya needs help, Mom sees it right away and answers with one tap. Maya doesn't get four texts at lunch anymore.
+[9b]  Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only.
+[10]  Her health information stays inside her family. Not even Apple can read it, and since there's no server, I never get a copy.
+[11]  I wrote it in Swift with SwiftUI. One function decides what each age is allowed to do, so every screen follows the same rules. And 198 tests check it.
+[12a]  There's more: widgets, Apple Watch, Siri, five thousand foods, trends, weekly recaps, urgent alerts for family, a sick-day checklist, a school card, doctor reports, supplies, lessons, and iPad. All of it free.
+[12b]  Next: the App Store, with family sharing on. Then other languages, school nurses, and clinics that hand it to families the day a kid is diagnosed.
+[13]  I'm Angad. I built DiabetesCare for my mom, and for every kid who'll grow up with it.

@@ -34,7 +34,10 @@ export function text(ctx, s, x, y, { size = 44, weight = 800, color = C.ink, ali
 }
 
 // The burned-in caption: Nunito 800, 46 px, on a cream card in the bottom third.
+// CAPTION_GATE (set by draft.mjs per frame) fades a shot's caption out before the cut and in after
+// it, so two shots' captions never show at once while they blend.
 export function caption(ctx, line, alpha = 1) {
+  alpha *= globalThis.CAPTION_GATE ?? 1;
   if (!line || alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -114,4 +117,18 @@ export function textBubble(ctx, x, y, from, msg, s = 1) {
   text(ctx, from, -150, -20, { size: 26, weight: 800, color: "#6f8277", align: "left" });
   text(ctx, msg, -150, 18, { size: 34, weight: 900, align: "left" });
   ctx.restore();
+}
+
+// Draws `draw` on its own layer and lays it over the frame at `alpha`, keeping the current
+// transform, so two poses or two expressions can cross-fade without either showing through.
+const LAYERS = [];
+export function fadeLayer(ctx, alpha, draw, slot = 0) {
+  if (alpha <= 0) return;
+  if (alpha >= 1) { draw(ctx); return; }
+  if (!LAYERS[slot]) { LAYERS[slot] = document.createElement("canvas"); LAYERS[slot].width = W; LAYERS[slot].height = H; }
+  const g = LAYERS[slot].getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+  g.setTransform(ctx.getTransform());
+  draw(g);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha *= alpha; ctx.drawImage(LAYERS[slot], 0, 0); ctx.restore();
 }

@@ -7,6 +7,8 @@ import { W, H, smooth, backOut, span, rr, caption, FONT } from "./common.js";
 import { hash } from "./paper.js";
 import { realPhone, IMG } from "./app.js";
 import { editor } from "./code.js";
+import { SRC } from "./source.js";
+import { TESTS } from "./tests.js";
 
 const NIGHT = "#0f2219";
 
@@ -78,31 +80,22 @@ export function slam(ctx, t, a, s, x, y, { size = 110, color = C.cream, shadow =
   ctx.restore();
 }
 
-// A pulse ring for the alarm beats (heartbeat rhythm).
-function pulseRings(ctx, t, x, y, color, until) {
-  if (t > until) return;
-  for (let i = 0; i < 3; i++) {
-    const k = ((t * 0.9) + i / 3) % 1;
-    ctx.beginPath(); ctx.arc(x, y, 260 + k * 520, 0, Math.PI * 2);
-    ctx.lineWidth = 6; ctx.strokeStyle = color.replace("A", String((1 - k) * 0.35)); ctx.stroke();
-  }
-}
 
 // ---- Shots ------------------------------------------------------------------------------------
 
 // 3 · The turn: the sprout bursts up, the name slams in letter by letter, then "grows with you".
 export const hypeTitle = {
-  duration: 6,
-  line: "So we built DiabetesCare. It grows with you.",
+  duration: 10.5,
+  line: "So I built DiabetesCare, an iPhone app that helps kids and teens with type 1 diabetes take over their own care, with their parents in the loop.",
   render(ctx, t) {
     const word = "DiabetesCare", letterAt = (i) => 1.1 + i * 0.07;
-    const hits = [0.45, ...[...word].map((_, i) => letterAt(i)), 2.1, 3.7];
+    const hits = [0.45, ...[...word].map((_, i) => letterAt(i)), 2.1, 3.7, 5.2, 8.2];
     ctx.save();
     shake(ctx, t, hits, 14);
     hypeBg(ctx, t, { tint: "#2f7a55", pulse: Math.exp(-Math.max(0, t - 2.1) * 3) * (t > 2.1 ? 1 : 0) });
     // Sprout: shoots up with overshoot, leaves pop on beats.
     const g = backOut(span(t, 0.3, 0.75));
-    ctx.save(); ctx.translate(W / 2, 470); ctx.scale(g, g);
+    ctx.save(); ctx.translate(W / 2, 380); ctx.scale(g, g);
     ctx.lineWidth = 8; ctx.strokeStyle = C.ink; ctx.lineJoin = "round";
     const leaf = (x, y, r, k) => { if (k <= 0) return; ctx.save(); ctx.translate(x, y); ctx.rotate(r); ctx.scale(k, k); ctx.beginPath(); ctx.ellipse(0, 0, 70, 30, 0, 0, Math.PI * 2); ctx.fillStyle = C.leaf; ctx.fill(); ctx.stroke(); ctx.restore(); };
     ctx.beginPath(); ctx.roundRect(-10, -260, 20, 260, 10); ctx.fillStyle = C.pine; ctx.fill(); ctx.stroke();
@@ -112,151 +105,151 @@ export const hypeTitle = {
     if (bloom > 0) { ctx.save(); ctx.translate(0, -270); ctx.scale(bloom, bloom); for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.ellipse(Math.cos(i) * 32, Math.sin(i) * 32, 30, 18, i, 0, Math.PI * 2); ctx.fillStyle = C.berry; ctx.fill(); ctx.stroke(); } ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fillStyle = "#f2c94c"; ctx.fill(); ctx.stroke(); ctx.restore(); }
     ctx.beginPath(); ctx.moveTo(-110, 0); ctx.lineTo(110, 0); ctx.lineTo(88, 130); ctx.lineTo(-88, 130); ctx.closePath(); ctx.fillStyle = C.amber; ctx.fill(); ctx.stroke();
     ctx.restore();
-    burst(ctx, t, 0.45, W / 2, 380, { color: C.mint, r: 200, n: 16 });
-    burst(ctx, t, 2.1, W / 2, 200, { color: "#f2c94c", r: 120 });
+    burst(ctx, t, 0.45, W / 2, 290, { color: C.mint, r: 200, n: 16 });
+    burst(ctx, t, 2.1, W / 2, 110, { color: "#f2c94c", r: 120 });
     // The name, a letter per beat.
     ctx.font = FONT(900, 150);
     const widths = [...word].map((ch) => ctx.measureText(ch).width);
     let x = W / 2 - widths.reduce((a, b) => a + b, 0) / 2;
-    [...word].forEach((ch, i) => { slam(ctx, t, letterAt(i), ch, x + widths[i] / 2, 760, { size: 150, rot: (hash(i) - 0.5) * 0.12, shadow: i < 8 ? C.pine : C.berry }); x += widths[i]; });
-    slam(ctx, t, 3.7, "grows with you", W / 2, 935, { size: 70, color: NIGHT, shadow: C.pine, pill: C.mint, rot: -0.03 });
-    burst(ctx, t, 3.7, W / 2, 935, { color: C.mint, r: 260, n: 18 });
+    [...word].forEach((ch, i) => { slam(ctx, t, letterAt(i), ch, x + widths[i] / 2, 610, { size: 150, rot: (hash(i) - 0.5) * 0.12, shadow: i < 8 ? C.pine : C.berry }); x += widths[i]; });
+    slam(ctx, t, 3.7, "grows with you", W / 2, 738, { size: 70, color: NIGHT, shadow: C.pine, pill: C.mint, rot: -0.03 });
+    burst(ctx, t, 3.7, W / 2, 738, { color: C.mint, r: 260, n: 18 });
+    // Who made it, and who it's for (the purpose in one sentence is the spoken line).
+    const by = smooth(span(t, 2.4, 2.9));
+    if (by > 0) text(ctx, "by Angad Kumar", 70, 64, { size: 40, weight: 800, align: "left", color: `rgba(191,224,201,${by})` });
+    slam(ctx, t, 5.2, "For kids & teens with type 1", 440, 250, { size: 52, color: C.cream, shadow: C.berry, rot: -0.04 });
+    slam(ctx, t, 8.2, "+ their parents", 1520, 250, { size: 52, color: C.cream, shadow: C.pine, rot: 0.04 });
     ctx.restore();
     flash(ctx, t, [0.45, 2.1, 3.7], 0.45);
-  },
-};
-
-// 5 · Feeling off? The urgent beat: the stage pulses berry, the phone punches in on each step, and
-// each step slams in as it's said. Calms to pine once the recheck is running.
-export const hypeHelp = {
-  duration: 14,
-  line: "A kid gets a simpler screen. Feeling off? Get Help walks them through it, starts a 15-minute recheck, and calls Mom in one tap.",
-  render(ctx, t) {
-    const hits = [2.8, 3.6, 6.1, 8.6, 10.4];
-    const calm = smooth(span(t, 9.8, 11));
-    const beat = Math.pow(Math.max(0, Math.sin(t * Math.PI * 2 * 1.1)), 8);
-    ctx.save();
-    shake(ctx, t, hits, 16);
-    hypeBg(ctx, t, { tint: calm > 0.5 ? C.pine : "#7a2f22", pulse: (1 - calm) * beat * (t > 2.6 ? 1 : 0.3) });
-    if (t > 2.6) pulseRings(ctx, t, W / 2, 520, "rgba(224,100,74,A)", 9.8);
-    const PHX = 757, PHY = 80, PHH = 880, PHW = (PHH * 1320) / 2868;
-    ctx.save();
-    punch(ctx, t, hits, PHX + PHW / 2, PHY + PHH / 2, 0.05);
-    const p = realPhone(ctx, t, { x: PHX, y: PHY, h: PHH, screens: [["kidToday", 0], ["kidHelp", 3.6], ["kidHelpLogged", 6.1], ["liveActivity", 10.4]], taps: [[3.2, 0.78, 0.6], [5.7, 0.5, 0.5], [8.9, 0.27, 0.31]] });
-    ctx.restore();
-    slam(ctx, t, 0.9, "Simpler screen", 380, 300, { size: 64, shadow: C.pine, until: 3.4 });
-    slam(ctx, t, 2.8, "Feeling off?", 1500, 300, { size: 100, until: 5.9 });
-    slam(ctx, t, 4.4, "Step by step", 380, 420, { size: 64, shadow: C.pine, until: 5.9 });
-    slam(ctx, t, 6.1, "15 g", 370, 360, { size: 170, color: "#f2c94c", shadow: C.berry, until: 9.9 });
-    slam(ctx, t, 6.9, "Recheck 15:00", 1510, 460, { size: 72, color: NIGHT, shadow: C.pine, pill: C.mint, until: 9.9 });
-    slam(ctx, t, 8.6, "Call Mom: 1 tap", 1500, 250, { size: 72, until: 9.9 });
-    slam(ctx, t, 10.8, "Still counting", 1500, 250, { size: 80, shadow: C.pine });
-    burst(ctx, t, 2.8, 1500, 300, { color: C.berry, r: 220 });
-    burst(ctx, t, 6.1, 370, 360, { color: "#f2c94c", r: 180 });
-    const [ix, iy] = p.at(0.62, 0.03);
-    burst(ctx, t, 10.4, ix, iy + 10, { color: C.mint, r: 90 });
-    ctx.restore();
-    flash(ctx, t, [2.8, 6.1], 0.45);
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };
 
-// 11 · One set of rules, then the tests land like a scoreboard and the app runs.
+
+// 11 · One function holds the rules, then the proof: every test in the suite scrolls past a scan
+// line and ticks green (the real names, from the last run: `python3 sync-tests.py`) while the
+// count runs up to the total.
 export const hypeGate = {
-  duration: 15,
-  line: "It's built in SwiftUI. Every rule about who can do what lives in one function, so no screen has a back door. And 207 tests check it.",
+  duration: 12,
+  line: "I wrote it in Swift with SwiftUI. One function decides what each age is allowed to do, so every screen follows the same rules. And 198 tests check it.",
   render(ctx, t) {
-    const hits = [0.3, 4.6, 7.6, 10.9];
+    const N = TESTS.names.length, total = TESTS.count;
+    const hits = [];
     ctx.save();
-    shake(ctx, t, hits, 12);
-    hypeBg(ctx, t, { tint: "#245c43", pulse: Math.exp(-Math.max(0, t - 10.9) * 2) * (t > 10.9 ? 1 : 0) });
-    const lines = [
-      "func access(to feature: Feature, completed: Set<Skill>) -> FeatureAccess {",
-      "    switch (self, feature) {",
-      "    case (.adult, _):                               base = .open",
-      "    case (.kid, .quickBolus):                       base = .hidden",
-      "    case (.kid, .logInsulin), (.kid, .changeSite):  base = .parent",
-      "    case (.teen, .logInsulin), (.teen, .changeSite): base = .open",
-      "    case (_, .editThresholds), (_, .clearData):     base = .parent",
-      "    }",
-      "    // A kid's skills can open what the stage keeps behind the passcode.",
-      "    if base == .parent, skills ⊆ completed { return .open }",
-      "}",
-    ];
-    const mark = t < 5.4 ? -1 : t < 6.2 ? 4 : t < 7 ? 5 : t < 7.6 ? 2 : 9;
-    const away = smooth(span(t, 9.4, 10));
-    ctx.save(); ctx.globalAlpha = 1 - away * 0.75;
-    ctx.translate(-away * 160, 0);
-    editor(ctx, { x: 90, y: 150, w: 1360, h: 700, file: "CareStage.swift", size: 26, lines, chars: Math.max(0, (t - 0.6) * 140), mark, markAlpha: 1 });
+    shake(ctx, t, hits, 10);
+    hypeBg(ctx, t, { tint: "#245c43" });
+    const mark = t < 4.2 ? -1 : t < 4.9 ? 7 : t < 5.6 ? 9 : t < 6.2 ? 3 : 15;
+    const away = smooth(span(t, 6.4, 7));
+    if (away < 1) {
+      ctx.save(); ctx.globalAlpha = 1 - away; ctx.translate(0, -away * 80);
+      editor(ctx, { x: 50, y: 150, w: 1430, h: 700, file: "CareStage.swift", size: 19, lines: SRC.access.lines, chars: Math.max(0, (t - 0.6) * 160), mark, markAlpha: 1 });
+      ctx.restore();
+    }
+    // Built with: the language, the tools and Apple's frameworks (the rules ask for the tools; AI use
+    // is disclosed in the entry form).
+    const panel = smooth(span(t, 0.3, 0.8)) * (1 - smooth(span(t, 6.4, 7)));
+    if (panel > 0) {
+      ctx.save(); ctx.globalAlpha = panel; ctx.translate((1 - smooth(span(t, 0.3, 0.8))) * 80, 0);
+      rr(ctx, 1510, 150, 370, 580, 26, "rgba(15,34,25,.92)", C.mint, 3);
+      text(ctx, "Built with", 1695, 200, { size: 36, weight: 900, color: "#f2c94c" });
+      const tools = ["Swift", "SwiftUI", "Xcode", "Core Data", "CloudKit", "HealthKit", "WidgetKit", "ActivityKit", "App Intents", "WatchConnectivity", "Foundation Models", "Swift Testing, XCTest"];
+      tools.forEach((s2, i) => { const k = smooth(span(t, 0.6 + i * 0.12, 0.9 + i * 0.12)); if (k > 0) text(ctx, s2, 1695, 248 + i * 37, { size: i < 2 ? 32 : 27, weight: i < 2 ? 900 : 800, color: `rgba(${i < 2 ? "251,248,241" : "191,224,201"},${k})` }); });
+      ctx.restore();
+    }
+    // The test wall: four columns rising past the scan line.
+    const wall = smooth(span(t, 6.6, 7.1));
+    let passed = 0;
+    if (wall > 0) {
+      const cols = 4, rows = Math.ceil(N / cols), lh = 34, scanY = 820;
+      const scroll = (H - scanY + rows * lh) * smooth(span(t, 6.9, 10.2));
+      ctx.save(); ctx.globalAlpha = wall;
+      ctx.font = '600 19px ui-monospace, "SF Mono", Menlo, monospace'; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+      for (let i = 0; i < N; i++) {
+        const r = Math.floor(i / cols), c = i % cols, y = H + 10 + r * lh - scroll, x = 70 + c * 455;
+        const ok = y < scanY;
+        if (ok) passed++;
+        if (y < 60 || y > H + 20) continue;
+        const fade = Math.min(1, (y - 60) / 120);
+        ctx.globalAlpha = wall * fade * (ok ? 1 : 0.45);
+        ctx.fillStyle = ok ? C.leaf : "#6f8a7a"; ctx.fillText(ok ? "✓" : "○", x, y);
+        let name = TESTS.names[i]; while (ctx.measureText(name).width > 400 && name.length > 4) name = name.slice(0, -2);
+        if (name !== TESTS.names[i]) name = name.slice(0, -1) + "…";
+        ctx.fillStyle = ok ? C.cream : "#9fb2a5"; ctx.fillText(name, x + 26, y);
+      }
+      ctx.globalAlpha = wall;
+      const g = ctx.createLinearGradient(0, scanY - 6, 0, scanY + 6);
+      g.addColorStop(0, "rgba(191,224,201,0)"); g.addColorStop(0.5, "rgba(191,224,201,.9)"); g.addColorStop(1, "rgba(191,224,201,0)");
+      ctx.fillStyle = g; ctx.fillRect(40, scanY - 6, W - 80, 12);
+      ctx.restore();
+      // The running count.
+      const shown = Math.round((passed / N) * total);
+      ctx.save(); ctx.globalAlpha = wall;
+      rr(ctx, W / 2 - 230, 30, 460, 70, 35, "rgba(15,34,25,.9)", C.mint, 3);
+      text(ctx, `${shown} of ${total} passed`, W / 2, 66, { size: 34, weight: 900, color: C.mint });
+      ctx.restore();
+    }
     ctx.restore();
-    slam(ctx, t, 0.3, "SwiftUI", 1680, 160, { size: 70, color: NIGHT, shadow: C.pine, pill: C.mint, rot: 0.05, until: 9.4 });
-    slam(ctx, t, 4.6, "One function", 1640, 420, { size: 70, rot: 0.04, until: 9.4 });
-    slam(ctx, t, 7.6, "No back door", 1640, 620, { size: 70, shadow: C.pine, rot: -0.05, until: 9.4 });
-    // The scoreboard.
-    const n1 = Math.round(147 * smooth(span(t, 9.6, 10.6))), n2 = Math.round(60 * smooth(span(t, 9.9, 10.7)));
-    if (t > 9.6 && t < 12.2) {
-      slam(ctx, t, 9.6, `${n1} unit`, 560, 330, { size: 90, color: C.mint, shadow: C.pine, rot: -0.03, until: 12 });
-      slam(ctx, t, 9.9, `${n2} UI`, 560, 480, { size: 90, color: C.mint, shadow: C.pine, rot: 0.03, until: 12 });
-    }
-    slam(ctx, t, 10.9, "207 tests ✓", 1300, 400, { size: 150, color: "#f2c94c", shadow: C.berry, rot: -0.05, until: 12.2 });
-    burst(ctx, t, 10.9, 1300, 400, { color: "#f2c94c", r: 320, n: 20 });
-    // Confetti checkmarks.
-    if (t > 10.9 && t < 12.6) for (let i = 0; i < 26; i++) {
-      const k = (t - 10.9) / 1.7, x = hash(i) * W, y = -60 + k * (900 + hash(i + 9) * 500), r = k * 6 * (hash(i + 3) - 0.5);
-      ctx.save(); ctx.translate(x, y); ctx.rotate(r); ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-4, 14); ctx.lineTo(22, -16);
-      ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = [C.mint, "#f2c94c", C.cream][i % 3]; ctx.stroke(); ctx.restore();
-    }
-    // And it runs.
-    const run = smooth(span(t, 12.2, 12.9));
-    if (run > 0) {
-      realPhone(ctx, t, { x: W / 2 - 190 + (1 - run) * 1200, y: 70, h: 820, screens: [["today", 0]] });
-      slam(ctx, t, 12.9, "Running on iPhone", 480, 470, { size: 64, color: C.mint, shadow: C.pine });
-    }
-    ctx.restore();
-    flash(ctx, t, [10.9], 0.7);
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };
 
-// 12a · Everything else, rapid fire: each feature slams onto the stage as it's named, its name
-// slams up top, and "Free" lands last.
+// 12a · Everything else: each feature lands on the stage as it's named, with its name up top and
+// the real Swift type that builds it underneath; "Free" lands last.
+const MONTAGE = [
+  ["widgetMedium", "Widgets", 1.4, "GlucoseWidget"], ["watchGlance", "Apple Watch", 1.9, "WatchBridge", "watch"], ["siriGlucose", "Siri", 2.8, "CheckGlucoseIntent"],
+  ["carbSearch", "5,371 foods", 3.4, "FoodSearchView"], ["trends2", "Trends", 4.8, "TrendsView"], ["weeklyRecap", "Weekly recap", 5.3, "WeeklyRecapView"],
+  ["parentUrgentLow", "Urgent alerts", 6.2, "CaregiverAlertPolicy"], ["sickDay", "Sick days", 8.7, "SickDayCard"], ["schoolCard", "School card", 10.2, "SchoolCardView"],
+  ["report", "Doctor reports", 11.1, "ReportsView"], ["supplies", "Supplies", 12.1, "SuppliesView"], ["learn", "Lessons", 12.6, "LearnView"],
+  ["ipadToday", "iPad", 13.6, "MainTabView", "ipad"],
+];
+const FREE = 15.3;
+
 export const hypeMontage = {
-  duration: 12,
-  line: "There's more: widgets, an Apple Watch app, Siri, five thousand foods to look up, a weekly recap, a sick-day checklist, and a card for school. All of it free.",
+  duration: 16.5,
+  line: "There's more: widgets, Apple Watch, Siri, five thousand foods, trends, weekly recaps, urgent alerts for family, a sick-day checklist, a school card, doctor reports, supplies, lessons, and iPad. All of it free.",
   render(ctx, t) {
-    const cards = [
-      ["widgetMedium", "Widgets", 0.8], ["watchGlance", "Apple Watch", 1.7, true], ["siriGlucose", "Siri", 2.5],
-      ["carbSearch", "5,371 foods", 3.4], ["weeklyRecap", "Weekly recap", 4.5], ["sickDay", "Sick days", 5.5], ["schoolCard", "School card", 6.6],
-    ];
-    const hits = [...cards.map((c) => c[2]), 8.4];
+    const hits = [...MONTAGE.map((c) => c[2]), FREE];
     ctx.save();
-    shake(ctx, t, hits, 12);
-    hypeBg(ctx, t, { tint: "#2f6b4a", pulse: impact(t, hits) * 0.6 });
-    cards.forEach(([name, label, a, watch], i) => {
+    shake(ctx, t, hits, 8);
+    hypeBg(ctx, t, { tint: "#2f6b4a", pulse: impact(t, hits) * 0.5 });
+    MONTAGE.forEach(([name, label, a, type, kind], i) => {
       const img = IMG(name); if (!img) return;
       const k = span(t, a, a + 0.18);
       if (k <= 0) return;
-      const tx = 225 + i * 245, ty = 440 + (i % 2) * 34, rot = (hash(i + 3) - 0.5) * 0.12;
-      const s = 1 + Math.pow(1 - k, 2) * 2.2;
+      const tx = 150 + i * 135, ty = 430 + (i % 2) * 30, rot = (hash(i + 3) - 0.5) * 0.12;
+      const s = 0.72 * (1 + Math.pow(1 - k, 2) * 2.2);
       ctx.save(); ctx.globalAlpha = k; ctx.translate(tx + (W / 2 - tx) * (1 - k), ty); ctx.rotate(rot); ctx.scale(s, s);
       ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
-      if (watch) {
+      if (kind === "watch") {
         rr(ctx, -70, -230, 140, 460, 30, C.ink, null);
         rr(ctx, -118, -146, 236, 292, 52, "#1c2420", C.ink, 6);
         ctx.shadowColor = "transparent"; ctx.save(); ctx.beginPath(); ctx.roundRect(-104, -132, 208, 264, 40); ctx.clip(); ctx.drawImage(img, -104, -132, 208, 264); ctx.restore();
+      } else if (kind === "ipad") {
+        rr(ctx, -200, -265, 400, 530, 30, "#1c2420", C.ink, 6);
+        ctx.shadowColor = "transparent"; ctx.save(); ctx.beginPath(); ctx.roundRect(-186, -251, 372, 502, 18); ctx.clip(); ctx.drawImage(img, -186, -251, 372, 502); ctx.restore();
       } else {
         rr(ctx, -125, -272, 250, 544, 26, C.cream, C.ink, 6);
         ctx.shadowColor = "transparent"; ctx.save(); ctx.beginPath(); ctx.roundRect(-113, -260, 226, 520, 18); ctx.clip(); { const iw = (520 * img.width) / img.height; ctx.drawImage(img, -iw / 2, -260, iw, 520); } ctx.restore();
       }
       ctx.restore();
-      burst(ctx, t, a, tx, ty - 120, { color: [C.mint, "#f2c94c", C.berry][i % 3], r: 120 });
-      const next = cards[i + 1] ? cards[i + 1][2] : 7.9;
-      slam(ctx, t, a, label, W / 2, 120, { size: 104, shadow: [C.berry, C.pine][i % 2], rot: (i % 2 ? 0.03 : -0.03), until: next - 0.05 });
+      burst(ctx, t, a, tx, ty - 110, { color: [C.mint, "#f2c94c", C.berry][i % 3], r: 100 });
+      // The real type behind it.
+      const ck = smooth(span(t, a + 0.25, a + 0.5));
+      if (ck > 0) {
+        ctx.save(); ctx.globalAlpha = ck;
+        ctx.font = '700 16px ui-monospace, "SF Mono", Menlo, monospace';
+        const w = ctx.measureText(type).width + 20, y = ty + 215 + (i % 2) * 6 + (i % 2 ? 34 : 0);
+        rr(ctx, tx - w / 2, y, w, 32, 10, "#1e2c25", C.mint, 2);
+        ctx.fillStyle = C.mint; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(type, tx, y + 16);
+        ctx.restore();
+      }
+      const next = MONTAGE[i + 1] ? MONTAGE[i + 1][2] : FREE - 0.4;
+      slam(ctx, t, a, label, W / 2, 110, { size: 96, shadow: [C.berry, C.pine][i % 2], rot: i % 2 ? 0.03 : -0.03, until: next - 0.05 });
     });
-    slam(ctx, t, 8.4, "Free", W / 2, 440, { size: 220, color: NIGHT, shadow: C.pine, pill: "#f2c94c", rot: -0.08 });
-    burst(ctx, t, 8.4, W / 2, 440, { color: "#f2c94c", r: 360, n: 24 });
+    slam(ctx, t, FREE, "Free", W / 2, 400, { size: 200, color: NIGHT, shadow: C.pine, pill: "#f2c94c", rot: -0.08 });
+    burst(ctx, t, FREE, W / 2, 400, { color: "#f2c94c", r: 340, n: 20 });
     ctx.restore();
-    flash(ctx, t, [8.4], 0.6);
+    flash(ctx, t, [FREE], 0.5);
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };

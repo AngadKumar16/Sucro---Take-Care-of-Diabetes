@@ -3,6 +3,9 @@
 // app source; keep them in sync if the code changes.
 import { C, drawMaya } from "../maya.js";
 import { W, H, smooth, backOut, span, rr, text, caption, FONT } from "./common.js";
+import { SRC } from "./source.js";
+import { realPhone } from "./app.js";
+import { paperGround } from "./paper.js";
 
 const MONO = (size, weight = 500) => `${weight} ${size}px ui-monospace, "SF Mono", Menlo, monospace`;
 const KEYWORDS = /\b(func|let|var|if|else|guard|return|switch|case|static|private|try|throws|for|in|self|true|false|nil)\b/g;
@@ -112,33 +115,117 @@ export const codeLock = {
   },
 };
 
-// 8b · Under the hood of the sealed letter: the payload goes into encryptedValues.
+
+
+// Code beside the app: an editor card that scrolls the real source and highlights the line behind
+// what the phone is showing, with a dashed link from that line to the control on screen.
+//   tabs: [{ file, start, lines, from, marks: [[at, line, [x, y]?, label?]] }]; `line` is 0-based in `lines`,
+//   `start` the file's line number of lines[0]. A tab shows from its `from` until the next one.
+export function sideCode(ctx, t, { x, y, w, h, tabs, size = 24, enter = 0, alpha = 1 }) {
+  const e = smooth(span(t, enter, enter + 0.5));
+  if (e <= 0 || alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha * e;
+  ctx.translate((1 - e) * 140, 0);
+  ctx.shadowColor = "rgba(15,30,22,.35)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+  rr(ctx, x, y, w, h, 24, "#1e2c25", C.ink, 4);
+  ctx.shadowColor = "transparent";
+  rr(ctx, x + 20, y + 18, 16, 16, 8, C.berry, null); rr(ctx, x + 44, y + 18, 16, 16, 8, C.amber, null); rr(ctx, x + 68, y + 18, 16, 16, 8, C.leaf, null);
+  let ti = 0;
+  tabs.forEach((tab, i) => { if (t >= (tab.from ?? 0)) ti = i; });
+  const sw = ti > 0 ? smooth(span(t, tabs[ti].from, tabs[ti].from + 0.35)) : 1;
+  // File tab: the current one, sliding in over the last.
+  ctx.font = FONT(800, 20);
+  const tab = tabs[ti], tw = ctx.measureText(tab.file).width + 36;
+  rr(ctx, x + 102, y + 8, tw, 34, 11, "#2b3d34", null);
+  text(ctx, tab.file, x + 102 + tw / 2, y + 26, { size: 20, weight: 800, color: "#cfe0d6" });
+  const body = [x + 8, y + 54, w - 16, h - 66];
+  const draw = (tb, a) => {
+    if (a <= 0) return;
+    const lh = size * 1.6, rows = Math.floor(body[3] / lh);
+    const marks = tb.marks ?? [];
+    let cur = -1, prev = -1, at = 0;
+    marks.forEach(([ma, ml], i) => { if (t >= ma) { cur = ml; prev = i ? marks[i - 1][1] : ml; at = ma; } });
+    const k = smooth(span(t, at, at + 0.45));
+    const m = cur < 0 ? (marks[0]?.[1] ?? 0) : prev + (cur - prev) * k;
+    const scroll = Math.max(0, Math.min(tb.lines.length - rows, m - rows * 0.4));
+    const shown = smooth(span(t, tb.from ?? enter, (tb.from ?? enter) + 0.7)) * tb.lines.length;
+    ctx.save(); ctx.globalAlpha *= a;
+    ctx.beginPath(); ctx.rect(...body); ctx.clip();
+    const top = body[1] + lh * 0.55 - scroll * lh;
+    if (cur >= 0) {
+      const by = top + (m - 0.5) * lh;
+      rr(ctx, body[0] + 4, by + 2, body[2] - 8, lh - 4, 9, "rgba(95,167,126,.30)", C.leaf, 2);
+      rr(ctx, body[0] + 4, by + 2, 6, lh - 4, 3, "#f2c94c", null);
+    }
+    tb.lines.forEach((line, i) => {
+      const ly = top + i * lh;
+      if (ly < body[1] - lh || ly > body[1] + body[3] + lh || i > shown) return;
+      ctx.font = MONO(size * 0.78); ctx.fillStyle = "#5d7a6b"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillText(String((tb.start ?? 1) + i), body[0] + 54, ly);
+      ctx.font = MONO(size); ctx.textAlign = "left";
+      let cx = body[0] + 70;
+      for (const [s, color] of tokens(line)) { ctx.fillStyle = color; ctx.fillText(s, cx, ly); cx += ctx.measureText(s).width; }
+    });
+    ctx.restore();
+    // The link from the marked line to the control it runs on the phone, labelled with what it is.
+    const mk = marks.filter(([ma]) => t >= ma).pop();
+    if (mk && (mk[2] || mk[3]) && a > 0.5) {
+      const by = Math.max(body[1] + 16, Math.min(body[1] + body[3] - 16, top + m * lh));
+      const lk = smooth(span(t, mk[0] + 0.15, mk[0] + 0.55));
+      ctx.save(); ctx.translate(-(1 - e) * 140, 0);
+      let sx = x + (1 - e) * 140 - 10;
+      if (mk[3]) {
+        ctx.font = FONT(900, 30);
+        const cw = ctx.measureText(mk[3]).width + 44, ck = backOut(span(t, mk[0] + 0.1, mk[0] + 0.45));
+        ctx.save(); ctx.translate(sx - cw / 2, by); ctx.scale(ck, ck);
+        rr(ctx, -cw / 2, -30, cw, 60, 30, "#fbf8f1", C.ink, 4);
+        text(ctx, mk[3], 0, 2, { size: 30, weight: 900 });
+        ctx.restore();
+        sx -= cw;
+      }
+      const [px, py] = mk[2] ?? [sx, by];
+      if (mk[2]) {
+        ctx.beginPath(); ctx.moveTo(sx, by); ctx.lineTo(sx + (px - sx) * lk, by + (py - by) * lk);
+        ctx.setLineDash([3, 10]); ctx.lineCap = "round"; ctx.lineWidth = 4; ctx.strokeStyle = "#f2c94c"; ctx.stroke(); ctx.setLineDash([]);
+      }
+      if (mk[2] && lk > 0.95) { ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2); ctx.fillStyle = "#f2c94c"; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke(); }
+      ctx.restore();
+    }
+  };
+  if (ti > 0 && sw < 1) draw(tabs[ti - 1], 1 - sw);
+  draw(tab, sw);
+  ctx.restore();
+}
+
+// 9b · Under the hood of the help request, between the two real phones: Maya's request is built
+// and published, sealed into encryptedValues, and the letter flies to Mom's phone.
 export const codeSeal = {
   duration: 6,
   line: "Before it leaves her phone, it's sealed: end-to-end encrypted, for her family only.",
   render(ctx, t) {
-    ctx.fillStyle = "#1a2620"; ctx.fillRect(0, 0, W, H);
-    editor(ctx, {
-      x: 210, y: 300, w: 1500, h: 470, file: "FamilyRecordCodec.swift", size: 30,
-      lines: [
-        "let record = CKRecord(recordType: type, recordID: id)",
-        "// End-to-end encrypted: only the people the share is with can read it, not Apple.",
-        "record.encryptedValues[\"payload\"] = try encoder.encode(payload)",
-        "return record",
-      ],
-      chars: typed(t, 0.6, 55), mark: 2, markAlpha: smooth(span(t, 3.4, 3.9)),
-    });
-    // The sealed letter flies over the highlighted line once it's typed.
-    const k = span(t, 4, 6.2);
-    if (k > 0 && k < 1) {
-      const e = smooth(k), x = 200 + e * 1520, y = 220 - Math.sin(Math.PI * e) * 120;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(-0.08);
+    paperGround(ctx, C.sage, { seed: 52 });
+    realPhone(ctx, t, { x: 50, y: 150, h: 640, screens: [["kidHelp", 0]], tag: "Maya's phone" });
+    realPhone(ctx, t, { x: 1576, y: 150, h: 640, screens: [["parentHelp", 0]], tag: "Mom's phone · sample data" });
+    sideCode(ctx, t, { x: 400, y: 190, w: 1120, h: 560, size: 24, enter: 0.1, tabs: [
+      { ...SRC.sendHelp, from: 0.1, marks: [[0.5, 3], [1.3, 4]] },
+      { ...SRC.codec, from: 2.2, marks: [[2.5, 3]] },
+    ] });
+    const label = t < 2.2 ? (t < 1.3 ? "Her help request" : "Published to her family") : "Sealed: end-to-end encrypted";
+    const k = backOut(span(t, t < 1.3 ? 0.5 : t < 2.2 ? 1.3 : 2.5, (t < 1.3 ? 0.5 : t < 2.2 ? 1.3 : 2.5) + 0.35));
+    if (t > 0.5) { ctx.save(); ctx.translate(960, 130); ctx.scale(k, k); ctx.font = FONT(900, 40); const w = ctx.measureText(label).width + 64; rr(ctx, -w / 2, -38, w, 76, 38, t < 2.2 ? "#fbf8f1" : C.pine, C.ink, 4); text(ctx, label, 0, 2, { size: 40, weight: 900, color: t < 2.2 ? C.ink : "#ffffff" }); ctx.restore(); }
+    // The sealed letter: leaves Maya's phone, passes over the sealed line, lands on Mom's.
+    const f = span(t, 3, 5.2);
+    if (f > 0 && f < 1) {
+      const e = smooth(f), x = 200 + e * 1520, y = 420 - Math.sin(Math.PI * e) * 260;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(-0.08 + e * 0.16);
       rr(ctx, -80, -52, 160, 104, 14, C.cream, C.ink, 4);
       ctx.beginPath(); ctx.moveTo(-74, -46); ctx.lineTo(0, 6); ctx.lineTo(74, -46); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
       ctx.beginPath(); ctx.arc(0, 8, 24, 0, Math.PI * 2); ctx.fillStyle = C.pine; ctx.fill(); ctx.stroke();
       ctx.restore();
     }
+    const land = span(t, 5.2, 5.8);
+    if (land > 0 && land < 1) { ctx.beginPath(); ctx.arc(1723, 420, 40 + land * 90, 0, Math.PI * 2); ctx.lineWidth = 6; ctx.strokeStyle = `rgba(31,107,74,${1 - land})`; ctx.stroke(); }
     caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
   },
 };
-
