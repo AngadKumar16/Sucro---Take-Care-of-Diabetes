@@ -12,7 +12,7 @@ You are the motion designer and engineer for the CAC demo video. The film plan (
 - **The voiceover leads.** Angad's narration is the spine. Scene lengths come from the script's spoken lines, not from a beat grid. Music sits under the voice (about −18 dB below it, ducked further while he speaks).
 - **Under the cap.** The CAC video cap has been 3:00. Check congressionalappchallenge.us before final, and keep the cut at 2:50 or less.
 - **The rubric.** 30 points: Ideology, Impact, Structure (concept); Function, Code, UI (technology). Every shot in the plan names the rubric row it serves. The Code row needs real code on screen, explained.
-- **Honest.** Maya is a made-up character and says so on screen once. Sample data is labelled "sample data". Sped-up time says so. Family sharing over iCloud is built but not live until the paid developer account: say it plainly. Never show a claim the app doesn't back (see `docs/security.md`, `PLANNING.md`).
+- **Honest.** Maya is a made-up character and says so on screen once. Sample data is labelled "sample data". Sped-up time says so. Family sharing over iCloud is built and shown through the real publish and apply path with sample data; the ending says it turns on at App Store launch. Don't claim two-phone testing or real users. Never show a claim the app doesn't back (see `docs/security.md`, `PLANNING.md`).
 - **Captions burned in.** Judges may watch muted or on a phone: every spoken line appears as a caption on a backing card, Nunito 800, at least 44 px at 1080p, bottom third, never over a phone screen's key content.
 
 ## 2. Look
@@ -40,8 +40,10 @@ The real app carries the solution; a mix of looks frames it so it never feels li
 | Desk | Isometric phones on a desk with the app's screens | `docs/video-frames/scenes.mjs` |
 | Code | The app's real Swift typed onto an editor card; the code appears at least three times | `scenes/code.js` |
 | Flat | The approved sealed-letter illustration, animated | `scenes/flat.js` |
+| Scrapbook | Kraft journal page: polaroids of real screens with washi tape, die-cut sticker props, handwritten notes (Caveat 700, `@fontsource/caveat`), doodled arrows, sticky notes. For the personal, story beats | `scenes/scrap.js` |
+| Hype | Dark pine stage, turning rays, halftone; words slam in with flash, shake and burst; the phone punches on beats. For the turn, the urgent moment, the proof and lists. Keep it to about a third of the film | `scenes/hype.js` |
 
-Type: **Nunito** (800/900 display, 700 text), the closest free face to the app's SF Rounded. Outline weight: 4 px at 1080p on characters and props. Light from the top left.
+Type: **Nunito** (800/900 display, 700 text), the closest free face to the app's SF Rounded; **Caveat** 700 for handwriting in Scrapbook only (never captions). Outline weight: 4 px at 1080p on characters and props. Light from the top left.
 
 ## 3. Maya
 

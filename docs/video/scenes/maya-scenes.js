@@ -77,7 +77,7 @@ export const lunch = {
 // 2c · 2 a.m.: an alarm, the pillow, then she sits up: "I can do this. Just let me."
 export const night = {
   duration: 9,
-  line: "Most apps treat her like an adult, or like a little kid. Nothing grows up with her.",
+  line: "Most apps treat her like an adult or like a little kid. None of them change as she grows up.",
   render(ctx, t) {
     ctx.save();
     pushIn(ctx, t, 10, 0.05, 1000, 640);
@@ -183,7 +183,7 @@ export const cheer = {
 // 11 · Maya at her desk, phone in hand, proud.
 export const proud = {
   duration: 3,
-  line: "It's free. Family sharing goes live once we have a developer account. Next, we're testing with real families.",
+  line: "Next: the App Store, with family sharing on. Then Spanish, school nurses, and clinics that hand it to families the day a kid is diagnosed.",
   render(ctx, t) {
     ctx.save();
     pushIn(ctx, t, 3, 0.03, 900, 600);

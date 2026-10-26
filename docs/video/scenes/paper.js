@@ -54,7 +54,7 @@ export function hop(t, a, b, from, to) {
 
 // ---- Pieces -----------------------------------------------------------------------------------
 
-const P = {
+export const P = {
   notebook: (c) => { blob(c, () => c.roundRect(-150, -190, 300, 380, 16), "#fffdf6"); for (let i = 0; i < 9; i++) blob(c, () => c.rect(-120, -140 + i * 34, 240, 3), "#cfe0e8"); blob(c, () => c.rect(-112, -190, 4, 380), "#f0b3a5"); },
   meter: (c) => { blob(c, () => c.roundRect(-70, -110, 140, 220, 34), C.cream); blob(c, () => c.roundRect(-48, -84, 96, 70, 12), C.mint); c.shadowColor = "transparent"; c.font = FONT(900, 40); c.fillStyle = C.pine; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("112", 0, -48); blob(c, () => c.arc(0, 50, 22, 0, Math.PI * 2), C.sage); },
   pen: (c) => { blob(c, () => c.roundRect(-210, -24, 330, 48, 24), C.pine); blob(c, () => c.roundRect(110, -24, 110, 48, 20), C.amber); blob(c, () => c.roundRect(-250, -12, 44, 24, 10), C.cream); blob(c, () => c.roundRect(-120, -10, 90, 20, 8), C.leaf); },
@@ -63,62 +63,7 @@ const P = {
   heart: (c) => { blob(c, () => { c.moveTo(0, 30); c.bezierCurveTo(-60, -10, -40, -60, 0, -30); c.bezierCurveTo(40, -60, 60, -10, 0, 30); }, C.berry); },
 };
 
-// 1 · Mom's kit lands on the kitchen table, piece by piece.
-export const paperKit = {
-  duration: 10,
-  line: "My mom has type 1 diabetes. I've watched her manage it every day, and I kept thinking about kids who get it young.",
-  render(ctx, t) {
-    paperGround(ctx, "#ead6b0", { seed: 3, planks: 7 });
-    const items = [
-      ["notebook", 1, [-400, 300], [560, 520], -0.08],
-      ["meter", 2, [600, -300], [880, 420], 0.12],
-      ["pen", 3, [2300, 200], [1300, 360], -0.35],
-      ["sensor", 4, [2200, 1300], [1240, 700], 0],
-      ["juice", 5, [-300, 1200], [380, 820], 0.15],
-      ["heart", 6, [960, -200], [960, 640], 0.1],
-    ];
-    items.forEach(([name, id, from, to, rot], i) => {
-      const a = 0.4 + i * 1.3, [x, y, k] = hop(t, a, a + 0.6, from, to);
-      if (k <= 0) return;
-      cut(ctx, x, y, rot * k, id, t, P[name], { lift: 1 + (1 - Math.min(1, k)) * 2 });
-    });
-    caption(ctx, this.line, smooth(span(t, 0.3, 0.7)));
-  },
-};
 
-// 3 · Title, in paper: the sprout grows in three cut stages, then the name is laid down tile by tile.
-export const paperTitle = {
-  duration: 6,
-  line: "So we built DiabetesCare. It grows with you.",
-  render(ctx, t) {
-    paperGround(ctx, C.sage, { seed: 9 });
-    const st = onTwos(t);
-    const stage = st < 0.6 ? 0 : st < 1.4 ? 1 : st < 2.2 ? 2 : 3;
-    cut(ctx, 960, 610, 0, 40, t, (c) => {
-      if (stage >= 1) blob(c, () => c.roundRect(-9, -40 - stage * 70, 18, 40 + stage * 70, 9), C.pine);
-      if (stage >= 2) { blob(c, () => c.ellipse(-60, -120, 64, 26, -0.5, 0, Math.PI * 2), C.leaf); blob(c, () => c.ellipse(60, -170, 64, 26, 0.5, 0, Math.PI * 2), C.leaf); }
-      if (stage >= 3) blob(c, () => c.arc(0, -250, 30, 0, Math.PI * 2), C.berry);
-      blob(c, () => { c.moveTo(-110, -40); c.lineTo(110, -40); c.lineTo(88, 110); c.lineTo(-88, 110); c.closePath(); }, C.amber);
-      blob(c, () => c.roundRect(-128, -66, 256, 40, 14), "#e6a65a");
-    });
-    // Name tiles, one per letter, laid on twos after the bloom.
-    const word = "DiabetesCare";
-    ctx.font = FONT(900, 92);
-    const widths = [...word].map((ch) => ctx.measureText(ch).width + 26);
-    let x = W / 2 - widths.reduce((a, b) => a + b, 0) / 2;
-    [...word].forEach((ch, i) => {
-      const a = 2.4 + i * (1.5 / 12), [, y, k] = hop(t, a, a + 0.3, [0, 80], [0, 0]);
-      const w = widths[i];
-      if (k > 0) cut(ctx, x + w / 2, 900 + y, (hash(i) - 0.5) * 0.12, 60 + i, t, (c) => {
-        blob(c, () => c.roundRect(-w / 2 + 3, -60, w - 6, 112, 14), C.cream);
-        c.shadowColor = "transparent"; c.font = FONT(900, 92); c.fillStyle = C.pine; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(ch, 0, 2);
-      });
-      x += w;
-    });
-    const k = hop(t, 4.4, 4.8, [0, 60], [0, 0])[2];
-    if (k > 0) cut(ctx, W / 2, 1010, -0.02, 90, t, (c) => { blob(c, () => c.roundRect(-210, -34, 420, 68, 34), C.pine); c.shadowColor = "transparent"; c.font = FONT(800, 44); c.fillStyle = C.cream; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("grows with you", 0, 2); });
-  },
-};
 
 // 4a · Who's it for? Four paper cards are dealt; Kid is picked up.
 export const paperDeal = {
@@ -144,29 +89,3 @@ export const paperDeal = {
   },
 };
 
-// 11b · End card: the plant in bloom and three paper notes.
-export const paperEnd = {
-  duration: 7,
-  line: "It's free. Family sharing goes live once we have a developer account. Next, we're testing with real families.",
-  render(ctx, t) {
-    paperGround(ctx, C.sage, { seed: 33 });
-    cut(ctx, 520, 760, 0, 200, t, (c) => {
-      blob(c, () => c.roundRect(-9, -330, 18, 290, 9), C.pine);
-      blob(c, () => c.ellipse(-70, -150, 74, 30, -0.5, 0, Math.PI * 2), C.leaf);
-      blob(c, () => c.ellipse(70, -220, 74, 30, 0.5, 0, Math.PI * 2), C.leaf);
-      for (let i = 0; i < 6; i++) blob(c, () => c.ellipse(Math.cos(i) * 34, -340 + Math.sin(i) * 34, 30, 18, i, 0, Math.PI * 2), C.berry);
-      blob(c, () => c.arc(0, -340, 20, 0, Math.PI * 2), "#f2c94c");
-      blob(c, () => { c.moveTo(-130, -40); c.lineTo(130, -40); c.lineTo(104, 140); c.lineTo(-104, 140); c.closePath(); }, C.amber);
-    });
-    const notes = [["Free, for every family", C.cream], ["Family sharing: live with a developer account", "#fff3d6"], ["Next: testing with real families", C.mint]];
-    notes.forEach(([s, col], i) => {
-      const a = 0.6 + i * 0.7, [x, y, k] = hop(t, a, a + 0.4, [2300, 300 + i * 170], [1240, 330 + i * 170]);
-      if (k > 0) cut(ctx, x, y, (hash(i + 5) - 0.5) * 0.08, 210 + i, t, (c) => {
-        c.font = FONT(900, 46); const w = c.measureText(s).width + 90;
-        blob(c, () => c.roundRect(-w / 2, -54, w, 108, 24), col);
-        c.shadowColor = "transparent"; c.fillStyle = C.ink; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(s, 0, 2);
-      });
-    });
-    caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
-  },
-};

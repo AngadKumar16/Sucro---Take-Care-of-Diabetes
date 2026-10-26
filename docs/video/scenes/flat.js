@@ -18,7 +18,7 @@ function envelope(ctx, x, y, s = 1, rot = -0.08) {
 // 9 · Sealed the whole way: Maya's phone → Mom's phone, only Mom's key opens it.
 export const sealedLetter = {
   duration: 16,
-  line: "Her health information is never shared outside her family. It's end-to-end encrypted, so not even Apple can read it. We don't have a server, so we never get a copy.",
+  line: "Her health information stays inside her family. Not even Apple can read it, and since we don't run a server, we never get a copy.",
   render(ctx, t) {
     ctx.fillStyle = C.sage; ctx.fillRect(0, 0, W, H);
     const phone = (x, icon, label) => {

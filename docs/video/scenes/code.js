@@ -74,7 +74,7 @@ export function flatPhone(ctx, x, y, w, h, screen) {
 // 6 · The passcode on the phone; then under the hood, the salted hash.
 export const codeLock = {
   duration: 8,
-  line: "Risky things need a grown-up's passcode. Safety help never does. The code itself is never saved, only a salted hash.",
+  line: "Risky things need a grown-up's passcode. Safety help never does. The app never saves the passcode itself, only a salted hash of it.",
   render(ctx, t) {
     ctx.fillStyle = C.sage; ctx.fillRect(0, 0, W, H);
     const slide = smooth(span(t, 2.2, 3));
@@ -142,49 +142,3 @@ export const codeSeal = {
   },
 };
 
-// 10 · The rules in one function, then the tests run green.
-export const codeGate = {
-  duration: 20,
-  line: "It's built in SwiftUI. Every rule about who can do what lives in one function, so no screen has a back door. And 207 tests check it.",
-  render(ctx, t) {
-    ctx.fillStyle = "#1a2620"; ctx.fillRect(0, 0, W, H);
-    const lines = [
-      "func access(to feature: Feature, completed: Set<Skill>) -> FeatureAccess {",
-      "    switch (self, feature) {",
-      "    case (.adult, _):                               base = .open",
-      "    case (.kid, .quickBolus):                       base = .hidden",
-      "    case (.kid, .logInsulin), (.kid, .changeSite):  base = .parent",
-      "    case (.teen, .logInsulin), (.teen, .changeSite): base = .open",
-      "    case (_, .editThresholds), (_, .clearData):     base = .parent",
-      "    }",
-      "    // A kid's skills can open what the stage keeps behind the passcode.",
-      "    if base == .parent, skills ⊆ completed { return .open }",
-      "}",
-    ];
-    // The marked line walks Kid → Teen → Adult as the narration names the stages.
-    const mark = t < 9 ? -1 : t < 11 ? 4 : t < 13 ? 5 : t < 15 ? 2 : 9;
-    editor(ctx, { x: 90, y: 80, w: 1360, h: 760, file: "CareStage.swift", size: 26, lines, chars: typed(t, 0.5, 90), mark, markAlpha: 1 });
-    // Test panel counts up after the code is typed.
-    const k = span(t, 15.5, 19);
-    const panel = smooth(span(t, 15, 15.6));
-    if (panel > 0) {
-      ctx.save(); ctx.globalAlpha = panel;
-      rr(ctx, 1490, 160, 360, 520, 30, "#24352d", C.ink, 4);
-      text(ctx, "Tests", 1670, 220, { size: 40, weight: 900, color: "#cfe0d6" });
-      const unit = Math.round(147 * smooth(k)), ui = Math.round(60 * smooth(span(t, 16.5, 19.5)));
-      text(ctx, String(unit), 1670, 330, { size: 96, weight: 900, color: C.mint });
-      text(ctx, "unit tests passed", 1670, 400, { size: 26, weight: 800, color: "#9fb2a5" });
-      text(ctx, String(ui), 1670, 510, { size: 96, weight: 900, color: C.mint });
-      text(ctx, "UI tests passed", 1670, 580, { size: 26, weight: 800, color: "#9fb2a5" });
-      ctx.restore();
-    }
-    // And here it is running: the real app slides in over the tests.
-    const run = smooth(span(t, 17, 17.8));
-    if (run > 0) {
-      const ph = realPhone(ctx, t, { x: 1960 - run * 900, y: 90, h: 820, screens: [["today", 0]] });
-      void ph;
-      if (run > 0.9) text(ctx, "Running on iPhone", 1250, 960, { size: 34, weight: 900, color: C.mint });
-    }
-    caption(ctx, this.line, smooth(span(t, 0.2, 0.6)));
-  },
-};

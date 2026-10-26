@@ -292,4 +292,82 @@ final class DemoReelUITests: XCTestCase {
         hold(2.5)
         snap("parent-replied")
     }
+
+    /// The school and sitter card: low signs, the rule of 15, who to call.
+    func test12SchoolCard() {
+        app.launchArguments += ["-demoData", "-stage", "kid"]
+        app.launch()
+        tab("Settings")
+        let card = app.buttons["School & Sitter Card"]
+        scrollTo(card, attempts: 12)
+        tapWhenReady(card)
+        hold(3)
+        snap("school-card")
+        app.swipeUp(velocity: .slow)
+        hold(2)
+        snap("school-card-more")
+    }
+
+    /// Siri and Shortcuts: the app's shortcuts, then "Check My Glucose" answers with the latest
+    /// reading (the same snippet Siri shows; Siri itself doesn't draw in the simulator).
+    func test13Siri() {
+        app.launchArguments += ["-demoData"]
+        app.launch()
+        hold(2)
+        let shortcuts = XCUIApplication(bundleIdentifier: "com.apple.shortcuts")
+        shortcuts.launch()
+        hold(2)
+        snap("shortcuts-step1")
+        let continueButton = shortcuts.buttons["Continue"]
+        if continueButton.exists { continueButton.tap(); hold(1) }
+        let app = shortcuts.staticTexts["DiabetesCare"].firstMatch
+        for _ in 0..<6 where !app.exists { shortcuts.swipeUp(velocity: .slow) }
+        if app.exists { app.tap(); hold(2) }
+        snap("shortcuts-app")
+        let check = shortcuts.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Check'")).firstMatch
+        if check.waitForExistence(timeout: 3) { check.tap() }
+        hold(4)
+        snap("siri-glucose")
+    }
+
+    /// The glucose widget on the Home Screen, added the way a person would.
+    func test14Widgets() {
+        app.launchArguments += ["-demoData", "-stage", "kid"]
+        app.launch()
+        hold(2)
+        XCUIDevice.shared.press(.home)
+        hold(1)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).press(forDuration: 1.6)
+        hold(1)
+        snap("widgets-step1")
+        let edit = springboard.buttons["Edit"]
+        if edit.waitForExistence(timeout: 3) { edit.tap(); hold(0.8) }
+        let add = springboard.buttons["Add Widget"]
+        if add.waitForExistence(timeout: 3) { add.tap(); hold(1.5) }
+        snap("widgets-step2")
+        let search = springboard.searchFields.firstMatch
+        if search.waitForExistence(timeout: 3) {
+            search.tap()
+            search.typeText("DiabetesCare")
+            hold(1.5)
+        }
+        snap("widgets-step3")
+        let result = springboard.cells.containing(.staticText, identifier: "DiabetesCare").firstMatch
+        if result.waitForExistence(timeout: 3) { result.tap() } else { springboard.staticTexts["DiabetesCare"].firstMatch.tap() }
+        hold(2)
+        snap("widgets-gallery")
+        // Swipe to the medium size, which has the 3-hour sparkline.
+        springboard.swipeLeft()
+        hold(1.5)
+        snap("widgets-gallery-medium")
+        let addWidget = springboard.buttons["Add Widget"]
+        if addWidget.waitForExistence(timeout: 3) { addWidget.tap() }
+        hold(2)
+        snap("widgets-placed")
+        let done = springboard.buttons["Done"]
+        if done.waitForExistence(timeout: 3) { done.tap() }
+        hold(3)
+        snap("widgets-home")
+    }
 }

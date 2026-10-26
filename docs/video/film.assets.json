@@ -24,5 +24,10 @@
   "sickDay": "assets/stills/sick-day.png",
   "today": "../screenshots/iPhone-17-Pro-Max/01-Today.png",
   "scene3": "../video-frames/shots/scene3-flight.png",
-  "letter": "../video-frames/sealed-letter.png"
+  "letter": "../video-frames/sealed-letter.png",
+  "widgetMedium": "assets/stills/widgets-gallery-medium.png",
+  "watchGlance": "assets/stills/watch-glance.png",
+  "siriGlucose": "assets/stills/siri-glucose.png",
+  "carbSearch": "assets/stills/carb-search.png",
+  "schoolCard": "assets/stills/school-card.png"
 }

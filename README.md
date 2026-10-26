@@ -26,12 +26,33 @@ Kids move up by learning. Your Path has six skills: four short quizzes tied to t
 
 ## What it does
 
-- Log glucose, carbs (5,371 foods from USDA FNDDS), insulin, ketones, activity and site changes. Reads CGM data from Apple Health.
-- Today screen with the latest reading, trends, streaks and a plant that grows as you learn.
-- Feeling off? A kid taps Get Help: find a grown-up, have 15 g of fast sugar, a 15-minute recheck timer on the Lock Screen, and Call or Text their grown-up.
-- Trends, weekly recap and a PDF report for the doctor.
-- Widgets, Live Activity, Siri shortcuts, Control Center buttons and an Apple Watch app.
-- Family sharing: the person with diabetes shares read-only with family, and a parent's phone shows their readings and gets alerts.
+### Logging
+
+Glucose, carbs, insulin, ketones, activity and site changes. Each one has a tool that looks like the real thing: a kitchen scale for carbs, a pen you dial for insulin, a body map for sites. Carb lookup covers 5,371 foods from the USDA's FNDDS database with household portions, plus an optional barcode scanner. CGM readings come in from Apple Health.
+
+### Today
+
+The latest reading with its trend arrow, active insulin (an estimate), what's coming up next, streaks, a short story of your day, and a plant that grows as you learn. You can tag a day as sick, stressed, sports, travel and more. A sick day opens a checklist with your last ketone check.
+
+### Help when you're low
+
+A kid taps Get Help: find a grown-up, have 15 g of fast sugar, and a 15-minute recheck timer starts on the Lock Screen and in the Dynamic Island. Call and Text buttons reach their grown-up with the latest reading.
+
+### Trends
+
+Time in range, your typical day (an AGP chart), how much you rise after meals and after specific foods, tagged days compared with ordinary ones, and activity and sleep from Health. A weekly recap shows up on Sunday evening, and a PDF report for the doctor includes the questions you saved for the visit.
+
+### Outside the app
+
+Home and Lock Screen widgets, including a "Feeling off?" widget that logs 15 g of sugar in one tap. Siri and Shortcuts, Control Center buttons, Spotlight search for glossary terms, and an Apple Watch app with complications.
+
+### Family
+
+The person with diabetes shares read-only with their family. A parent's phone shows their readings and gets alerts tuned to the stage: lows and help requests for a kid, only urgent ones for a teen. A parent answers a help request with "On my way" in one tap.
+
+### Everyday things
+
+Supply counts with reorder reminders, insulin expiry reminders, a school and sitter card as a PDF, a 134-term glossary with plain-language guides, daily backups you can restore, alternate app icons, and Dynamic Type throughout.
 
 ## Privacy
 
@@ -45,14 +66,33 @@ Your health data is never sold, never used for ads and never sent to us. There i
 - Every permission rule lives in one function, `CareStage.access(to:completed:)`, behind one gate, covered by unit tests.
 - Only two optional network paths, both HTTPS: family sharing and a barcode lookup that sends nothing but the barcode digits.
 
-Details and honest limits: [docs/security.md](docs/security.md).
+More detail: [docs/security.md](docs/security.md).
 
 **Not for dosing.** DiabetesCare is a log and a learning tool. It doesn't calculate insulin doses or replace advice from your care team.
 
-## Honest status
+## Ready to launch
 
-- Family sharing over iCloud is built and tested with a stand-in transport, but it's switched off: iCloud needs a paid Apple Developer account, which we don't have yet. **See What Family Sees** in Settings › Family shows exactly what a parent would get. Turning it on is one script (`sh scripts/enable-icloud.sh`), see [docs/release-checklist.md](docs/release-checklist.md).
-- The glossary, guides and quizzes are plain-language general information and still need a clinician's review.
+Family sharing runs on iCloud (CloudKit) and is end-to-end encrypted. The whole path is built: publishing changes from the teen's phone, the CloudKit record layout, share invitations, stage-based alerts on the parent's phone, and help replies. Unit tests run every step through a stand-in transport, and **See What Family Sees** in Settings › Family shows exactly what a parent gets. It switches on with one script (`sh scripts/enable-icloud.sh`) when the app goes to the App Store. The steps are in [docs/release-checklist.md](docs/release-checklist.md).
+
+## What's next
+
+For the app:
+
+- Put it on the App Store and TestFlight with family sharing on, and test it with families and teens who live with type 1.
+- Have a diabetes educator review the guides, quizzes and glossary.
+- Spanish first (the glossary already loads a file per language), then more languages.
+- Direct CGM connections, a caregiver dashboard on iPad, and an Android version.
+- Modes for type 2 and gestational diabetes. Stages and skills fit any condition where someone slowly takes over their own care.
+
+For reach:
+
+- Schools. The school card is already in the app; a view for school nurses comes next.
+- Clinics. A pediatric diabetes team could hand DiabetesCare to a family on the day their kid is diagnosed, and the PDF report brings the same numbers to every visit.
+- Diabetes camps and groups like Breakthrough T1D, where kids already practice doing things on their own.
+- It stays free. There's no server, so one more family costs us nothing.
+- The code is public on GitHub, so other developers can build on the stage rules and the family sharing.
+
+A kid diagnosed at six will be managing diabetes alone at eighteen. We want the app to be there for all twelve of those years.
 
 ## Build and run
 
@@ -80,6 +120,6 @@ Demo launch arguments (Debug builds; Edit Scheme › Run › Arguments):
 
 ## Built with
 
-SwiftUI, Core Data, HealthKit, WidgetKit, ActivityKit, App Intents, WatchKit/WatchConnectivity, CloudKit (sharing, off for now), TipKit, VisionKit, Swift Testing and XCUITest.
+SwiftUI, Core Data, HealthKit, WidgetKit, ActivityKit, App Intents, WatchKit/WatchConnectivity, CloudKit (family sharing), TipKit, VisionKit, Swift Testing and XCUITest.
 
 Project notes and history: [PLANNING.md](PLANNING.md).

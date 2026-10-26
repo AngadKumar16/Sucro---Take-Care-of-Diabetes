@@ -6,6 +6,7 @@
     "sheet": "node render.mjs sheet out/maya-sheet.png"
   },
   "dependencies": {
+    "@fontsource/caveat": "^5.1.0",
     "@fontsource/nunito": "^5.1.0",
     "playwright-core": "^1.48.0"
   }
