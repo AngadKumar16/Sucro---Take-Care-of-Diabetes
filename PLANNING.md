@@ -163,7 +163,6 @@ Judges are mostly non-technical and mostly watch the demo video, so the order of
 - [ ] **After enrollment:** `sh scripts/enable-icloud.sh` → pick the team → the two-device test in `docs/release-checklist.md`.
 
 ### Later (not app work)
-- [ ] Demo video (under the CAC cap): mom's story → Kid → skill unlock → Teen → What Family Sees / parent alert (`-demoFamily`) → privacy, free → next steps. Say plainly in the video if iCloud sharing isn't live yet.
 - [ ] README with screenshots from `docs/screenshots/`.
 - [ ] Interviews with families or teens with T1D; TestFlight once enrolled.
 - [ ] Clinician review of the quiz questions, glossary and guides.
