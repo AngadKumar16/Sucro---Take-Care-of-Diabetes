@@ -2,9 +2,9 @@
 
 A diabetes log for iPhone that grows with you.
 
-My mom has type 1 diabetes. Watching her manage it every day made us think about kids who get diagnosed young: at first a parent does everything, and years later that kid has to do it all alone. Most diabetes apps are built for one adult. DiabetesCare is built for the years in between.
+My mom has type 1 diabetes. Watching her manage it every day made me think about kids who get diagnosed young: at first a parent does everything, and years later that kid has to do it all alone. Most diabetes apps are built for one adult. DiabetesCare is built for the years in between.
 
-Made by Angad Kumar and Abhay for the 2026 Congressional App Challenge.
+Made by Angad Kumar for the 2026 Congressional App Challenge.
 
 <p>
   <img src="docs/screenshots/iPhone-17-Pro-Max/04-KidToday.png" width="200" alt="Kid's Today screen">
@@ -56,11 +56,11 @@ Supply counts with reorder reminders, insulin expiry reminders, a school and sit
 
 ## Privacy
 
-Your health data is never sold, never used for ads and never sent to us. There is no account and no server. It stays on your phone, and the only people who ever see it are the family members you invite. Family sharing is end-to-end encrypted in your own iCloud (CloudKit `encryptedValues`), so not even Apple can read it. App Store privacy label: Data Not Collected. See [docs/privacy-policy.md](docs/privacy-policy.md).
+Your health data is never sold, never used for ads and never sent to me. There is no account and no server. It stays on your phone, and the only people who ever see it are the family members you invite. Family sharing is end-to-end encrypted in your own iCloud (CloudKit `encryptedValues`), so not even Apple can read it. App Store privacy label: Data Not Collected. See [docs/privacy-policy.md](docs/privacy-policy.md).
 
 ## Security
 
-- No server, no account, no password database: nothing of ours to breach. No analytics, ads or tracking SDKs.
+- No server, no account, no password database: nothing to breach. No analytics, ads or tracking SDKs.
 - Data on the phone is encrypted at rest by iOS. Family sharing is end-to-end encrypted, private (`publicPermission = .none`) and read-only.
 - The grown-up passcode is kept only as a salted SHA-256 hash in the Keychain (this device only), with a lockout after 5 wrong tries.
 - Every permission rule lives in one function, `CareStage.access(to:completed:)`, behind one gate, covered by unit tests.
@@ -80,7 +80,7 @@ For the app:
 
 - Put it on the App Store and TestFlight with family sharing on, and test it with families and teens who live with type 1.
 - Have a diabetes educator review the guides, quizzes and glossary.
-- Spanish first (the glossary already loads a file per language), then more languages.
+- More languages (the glossary already loads a file per language).
 - Direct CGM connections, a caregiver dashboard on iPad, and an Android version.
 - Modes for type 2 and gestational diabetes. Stages and skills fit any condition where someone slowly takes over their own care.
 
@@ -89,10 +89,10 @@ For reach:
 - Schools. The school card is already in the app; a view for school nurses comes next.
 - Clinics. A pediatric diabetes team could hand DiabetesCare to a family on the day their kid is diagnosed, and the PDF report brings the same numbers to every visit.
 - Diabetes camps and groups like Breakthrough T1D, where kids already practice doing things on their own.
-- It stays free. There's no server, so one more family costs us nothing.
+- It stays free. There's no server, so one more family costs nothing to support.
 - The code is public on GitHub, so other developers can build on the stage rules and the family sharing.
 
-A kid diagnosed at six will be managing diabetes alone at eighteen. We want the app to be there for all twelve of those years.
+A kid diagnosed at six will be managing diabetes alone at eighteen. I want the app to be there for all twelve of those years.
 
 ## Build and run
 
@@ -122,4 +122,3 @@ Demo launch arguments (Debug builds; Edit Scheme › Run › Arguments):
 
 SwiftUI, Core Data, HealthKit, WidgetKit, ActivityKit, App Intents, WatchKit/WatchConnectivity, CloudKit (family sharing), TipKit, VisionKit, Swift Testing and XCUITest.
 
-Project notes and history: [PLANNING.md](PLANNING.md).
